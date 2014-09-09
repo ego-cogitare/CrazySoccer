@@ -8,34 +8,46 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.g2d.TextureRegion; 
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 
 public class Player extends Actor {
 
 	private static final int FRAME_COLS = 9;    
-    private static final int FRAME_ROWS = 8;     
+    private static final int FRAME_ROWS = 7;     
     
-    // Спрайт для отрисовки персонажа
+    // РЎРїСЂР°Р№С‚ РґР»СЏ РѕС‚СЂРёСЃРѕРІРєРё РїРµСЂСЃРѕРЅР°Р¶Р°
     public SpriteBatch spriteBatch;
     
-	// Перечень возможных состояний героя
+    // Р’С‹СЃРѕС‚Р° СЃРїСЂР°Р№С‚Р°
+    public int spriteHeight = 118;
+    
+	// РџРµСЂРµС‡РµРЅСЊ РІРѕР·РјРѕР¶РЅС‹С… СЃРѕСЃС‚РѕСЏРЅРёР№ РіРµСЂРѕСЏ
 	public static enum States {
-		STAY,     // Состояние покоя
-		WALKING,  // Ходьба
-		RUN		  // Бег
+		STAY,     // РЎРѕСЃС‚РѕСЏРЅРёРµ РїРѕРєРѕСЏ
+		WALKING,  // РҐРѕРґСЊР±Р°
+		RUN,	  // Р‘РµРі
+		FATIGUE,  // РЈСЃС‚Р°Р»РѕСЃС‚СЊ
+		CELEBRATE,// РџСЂР°Р·РґРЅРѕРІР°РЅРёРµ РїРѕР±РµРґС‹
+		LEFT_HAND_KICK
 	} 
     
-    // Набор анимаций персонажа
+    // РќР°Р±РѕСЂ Р°РЅРёРјР°С†РёР№ РїРµСЂСЃРѕРЅР°Р¶Р°
     public Map<States, Animation> animations;
     
-	// Кадры анимации покоя
+	// РљР°РґСЂС‹ Р°РЅРёРјР°С†РёРё РїРѕРєРѕСЏ
 	public TextureRegion[] stayFrames; 
-	// Кадры анимации хотьбы
+	// РљР°РґСЂС‹ Р°РЅРёРјР°С†РёРё С…РѕС‚СЊР±С‹
 	public TextureRegion[] walkFrames; 
-	// Кадры анимации бега
+	// РљР°РґСЂС‹ Р°РЅРёРјР°С†РёРё Р±РµРіР°
 	public TextureRegion[] runFrames;
+	// РљР°РґСЂС‹ Р°РЅРёРјР°С†РёРё СѓСЃС‚Р°Р»РѕСЃС‚Рё
+	public TextureRegion[] fetigueFrames;
+	// РљР°РґСЂС‹ Р°РЅРёРјР°С†РёРё РїСЂР°Р·РґРѕРІР°РЅРёСЏ РїРѕР±РµРґС‹
+	public TextureRegion[] celebrateFrames;
+	// РљР°РґСЂС‹ Р°РЅРёРјР°С†РёРё РїСЂР°Р·РґРѕРІР°РЅРёСЏ РїРѕР±РµРґС‹
+	public TextureRegion[] leftHandHitFrames;
 	
 	
 	public TextureRegion currentFrame; 
@@ -43,7 +55,7 @@ public class Player extends Actor {
 	public Texture animationSheet;
 	public TextureRegion[][] animationMap;
     
-	// Текущее состояние героя
+	// РўРµРєСѓС‰РµРµ СЃРѕСЃС‚РѕСЏРЅРёРµ РіРµСЂРѕСЏ
 	public Map<States, Boolean> states = new HashMap<States, Boolean>();
 	
     public float stateTime; 
@@ -57,30 +69,30 @@ public class Player extends Actor {
         setY(10);        
         stateTime = 0f;
         
-        // Первоначальная инициализация состояний анимаций героя
+        // РџРµСЂРІРѕРЅР°С‡Р°Р»СЊРЅР°СЏ РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ СЃРѕСЃС‚РѕСЏРЅРёР№ Р°РЅРёРјР°С†РёР№ РіРµСЂРѕСЏ
         stopAll();
 		
-        // Загрузка изображения с анимацией героя
+        // Р—Р°РіСЂСѓР·РєР° РёР·РѕР±СЂР°Р¶РµРЅРёСЏ СЃ Р°РЅРёРјР°С†РёРµР№ РіРµСЂРѕСЏ
         animationSheet = new Texture(Gdx.files.internal("rikki.gif"));
         
-        // Загрузка карты анимаций героя
+        // Р—Р°РіСЂСѓР·РєР° РєР°СЂС‚С‹ Р°РЅРёРјР°С†РёР№ РіРµСЂРѕСЏ
         animationMap = TextureRegion.split(animationSheet, animationSheet.getWidth()/FRAME_COLS, animationSheet.getHeight()/FRAME_ROWS);
         
-        // Спрайт для отрисовки героя
+        // РЎРїСЂР°Р№С‚ РґР»СЏ РѕС‚СЂРёСЃРѕРІРєРё РіРµСЂРѕСЏ
         spriteBatch = new SpriteBatch(); 
         
-        // Создаем анимацию покоя
+        // РЎРѕР·РґР°РµРј Р°РЅРёРјР°С†РёСЋ РїРѕРєРѕСЏ
         stayFrames = new TextureRegion[1];
         stayFrames[0] = animationMap[0][2];
         animations.put(States.STAY, new Animation(0.5f, stayFrames));
         
-        // Создаем анимацию ходьбы
+        // РЎРѕР·РґР°РµРј Р°РЅРёРјР°С†РёСЋ С…РѕРґСЊР±С‹
         walkFrames = new TextureRegion[2];
         walkFrames[0] = animationMap[0][0];
         walkFrames[1] = animationMap[0][1];
         animations.put(States.WALKING, new Animation(0.25f, walkFrames));
         
-        // Создаем анимацию бега
+        // РЎРѕР·РґР°РµРј Р°РЅРёРјР°С†РёСЋ Р±РµРіР°
         runFrames = new TextureRegion[6];
         runFrames[0] = animationMap[0][3];
         runFrames[1] = animationMap[0][4];
@@ -89,6 +101,27 @@ public class Player extends Actor {
         runFrames[4] = animationMap[0][7];
         runFrames[5] = animationMap[0][8];
         animations.put(States.RUN, new Animation(0.10f, runFrames));
+        
+        // РЎРѕР·РґР°РµРј Р°РЅРёРјР°С†РёСЋ СѓСЃС‚Р°Р»РѕСЃС‚Рё
+        fetigueFrames = new TextureRegion[2];
+        fetigueFrames[0] = animationMap[4][0];
+        fetigueFrames[1] = animationMap[4][1];
+        animations.put(States.FATIGUE, new Animation(0.25f, fetigueFrames));
+        
+        // РЎРѕР·РґР°РµРј Р°РЅРёРјР°С†РёСЋ РїСЂР°Р·РґРЅРѕРІР°РЅРёСЏ РїРѕР±РµРґС‹
+        celebrateFrames = new TextureRegion[2];
+        celebrateFrames[0] = animationMap[6][1];
+        celebrateFrames[1] = animationMap[6][2];
+        animations.put(States.CELEBRATE, new Animation(0.25f, celebrateFrames));
+        
+        // РЎРѕР·РґР°РµРј Р°РЅРёРјР°С†РёСЋ СѓРґР°СЂР° Р»РµРІРѕР№ СЂСѓРєРѕР№
+        leftHandHitFrames = new TextureRegion[4];
+        leftHandHitFrames[0] = animationMap[1][0];
+        leftHandHitFrames[1] = animationMap[1][2];
+        leftHandHitFrames[2] = animationMap[1][1];
+//        leftHandHitFrames[3] = animationMap[1][2];
+        leftHandHitFrames[3] = animationMap[1][0];
+        animations.put(States.LEFT_HAND_KICK, new Animation(0.07f, leftHandHitFrames));
 	}
 	
 	public void movePlayerBy(Vector2 movePoint) {
@@ -111,7 +144,7 @@ public class Player extends Actor {
 		}
 	}
 	
-	// Полностью остановить игрока
+	// РџРѕР»РЅРѕСЃС‚СЊСЋ РѕСЃС‚Р°РЅРѕРІРёС‚СЊ РёРіСЂРѕРєР°
 	public void stopAll() {
 		for (int i = 0; i < States.values().length; i++) {
 			states.put(States.values()[i], false);
@@ -128,6 +161,11 @@ public class Player extends Actor {
 		if (Field.JUMP) {
 			stopAll();
 			states.put(States.RUN, true);
+		}
+		
+		if (Field.LEFT_HAND_KICK) {
+			stopAll();
+			states.put(States.LEFT_HAND_KICK, true);
 		}
 		
 		if (Field.UP) {
@@ -154,10 +192,10 @@ public class Player extends Actor {
 			movePlayerBy(new Vector2(3,0));
 		}
 		
-		// Если ниодна из кнопок направления движения не нажата
+		// Р•СЃР»Рё РЅРёРѕРґРЅР° РёР· РєРЅРѕРїРѕРє РЅР°РїСЂР°РІР»РµРЅРёСЏ РґРІРёР¶РµРЅРёСЏ РЅРµ РЅР°Р¶Р°С‚Р°
 		if (!Field.UP && !Field.DOWN && !Field.LEFT && !Field.RIGHT) {
 			
-			// Если анимация была WALKING то отключаем ее
+			// Р•СЃР»Рё Р°РЅРёРјР°С†РёСЏ Р±С‹Р»Р° WALKING С‚Рѕ РѕС‚РєР»СЋС‡Р°РµРј РµРµ
 			if (states.get(States.WALKING)) {
 				states.put(States.WALKING, false);
 			}
@@ -175,10 +213,22 @@ public class Player extends Actor {
 		else if (states.get(States.RUN)) {
 			currentFrame = animations.get(States.RUN).getKeyFrame(stateTime, true); 
 		} 
+		else if (states.get(States.FATIGUE)) {
+			currentFrame = animations.get(States.FATIGUE).getKeyFrame(stateTime, true); 
+		}
+		else if (states.get(States.CELEBRATE)) {
+			currentFrame = animations.get(States.CELEBRATE).getKeyFrame(stateTime, true); 
+		}
+		else if (states.get(States.LEFT_HAND_KICK)) {
+			currentFrame = animations.get(States.LEFT_HAND_KICK).getKeyFrame(stateTime, true);
+		}
 		else {
 			currentFrame = animations.get(States.STAY).getKeyFrame(stateTime, true); 
 		} 
-        
+		
+		// РЈСЃС‚Р°РЅРѕРІРєР° РІС‹СЃРѕС‚С‹ СЃРїСЂР°Р№С‚Р°
+		currentFrame.setRegionHeight(this.spriteHeight);
+		
         spriteBatch.begin();
         spriteBatch.draw(currentFrame, this.getX(), this.getY());       
         spriteBatch.end();

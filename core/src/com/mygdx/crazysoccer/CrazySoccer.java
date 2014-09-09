@@ -3,8 +3,6 @@ package com.mygdx.crazysoccer;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
 public class CrazySoccer extends ApplicationAdapter {
@@ -28,12 +26,12 @@ public class CrazySoccer extends ApplicationAdapter {
 		field.fieldMapRenderer.setView(field.camera);
 		field.fieldMapRenderer.render();
 		
-		// Обработка входящей информации от игрока и изменение поведения героев
+		// РћР±СЂР°Р±РѕС‚РєР° РІС…РѕРґСЏС‰РµР№ РёРЅС„РѕСЂРјР°С†РёРё РѕС‚ РёРіСЂРѕРєР° Рё РёР·РјРµРЅРµРЅРёРµ РїРѕРІРµРґРµРЅРёСЏ РіРµСЂРѕРµРІ
 		field.act();
 		
 		field.processGame();
 		
-		// Отрисовка сцены и всех добавленных в нее актеров
+		// РћС‚СЂРёСЃРѕРІРєР° СЃС†РµРЅС‹ Рё РІСЃРµС… РґРѕР±Р°РІР»РµРЅРЅС‹С… РІ РЅРµРµ Р°РєС‚РµСЂРѕРІ
 		field.draw();
 	}
 }

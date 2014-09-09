@@ -1,17 +1,14 @@
 package com.mygdx.crazysoccer;
 
 import java.util.Arrays;
-import java.util.Iterator;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
-import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.maps.MapObject;
 import com.badlogic.gdx.maps.objects.PolylineMapObject;
-import com.badlogic.gdx.maps.objects.RectangleMapObject;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapRenderer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
@@ -20,13 +17,12 @@ import com.badlogic.gdx.math.Polyline;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
-import com.mygdx.crazysoccer.Player.States;
 
 public class Field extends Stage {
 	
 	private Stage stage;
 	
-	// Екземпляр класса описывающего игрока
+	// Р•РєР·РµРјРїР»СЏСЂ РєР»Р°СЃСЃР° РѕРїРёСЃС‹РІР°СЋС‰РµРіРѕ РёРіСЂРѕРєР°
 	private Player player;
 	
 	public int KEY_FLAGS = 0;
@@ -41,20 +37,21 @@ public class Field extends Stage {
 	public static boolean LEFT = false;
 	public static boolean RIGHT = false;
 	public static boolean JUMP = false;
+	public static boolean LEFT_HAND_KICK = false;
 	
 	
-	// Четыре точки определяющие размеры поля
+	// Р§РµС‚С‹СЂРµ С‚РѕС‡РєРё РѕРїСЂРµРґРµР»СЏСЋС‰РёРµ СЂР°Р·РјРµСЂС‹ РїРѕР»СЏ
 	private Vector2 leftBottom;
 	private Vector2 rightBottom;
 	private Vector2 rightTop;
 	private Vector2 leftTop;
 	
-	// Размры игрового (футбольного) поля
+	// Р Р°Р·РјСЂС‹ РёРіСЂРѕРІРѕРіРѕ (С„СѓС‚Р±РѕР»СЊРЅРѕРіРѕ) РїРѕР»СЏ
 	private int fieldMinWidth;
 	private int fieldMaxWidth;
 	private int fieldHeight;
 	
-	// Смещение игрового поля относительно карты (левого нижнего угла)
+	// РЎРјРµС‰РµРЅРёРµ РёРіСЂРѕРІРѕРіРѕ РїРѕР»СЏ РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ РєР°СЂС‚С‹ (Р»РµРІРѕРіРѕ РЅРёР¶РЅРµРіРѕ СѓРіР»Р°)
 	private int fieldOffsetX;
 	private int fieldOffsetY;
 	
@@ -69,13 +66,13 @@ public class Field extends Stage {
 		super(screenViewport);
 		
 		player = new Player();
-		// Добавление игрока (актера) на сцену (поле)
+		// Р”РѕР±Р°РІР»РµРЅРёРµ РёРіСЂРѕРєР° (Р°РєС‚РµСЂР°) РЅР° СЃС†РµРЅСѓ (РїРѕР»Рµ)
 		this.addActor(player);
 		
-		// Для отрисовки линий поля
+		// Р”Р»СЏ РѕС‚СЂРёСЃРѕРІРєРё Р»РёРЅРёР№ РїРѕР»СЏ
 		shapeRenderer = new ShapeRenderer();
 		
-		// Создание камеры
+		// РЎРѕР·РґР°РЅРёРµ РєР°РјРµСЂС‹
 		camera = new OrthographicCamera(Vars.WINDOW_WIDTH, Vars.WINDOW_HEIGHT);
         camera.position.set(Vars.WINDOW_WIDTH / 2.0f, Vars.WINDOW_HEIGHT / 2.0f, 0);
         camera.update();
@@ -92,7 +89,7 @@ public class Field extends Stage {
         	if ((Object)ma instanceof PolylineMapObject) {
         		Polyline polyline = ((PolylineMapObject)ma).getPolyline();
         		
-        		// Получение опорных точек трапеции поля
+        		// РџРѕР»СѓС‡РµРЅРёРµ РѕРїРѕСЂРЅС‹С… С‚РѕС‡РµРє С‚СЂР°РїРµС†РёРё РїРѕР»СЏ
         		leftBottom  = new Vector2(polyline.getVertices()[0],polyline.getVertices()[1]);
         		rightBottom = new Vector2(polyline.getVertices()[2],polyline.getVertices()[3]);
         		rightTop    = new Vector2(polyline.getVertices()[4],polyline.getVertices()[5]);
@@ -100,12 +97,12 @@ public class Field extends Stage {
         		
         		Arrays.sort(polyline.getVertices());
         		
-        		// Получение размеров игрового поля
+        		// РџРѕР»СѓС‡РµРЅРёРµ СЂР°Р·РјРµСЂРѕРІ РёРіСЂРѕРІРѕРіРѕ РїРѕР»СЏ
         		fieldMinWidth = (int)polyline.getVertices()[9] - (int)polyline.getVertices()[0];
         		fieldMaxWidth = (int)polyline.getVertices()[8] - (int)polyline.getVertices()[5];
         		fieldHeight   = (int)polyline.getVertices()[6] - (int)polyline.getVertices()[0];
         		
-        		// Получение смещения разметки поля относительно карты
+        		// РџРѕР»СѓС‡РµРЅРёРµ СЃРјРµС‰РµРЅРёСЏ СЂР°Р·РјРµС‚РєРё РїРѕР»СЏ РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ РєР°СЂС‚С‹
         		fieldOffsetX = Math.round(ma.getProperties().get("x", Float.class));
         		fieldOffsetY = Math.round(ma.getProperties().get("y", Float.class));
         		
@@ -116,8 +113,8 @@ public class Field extends Stage {
 		}
 	}
 	
-	// Получение длины проекции отрезка на ось аута поля (используется для проверки
-	// находится ли объект в пределах поля)
+	// РџРѕР»СѓС‡РµРЅРёРµ РґР»РёРЅС‹ РїСЂРѕРµРєС†РёРё РѕС‚СЂРµР·РєР° РЅР° РѕСЃСЊ Р°СѓС‚Р° РїРѕР»СЏ (РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РґР»СЏ РїСЂРѕРІРµСЂРєРё
+	// РЅР°С…РѕРґРёС‚СЃСЏ Р»Рё РѕР±СЉРµРєС‚ РІ РїСЂРµРґРµР»Р°С… РїРѕР»СЏ)
 	private float mGetSideLineProjection(int h) {
 		float b = (fieldMaxWidth - fieldMinWidth) / 2.0f;
 		float c = (float)Math.sqrt(fieldHeight * fieldHeight + b * b);
@@ -137,7 +134,7 @@ public class Field extends Stage {
 	    stage.getViewport().update(width, height, true);
 	}
 	
-	// Отрисовка поля
+	// РћС‚СЂРёСЃРѕРІРєР° РїРѕР»СЏ
 	public void drawField() {
 		 Gdx.gl20.glLineWidth(10);
 		 shapeRenderer.setProjectionMatrix(camera.combined);
@@ -188,6 +185,10 @@ public class Field extends Stage {
 			case Keys.SPACE: //SPACE
 				this.KEY_FLAGS = this.KEY_FLAGS & 0x0F;
 			break;
+			
+			case Keys.Q: //Q - Hand kick
+				this.KEY_FLAGS = this.KEY_FLAGS & 0x1F;
+			break;
 		}
 		
 		binaryToKeys();
@@ -219,6 +220,10 @@ public class Field extends Stage {
 			case Keys.SPACE: //SPACE
 				this.KEY_FLAGS = this.KEY_FLAGS | 0x10;
 			break;
+			
+			case Keys.Q: //Q - Hand kick
+				this.KEY_FLAGS = this.KEY_FLAGS | 0x20;
+			break;
 		}
 		
 		binaryToKeys();
@@ -232,6 +237,7 @@ public class Field extends Stage {
 		this.LEFT  = ((this.KEY_FLAGS & 0x04) == 0x04);
 		this.RIGHT = ((this.KEY_FLAGS & 0x08) == 0x08);
 		this.JUMP  = ((this.KEY_FLAGS & 0x10) == 0x10);
+		this.LEFT_HAND_KICK = ((this.KEY_FLAGS & 0x20) == 0x20);
 		
 //		String s = "";
 //		if (this.UP)    s += "UP, ";
@@ -239,6 +245,7 @@ public class Field extends Stage {
 //		if (this.LEFT)  s += "LEFT, ";
 //		if (this.RIGHT) s += "RIGHT, ";
 //		if (this.JUMP)  s += "JUMP, ";
+//		if (this.HAND_KICK)  s += "HAND KICK, ";
 //		System.out.println(s);
 	}
 }

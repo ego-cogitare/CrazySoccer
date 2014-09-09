@@ -1,6 +1,8 @@
 package com.mygdx.crazysoccer;
 
 import java.util.Arrays;
+import java.util.Map;
+import java.util.HashMap;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
@@ -25,21 +27,6 @@ public class Field extends Stage {
 	// Екземпляр класса описывающего игрока
 	private Player player;
 	
-	public int KEY_FLAGS = 0;
-	/* Numbers of bits 
-	 * 1. Up
-	 * 2. Down
-	 * 3. Left
-	 * 4. Right
-	 * 5. Up */
-	public static boolean UP = false;
-	public static boolean DOWN = false;
-	public static boolean LEFT = false;
-	public static boolean RIGHT = false;
-	public static boolean JUMP = false;
-	public static boolean LEFT_HAND_KICK = false;
-	
-	
 	// Четыре точки определяющие размеры поля
 	private Vector2 leftBottom;
 	private Vector2 rightBottom;
@@ -61,11 +48,16 @@ public class Field extends Stage {
     
     public ShapeRenderer shapeRenderer;
 	
+    // Сохранение нажатых клавиш и их времени
+    public Actions actions = new Actions();
 	
 	public Field(ScreenViewport screenViewport) {
 		super(screenViewport);
 		
 		player = new Player();
+		
+		player.setActionsListener(actions);
+		
 		// Добавление игрока (актера) на сцену (поле)
 		this.addActor(player);
 		
@@ -167,32 +159,32 @@ public class Field extends Stage {
 		switch (keycode)
 		{
 			case Keys.UP: //UP
-				this.KEY_FLAGS = this.KEY_FLAGS & 0x1E;
+				actions.remove(Vars.Action.UP);
 			break;
 			
 			case Keys.DOWN: //DOWN
-				this.KEY_FLAGS = this.KEY_FLAGS & 0x1D;
+				actions.remove(Vars.Action.DOWN);
 			break;
 				
 			case Keys.LEFT: //LEFT
-				this.KEY_FLAGS = this.KEY_FLAGS & 0x1B;
+				actions.remove(Vars.Action.LEFT);
 			break;
 				
 			case Keys.RIGHT: //RIGHT
-				this.KEY_FLAGS = this.KEY_FLAGS & 0x17;
+				actions.remove(Vars.Action.RIGHT);
 			break;
 			
 			case Keys.SPACE: //SPACE
-				this.KEY_FLAGS = this.KEY_FLAGS & 0x0F;
+				actions.remove(Vars.Action.ACTION1);
 			break;
 			
 			case Keys.Q: //Q - Hand kick
-				this.KEY_FLAGS = this.KEY_FLAGS & 0x1F;
+				actions.remove(Vars.Action.ACTION2);
 			break;
 		}
 		
-		binaryToKeys();
-
+//		actions.debug();
+		
 		return false;
 	}
 	
@@ -202,50 +194,32 @@ public class Field extends Stage {
 		switch (keycode)
 		{
 			case Keys.UP: //UP
-				this.KEY_FLAGS = this.KEY_FLAGS | 0x01;
+				actions.add(Vars.Action.UP);
 			break;
 			
 			case Keys.DOWN: //DOWN
-				this.KEY_FLAGS = this.KEY_FLAGS | 0x02;
+				actions.add(Vars.Action.DOWN);
 			break;
 				
 			case Keys.LEFT: //LEFT
-				this.KEY_FLAGS = this.KEY_FLAGS | 0x04;
+				actions.add(Vars.Action.LEFT);
 			break;
 				
 			case Keys.RIGHT: //RIGHT
-				this.KEY_FLAGS = this.KEY_FLAGS | 0x08;
+				actions.add(Vars.Action.RIGHT);
 			break;
 			
 			case Keys.SPACE: //SPACE
-				this.KEY_FLAGS = this.KEY_FLAGS | 0x10;
+				actions.add(Vars.Action.ACTION1);
 			break;
 			
 			case Keys.Q: //Q - Hand kick
-				this.KEY_FLAGS = this.KEY_FLAGS | 0x20;
+				actions.add(Vars.Action.ACTION2);
 			break;
 		}
 		
-		binaryToKeys();
+//		actions.debug();
 		
 		return false;
-	}
-	
-	private void binaryToKeys() {
-		this.UP    = ((this.KEY_FLAGS & 0x01) == 0x01);
-		this.DOWN  = ((this.KEY_FLAGS & 0x02) == 0x02);
-		this.LEFT  = ((this.KEY_FLAGS & 0x04) == 0x04);
-		this.RIGHT = ((this.KEY_FLAGS & 0x08) == 0x08);
-		this.JUMP  = ((this.KEY_FLAGS & 0x10) == 0x10);
-		this.LEFT_HAND_KICK = ((this.KEY_FLAGS & 0x20) == 0x20);
-		
-//		String s = "";
-//		if (this.UP)    s += "UP, ";
-//		if (this.DOWN)  s += "DOWN, ";
-//		if (this.LEFT)  s += "LEFT, ";
-//		if (this.RIGHT) s += "RIGHT, ";
-//		if (this.JUMP)  s += "JUMP, ";
-//		if (this.HAND_KICK)  s += "HAND KICK, ";
-//		System.out.println(s);
 	}
 }

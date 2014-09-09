@@ -7,4 +7,9 @@ public class Vars {
 	
 	// Set debug mode (is set then draw lines etc.)
 	public static final boolean DEBUG = true;
+	
+	
+	public enum Action {
+		UP, DOWN, LEFT, RIGHT, ACTION1, ACTION2
+	}
 }

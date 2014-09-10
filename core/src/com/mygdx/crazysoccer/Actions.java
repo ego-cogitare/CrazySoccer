@@ -3,19 +3,22 @@ package com.mygdx.crazysoccer;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.mygdx.crazysoccer.Vars;
-
 // Допустимые действия для обработки
 public class Actions {
+	
+	// Перечень допустимых действий
+	public static enum Action {
+		UP, DOWN, LEFT, RIGHT, ACTION1, ACTION2, ACTION3
+	}
 	
 	public static class ActionDescription {
 		public boolean state;
 		public boolean doublePressed;
 	}
 	
-	private Map<Vars.Action, Long> actionTime = new HashMap<Vars.Action, Long>();
-	public Map<Vars.Action, Boolean> actions = new HashMap<Vars.Action, Boolean>();
-	public Map<Vars.Action, Boolean> doublePressed = new HashMap<Vars.Action, Boolean>();
+	private Map<Action, Long> actionTime = new HashMap<Action, Long>();
+	public Map<Action, Boolean> actions = new HashMap<Action, Boolean>();
+	public Map<Action, Boolean> doublePressed = new HashMap<Action, Boolean>();
 	public ActionDescription ad;
 	
 	public Actions() {
@@ -24,7 +27,7 @@ public class Actions {
 		//System.out.println("Actions class initialized...");
 	}
 	
-	public void add(Vars.Action action) {
+	public void add(Action action) {
 		long timeAction = System.nanoTime();
 		
 		// Время с момента последнего вызова этого действия
@@ -40,28 +43,30 @@ public class Actions {
 		actionTime.put(action, timeAction);
 	}
 	
-	public ActionDescription get(Vars.Action action) {
+	public ActionDescription get(Action action) {
 		ad.state = actions.get(action);
 		ad.doublePressed = doublePressed.get(action);
 		
 		return ad;
 	}
 	
-	public void remove(Vars.Action action) {
+	public void remove(Action action) {
 		actions.put(action, false);
 	}
 	
 	public void clear() {
-		for (int i = 0; i < Vars.Action.values().length; i++) {
-			actions.put(Vars.Action.values()[i], false);
-			actionTime.put(Vars.Action.values()[i], 0L);
-			doublePressed.put(Vars.Action.values()[i], false);
+		for (int i = 0; i < Action.values().length; i++) {
+			actions.put(Action.values()[i], false);
+			actionTime.put(Action.values()[i], 0L);
+			doublePressed.put(Action.values()[i], false);
 		}
 	}
 	
 	public void debug() {
-		for (int i = 0; i < Vars.Action.values().length; i++) {
-			System.out.println("Action: " + Vars.Action.values()[i] + "\nState: " + actions.get(Vars.Action.values()[i]) + "\nDouble pressed: " + doublePressed.get(Vars.Action.values()[i])+"\n");
+		for (int i = 0; i < Action.values().length; i++) {
+			if (actions.get(Action.values()[i])) {
+				System.out.println("Action: " + Action.values()[i] + "\nState: " + actions.get(Action.values()[i]) + "\nDouble pressed: " + doublePressed.get(Action.values()[i])+"\n");
+			}
 		}
 	}
 }

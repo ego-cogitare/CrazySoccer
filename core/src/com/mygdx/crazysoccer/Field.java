@@ -1,8 +1,6 @@
 package com.mygdx.crazysoccer;
 
 import java.util.Arrays;
-import java.util.Map;
-import java.util.HashMap;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
@@ -159,32 +157,35 @@ public class Field extends Stage {
 		switch (keycode)
 		{
 			case Keys.UP: //UP
-				actions.remove(Vars.Action.UP);
+				actions.remove(Actions.Action.UP);
 			break;
 			
 			case Keys.DOWN: //DOWN
-				actions.remove(Vars.Action.DOWN);
+				actions.remove(Actions.Action.DOWN);
 			break;
 				
 			case Keys.LEFT: //LEFT
-				actions.remove(Vars.Action.LEFT);
+				actions.remove(Actions.Action.LEFT);
 			break;
 				
 			case Keys.RIGHT: //RIGHT
-				actions.remove(Vars.Action.RIGHT);
+				actions.remove(Actions.Action.RIGHT);
 			break;
 			
-			case Keys.SPACE: //SPACE
-				actions.remove(Vars.Action.ACTION1);
+			case Keys.Q:
+				actions.remove(Actions.Action.ACTION1);
 			break;
 			
-			case Keys.Q: //Q - Hand kick
-				actions.remove(Vars.Action.ACTION2);
+			case Keys.W:
+				actions.remove(Actions.Action.ACTION2);
+			break;
+			
+			case Keys.E:
+				actions.remove(Actions.Action.ACTION3);
 			break;
 		}
 		
 //		actions.debug();
-		
 		return false;
 	}
 	
@@ -194,32 +195,35 @@ public class Field extends Stage {
 		switch (keycode)
 		{
 			case Keys.UP: //UP
-				actions.add(Vars.Action.UP);
+				actions.add(Actions.Action.UP);
 			break;
 			
 			case Keys.DOWN: //DOWN
-				actions.add(Vars.Action.DOWN);
+				actions.add(Actions.Action.DOWN);
 			break;
 				
 			case Keys.LEFT: //LEFT
-				actions.add(Vars.Action.LEFT);
+				actions.add(Actions.Action.LEFT);
 			break;
 				
 			case Keys.RIGHT: //RIGHT
-				actions.add(Vars.Action.RIGHT);
+				actions.add(Actions.Action.RIGHT);
 			break;
 			
-			case Keys.SPACE: //SPACE
-				actions.add(Vars.Action.ACTION1);
+			case Keys.Q:
+				actions.add(Actions.Action.ACTION1);
 			break;
 			
-			case Keys.Q: //Q - Hand kick
-				actions.add(Vars.Action.ACTION2);
+			case Keys.W:
+				actions.add(Actions.Action.ACTION2);
+			break;
+			
+			case Keys.E:
+				actions.add(Actions.Action.ACTION3);
 			break;
 		}
 		
 //		actions.debug();
-		
 		return false;
 	}
 }

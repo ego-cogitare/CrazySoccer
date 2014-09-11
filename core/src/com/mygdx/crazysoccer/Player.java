@@ -89,7 +89,8 @@ public class Player extends Actor {
         setY(10);        
         
         // Первоначальная инициализация состояний анимаций персонажа
-        stopAll();
+//        stopAll();
+        Do(States.STAY, true);
         
         // Изначальное направление персонажа
         direction = Directions.RIGHT;
@@ -137,22 +138,17 @@ public class Player extends Actor {
         animations.put(States.CELEBRATE, new Animation(0.25f, celebrateFrames));
         
         // Создаем анимацию удара левой рукой
-        leftHandHitFrames = new TextureRegion[7];
-        leftHandHitFrames[0] = animationMap[1][0];
-        leftHandHitFrames[1] = animationMap[1][2];
-        leftHandHitFrames[2] = animationMap[1][1];
-        leftHandHitFrames[3] = animationMap[1][1];
-        leftHandHitFrames[4] = animationMap[1][2];
-        leftHandHitFrames[5] = animationMap[1][0];
-        leftHandHitFrames[6] = animationMap[1][0];
-        animations.put(States.LEFT_HAND_KICK, new Animation(0.03f, leftHandHitFrames));
+        leftHandHitFrames = new TextureRegion[3];
+        leftHandHitFrames[0] = animationMap[1][2];
+        leftHandHitFrames[1] = animationMap[1][1];
+        leftHandHitFrames[2] = animationMap[1][2];
+        animations.put(States.LEFT_HAND_KICK, new Animation(0.04f, leftHandHitFrames));
         
         // Создаем анимацию удара левой рукой
-        rightFootHitFrames = new TextureRegion[4];
+        rightFootHitFrames = new TextureRegion[3];
         rightFootHitFrames[0] = animationMap[1][4];
         rightFootHitFrames[1] = animationMap[1][3];
         rightFootHitFrames[2] = animationMap[1][4];
-        rightFootHitFrames[3] = animationMap[1][0];
         animations.put(States.RIGHT_FOOT_KICK, new Animation(0.06f, rightFootHitFrames));
 	}
 	
@@ -185,12 +181,102 @@ public class Player extends Actor {
 		}
 	}
 	
+	// Проверка может ли персонаж выполнить действие
+	public boolean Can(States stateToCheck) {
+		boolean isCan = false;
+		
+		switch (stateToCheck) {
+		
+			/* 
+			 * Персонаж может идти если он:
+			 * 	1. не бъет ногой
+			 *  2. не бъет рукой
+			 */
+			case WALKING : 
+				isCan = (!state.get(States.LEFT_HAND_KICK) && !state.get(States.RIGHT_FOOT_KICK));
+			break;
+			
+			/* 
+			 * Персонаж может бежать если он:
+			 * 	1. не бъет ногой
+			 *  2. не бъет рукой
+			 */
+			case RUN: 
+				isCan = (!state.get(States.LEFT_HAND_KICK) && !state.get(States.RIGHT_FOOT_KICK));
+			break;
+			
+			/* 
+			 * Персонаж может выполнить удар рукой если он:
+			 * 	1. не бъет рукой
+			 *  2. не бъет ногой
+			 */
+			case LEFT_HAND_KICK: 
+				isCan = (!state.get(States.LEFT_HAND_KICK) && !state.get(States.RIGHT_FOOT_KICK));
+			break;
+			
+			/* 
+			 * Персонаж может выполнить удар ногой если он:
+			 * 	1. не бъет ногой
+			 *  2. не бъет рукой
+			 */
+			case RIGHT_FOOT_KICK: 
+				isCan = (!state.get(States.LEFT_HAND_KICK) && !state.get(States.RIGHT_FOOT_KICK));
+			break;
+		}
+		
+		return isCan;
+	}
+	
+	// Текущее состояние персонажа
+	public States curentState() {
+		for (int i = 0; i < States.values().length; i++) {
+			if (state.get(States.values()[i])) {
+				return States.values()[i];
+			}
+		}
+		return States.STAY;
+	}
+	
+	// Отключение действия
+	private void disableAction(Action disableAction) {
+		actionsListener.remove(disableAction);
+	}
+	
+	// Отключение всех действий к перемещению персонажа
+	private void disableDirections() {
+		actionsListener.remove(Action.RIGHT);
+		actionsListener.remove(Action.LEFT);
+		actionsListener.remove(Action.UP);
+		actionsListener.remove(Action.DOWN);
+	}
+	
+	// Постановка задания на выполнение действия
+	public void Do(States state, boolean stopAll) {
+		// Если установлен флаг stopAll то останавливаем все анимации
+		if (stopAll) this.stopAll();
+		
+		// Если нужно выполнить дополнительные действия
+		switch (state) {
+			case RIGHT_FOOT_KICK:
+				disableDirections();
+				disableAction(Action.ACTION1);
+			break;
+			
+			case LEFT_HAND_KICK: 
+				disableDirections();
+				disableAction(Action.ACTION2);
+			break;
+		}
+		
+		// Добавляем задачу на исполнение
+		this.state.put(state, true);
+	}
+	
 	// Полностью остановить игрока
-	public void stopAll() {
+	private void stopAll() {
 		for (int i = 0; i < States.values().length; i++) {
 			state.put(States.values()[i], false);
 		}
-		state.put(States.STAY, true);
 	}
 	
 	@Override
@@ -206,86 +292,71 @@ public class Player extends Actor {
 			}
 		}
 		
-		// Если не нажата ни кнопка удара ногой ни кнопка удара рукой, то можно 
-		if (!actionsListener.get(Action.ACTION1).state && !actionsListener.get(Action.ACTION2).state) {
-			
-			if (actionsListener.get(Action.UP).state) {
-				// Если персонаж бежит и нажата кнопка вверх
-				if (!state.get(States.RUN)) {
-					stopAll();
-					state.put(States.WALKING, true);
-				}
-				movePlayerBy(new Vector2(0,1.3f));
+		if (actionsListener.get(Action.UP).state) {
+			// Если персонаж не бежи, и нажата клавиша вверх
+			if (curentState() != States.RUN && Can(States.WALKING)) {
+				Do(States.WALKING, true);
 			}
-			
-			if (actionsListener.get(Action.DOWN).state) {
-				// Если персонаж бежит и нажата кнопка вверх
-				if (!state.get(States.RUN)) {
-					stopAll();
-					state.put(States.WALKING, true);
-				}
-				movePlayerBy(new Vector2(0,-1.3f));
+			movePlayerBy(new Vector2(0, 1.3f));
+		}
+		
+		if (actionsListener.get(Action.DOWN).state) {
+			// Если персонаж не бежи, и нажата клавиша вниз
+			if (curentState() != States.RUN && Can(States.WALKING)) {
+				Do(States.WALKING, true);
 			}
+			movePlayerBy(new Vector2(0, -1.3f));
+		}
+		
+		
+		if (actionsListener.get(Action.LEFT).state) {
+			this.direction = Directions.LEFT;
 			
-			if (actionsListener.get(Action.LEFT).state) {
-				this.direction = Directions.LEFT;
-				
-				stopAll();
-				
-				// Если было двойное нажатие кнопки, то делаем персонаж бегущим
-				if (actionsListener.get(Action.LEFT).doublePressed) {
-					state.put(States.RUN, true);
-				} else {
-					state.put(States.WALKING, true);
-					movePlayerBy(new Vector2(-2,0));
-				}
+			// Если было двойное нажатие кнопки, то делаем персонаж бегущим
+			if (actionsListener.get(Action.LEFT).doublePressed && Can(States.RUN)) {
+				Do(States.RUN, true);
+			} else {
+				Do(States.WALKING, true);
+				movePlayerBy(new Vector2(-2,0));
 			}
+		}
+		
+		if (actionsListener.get(Action.RIGHT).state) {
+			this.direction = Directions.RIGHT;
 			
-			if (actionsListener.get(Action.RIGHT).state) {
-				this.direction = Directions.RIGHT;
-				
-				stopAll();
-				
-				if (actionsListener.get(Action.RIGHT).doublePressed) {
-					state.put(States.RUN, true);
-				} else {
-					state.put(States.WALKING, true);
-					movePlayerBy(new Vector2(2,0));
-				}
+			if (actionsListener.get(Action.RIGHT).doublePressed && Can(States.RUN)) {
+				Do(States.RUN, true);
+			} else {
+				Do(States.WALKING, true);
+				movePlayerBy(new Vector2(2,0));
 			}
 		}
 		
 		// Удар правой ногой
-		if (actionsListener.get(Action.ACTION1).state && !state.get(States.RIGHT_FOOT_KICK) && !state.get(States.LEFT_HAND_KICK)) {
+		if (actionsListener.get(Action.ACTION1).state && Can(States.RIGHT_FOOT_KICK)) {
 			stateTime = 0.0f;
-			stopAll();
-			state.put(States.RIGHT_FOOT_KICK, true);
 			
-			actionsListener.remove(Action.RIGHT);
-			actionsListener.remove(Action.LEFT);
-			actionsListener.remove(Action.ACTION1);
+			Do(States.RIGHT_FOOT_KICK, true);
 		}
 		
 		// Удар левой рукой
-		if (actionsListener.get(Action.ACTION2).state && !state.get(States.RIGHT_FOOT_KICK) && !state.get(States.LEFT_HAND_KICK)) {
+		if (actionsListener.get(Action.ACTION2).state && Can(States.LEFT_HAND_KICK)) {
 			stateTime = 0.0f;
-			stopAll();
-			state.put(States.LEFT_HAND_KICK, true);
 			
-			actionsListener.remove(Action.RIGHT);
-			actionsListener.remove(Action.LEFT);
-			actionsListener.remove(Action.ACTION2);
+			Do(States.LEFT_HAND_KICK, true);
 		}
 		
 		// Если ниодна из кнопок направления движения не нажата
-		if (!actionsListener.get(Action.UP).state   && 
-			!actionsListener.get(Action.DOWN).state &&
-			!actionsListener.get(Action.LEFT).state &&
-			!actionsListener.get(Action.RIGHT).state) {
+		if (!actionsListener.get(Action.UP).state      && 
+			!actionsListener.get(Action.DOWN).state    &&
+			!actionsListener.get(Action.LEFT).state    &&
+			!actionsListener.get(Action.RIGHT).state   &&
+			!actionsListener.get(Action.ACTION1).state &&
+			!actionsListener.get(Action.ACTION2).state) {
 			
 			// Если анимация была WALKING то отключаем ее
 			if (state.get(States.WALKING)) {
-				state.put(States.WALKING, false);
+				Do(States.STAY, true);
 			}
 		}
 	}
@@ -295,25 +366,16 @@ public class Player extends Actor {
 		stateTime += Gdx.graphics.getDeltaTime();
 		
 		// Анимирование персонажа
-		for (int i = 0; i < States.values().length; i++) {
-			if (state.get(States.values()[i])) {
-				animations.get(States.values()[i]).setPlayMode(PlayMode.LOOP);
-				currentFrame = animations.get(States.values()[i]).getKeyFrame(stateTime, true); 
-				
-				// Если окончено действие удара левой рукой
-				if (animations.get(States.LEFT_HAND_KICK).isAnimationFinished(stateTime)) {
-					state.put(States.LEFT_HAND_KICK, false);
-				}
-				
-				if (animations.get(States.RIGHT_FOOT_KICK).isAnimationFinished(stateTime)) {
-					state.put(States.RIGHT_FOOT_KICK, false);
-				}
-				
-				//System.out.println("Animation : " + States.values()[i] + "\nDuration: " + animations.get(States.values()[i]).getAnimationDuration());
+		animations.get(this.curentState()).setPlayMode(PlayMode.LOOP);
+		currentFrame = animations.get(this.curentState()).getKeyFrame(stateTime, true); 
+		
+		// Если окончено текущее действие
+		if (animations.get(this.curentState()).isAnimationFinished(stateTime)) {
+			if (this.curentState() != States.RUN) {
+				Do(States.STAY, true);
 			}
 		}
-
-		
+				
 //		if (states.get(States.WALKING)) {
 //			currentFrame = animations.get(States.WALKING).getKeyFrame(stateTime, true); 
 //		} 

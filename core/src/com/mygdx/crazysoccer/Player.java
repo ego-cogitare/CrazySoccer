@@ -19,27 +19,35 @@ import com.mygdx.crazysoccer.Vars;
 public class Player extends Actor {
 	
 	// Идентификатор игрока (используется при определении нажатия управляющих кнопок)
-	public int PLAYER_ID = 0;
+	private int PLAYER_ID = 0;
 		
-	private static final int FRAME_COLS = 9;    
-    private static final int FRAME_ROWS = 7;     
+	private static final int FRAME_COLS = 8;    
+    private static final int FRAME_ROWS = 8;     
     
     // Спрайт для отрисовки персонажа
     public SpriteBatch spriteBatch;
     
     // Параметры спрайта
-    public int SPRITE_WIDTH = 118;
-    public int SPRITE_HEIGHT = 118;
-    public float SPRITE_SCALE = 0.8f;
+    private int SPRITE_WIDTH = 32;
+    private int SPRITE_HEIGHT = 32;
+    private float SPRITE_SCALE = 3.0f;
     
     // Парамерты прыжка персонажа
-    public float CURENT_JUMP_HEIGHT = 0;
-    public int MAX_JUMP_HEIGHT = 120;
-    public float JUMP_INCREMENT = 9;
-    public int JUMP_FROM = 0;
+    private float JUMP_HEIGHT = 0;
+    
+    // Масса персонажа
+    private float MASS = 63.0f;
+    
+    // Сила персонажа
+    private float STRENGTH = 400.0f;
+    
+    // Текущая скорость движения персонажа при прыжке 
+    private float JUMP_VELOCITY = 0.0f;
+    
     
     // Параметры персонажа
     public float CURENT_SPEED_X = 0.0f;
+    public float CURENT_SPEED_Y = 0.0f;
     public float WALKING_SPEED = 1.5f;
     public float RUN_SPEED = 4.0f;
     
@@ -51,8 +59,10 @@ public class Player extends Actor {
 		FATIGUE,  			// Усталость
 		CELEBRATE,			// Празднование победы
 		LEFT_HAND_KICK,		// Удар левой рукой
-		RIGHT_FOOT_KICK, 	// Удар правой ногой
-		JUMP				// Прыжок
+		FOOT_KICK, 			// Удар правой ногой
+		JUMP,				// Прыжок
+		SIT,				// Присел
+		PASS				// Пасс
 	} 
 	
 	
@@ -75,10 +85,10 @@ public class Player extends Actor {
 	public TextureRegion[] walkFrames; 
 	// Кадры анимации бега
 	public TextureRegion[] runFrames;
-	// Кадры анимации усталости
-	public TextureRegion[] fetigueFrames;
+	// Кадры анимации приседания
+	public TextureRegion[] sitFrames;
 	// Кадры анимации праздования победы
-	public TextureRegion[] celebrateFrames;
+	public TextureRegion[] passFrames;
 	// Кадры анимации праздования победы
 	public TextureRegion[] leftHandHitFrames;
 	// Кадры анимации праздования победы
@@ -118,7 +128,7 @@ public class Player extends Actor {
         direction = Directions.RIGHT;
 		
         // Загрузка изображения с анимацией персонажа
-        animationSheet = new Texture(Gdx.files.internal("rikki.gif"));
+        animationSheet = new Texture(Gdx.files.internal("kunio.png"));
         
         // Загрузка карты анимаций персонажа
         animationMap = TextureRegion.split(animationSheet, animationSheet.getWidth()/FRAME_COLS, animationSheet.getHeight()/FRAME_ROWS);
@@ -128,36 +138,33 @@ public class Player extends Actor {
         
         // Создаем анимацию покоя
         stayFrames = new TextureRegion[1];
-        stayFrames[0] = animationMap[1][0];
+        stayFrames[0] = animationMap[0][0];
         animations.put(States.STAY, new Animation(1.0f, stayFrames));
         
         // Создаем анимацию ходьбы
-        walkFrames = new TextureRegion[2];
-        walkFrames[0] = animationMap[0][0];
-        walkFrames[1] = animationMap[0][1];
-        animations.put(States.WALKING, new Animation(0.25f, walkFrames));
+        walkFrames = new TextureRegion[4];
+        walkFrames[0] = animationMap[0][1];
+        walkFrames[1] = animationMap[0][0];
+        walkFrames[2] = animationMap[0][2];
+        walkFrames[3] = animationMap[0][0];
+        animations.put(States.WALKING, new Animation(0.15f, walkFrames));
         
         // Создаем анимацию бега
-        runFrames = new TextureRegion[6];
-        runFrames[0] = animationMap[0][3];
-        runFrames[1] = animationMap[0][4];
-        runFrames[2] = animationMap[0][5];
-        runFrames[3] = animationMap[0][6];
-        runFrames[4] = animationMap[0][7];
-        runFrames[5] = animationMap[0][8];
-        animations.put(States.RUN, new Animation(0.10f, runFrames));
+        runFrames = new TextureRegion[2];
+        runFrames[0] = animationMap[1][4];
+        runFrames[1] = animationMap[0][0];
+        animations.put(States.RUN, new Animation(0.13f, runFrames));
         
-        // Создаем анимацию усталости
-        fetigueFrames = new TextureRegion[2];
-        fetigueFrames[0] = animationMap[4][0];
-        fetigueFrames[1] = animationMap[4][1];
-        animations.put(States.FATIGUE, new Animation(0.25f, fetigueFrames));
+        // Создаем анимацию приседания
+        sitFrames = new TextureRegion[1];
+        sitFrames[0] = animationMap[0][3];
+        animations.put(States.SIT, new Animation(0.30f, sitFrames));
         
-        // Создаем анимацию празднования победы
-        celebrateFrames = new TextureRegion[2];
-        celebrateFrames[0] = animationMap[6][1];
-        celebrateFrames[1] = animationMap[6][2];
-        animations.put(States.CELEBRATE, new Animation(0.25f, celebrateFrames));
+        // Создаем анимацию паса
+        passFrames = new TextureRegion[2];
+        passFrames[0] = animationMap[0][5];
+        passFrames[1] = animationMap[0][6];
+        animations.put(States.PASS, new Animation(0.25f, passFrames));
         
         // Создаем анимацию удара левой рукой
         leftHandHitFrames = new TextureRegion[3];
@@ -167,17 +174,23 @@ public class Player extends Actor {
         animations.put(States.LEFT_HAND_KICK, new Animation(0.04f, leftHandHitFrames));
         
         // Создаем анимацию удара левой рукой
-        rightFootHitFrames = new TextureRegion[3];
-        rightFootHitFrames[0] = animationMap[1][4];
-        rightFootHitFrames[1] = animationMap[1][3];
-        rightFootHitFrames[2] = animationMap[1][4];
-        animations.put(States.RIGHT_FOOT_KICK, new Animation(0.06f, rightFootHitFrames));
+        rightFootHitFrames = new TextureRegion[11];
+        rightFootHitFrames[0] = animationMap[0][7];
+        rightFootHitFrames[1] = animationMap[0][7];
+        rightFootHitFrames[2] = animationMap[0][7];
+        rightFootHitFrames[3] = animationMap[1][0];
+        rightFootHitFrames[4] = animationMap[1][1];
+        rightFootHitFrames[5] = animationMap[1][1];
+        rightFootHitFrames[6] = animationMap[1][1];
+        rightFootHitFrames[7] = animationMap[1][1];
+        rightFootHitFrames[8] = animationMap[1][1];
+        rightFootHitFrames[9] = animationMap[1][1];
+        rightFootHitFrames[10] = animationMap[1][1];
+        animations.put(States.FOOT_KICK, new Animation(0.06f, rightFootHitFrames));
         
         // Создаем анимацию прыжка
         jumpFrames = new TextureRegion[1];
-//        jumpFrames[0] = animationMap[2][5];
-        jumpFrames[0] = animationMap[2][6];
-//        jumpFrames[2] = animationMap[2][5];
+        jumpFrames[0] = animationMap[0][4];
         animations.put(States.JUMP, new Animation(0.2f, jumpFrames));
         
         shadow = new Shadow();
@@ -186,6 +199,35 @@ public class Player extends Actor {
 	// Проверка необходимости зеркалирования спрайта персонажа
 	private boolean getFlipX() {
 		return (this.direction == Directions.LEFT);
+	}
+	
+	// Возвращает текущую высоту прыжка персонажа
+	public float jumpHeight() {
+		return this.JUMP_HEIGHT;
+	}
+	
+	public float getJumpVelocity() {
+		return this.JUMP_VELOCITY;
+	}
+	
+	public void setJumpVelocity(float v) {
+		this.JUMP_VELOCITY = v;
+	}
+	
+	public float getMass() {
+		return this.MASS;
+	}
+	
+	public void setMass(float m) {
+		this.MASS = m;
+	}
+	
+	public float getStrength() {
+		return this.STRENGTH;
+	}
+	
+	public void setStrength(float f) {
+		this.STRENGTH = f;
 	}
 	
 	public void setActionsListener(Actions al) {
@@ -225,7 +267,8 @@ public class Player extends Actor {
 			 */
 			case WALKING : 
 				isCan = !state.get(States.LEFT_HAND_KICK)  && 
-						!state.get(States.RIGHT_FOOT_KICK) &&
+						!state.get(States.FOOT_KICK) &&
+						!state.get(States.SIT) &&
 						!state.get(States.JUMP);
 			break;
 			
@@ -236,7 +279,8 @@ public class Player extends Actor {
 			 */
 			case RUN: 
 				isCan = !state.get(States.LEFT_HAND_KICK)  && 
-						!state.get(States.RIGHT_FOOT_KICK) &&
+						!state.get(States.FOOT_KICK) &&
+						!state.get(States.SIT) &&
 						!state.get(States.JUMP);
 			break;
 			
@@ -246,18 +290,28 @@ public class Player extends Actor {
 			 *  2. не бъет ногой
 			 */
 			case LEFT_HAND_KICK: 
-				isCan = !state.get(States.LEFT_HAND_KICK)  && 
-						!state.get(States.RIGHT_FOOT_KICK);
+				isCan = !state.get(States.LEFT_HAND_KICK) && 
+						!state.get(States.FOOT_KICK);
 			break;
 			
 			/* 
 			 * Персонаж может выполнить удар ногой если он:
-			 * 	1. не бъет ногой
-			 *  2. не бъет рукой
+			 * 	1. не дает пасс
+			 *  2. не бьет ногой
 			 */
-			case RIGHT_FOOT_KICK: 
-				isCan = !state.get(States.LEFT_HAND_KICK)  && 
-						!state.get(States.RIGHT_FOOT_KICK);
+			case PASS: 
+				isCan = !state.get(States.FOOT_KICK) &&
+						!state.get(States.PASS);
+			break;
+			
+			/* 
+			 * Персонаж может выполнить удар ногой если он:
+			 * 	1. не дает пасс
+			 *  2. не бьет ногой
+			 */
+			case FOOT_KICK: 
+				isCan = !state.get(States.FOOT_KICK) && 
+						!state.get(States.PASS);
 			break;
 			
 			/* 
@@ -267,8 +321,8 @@ public class Player extends Actor {
 			 *  3. не находится в воздухе
 			 */
 			case JUMP: 
-				isCan = !state.get(States.LEFT_HAND_KICK)  && 
-						!state.get(States.RIGHT_FOOT_KICK) &&
+				isCan = !state.get(States.LEFT_HAND_KICK) && 
+						!state.get(States.FOOT_KICK) &&
 						!state.get(States.JUMP);
 			break;
 		}
@@ -283,9 +337,28 @@ public class Player extends Actor {
 		
 		// Если нужно выполнить дополнительные действия
 		switch (state) {
-			case RIGHT_FOOT_KICK:
+			case FOOT_KICK:
 				disableDirections();
 				actionsListener.disableAction(Controls.ACTION1, this.PLAYER_ID);
+				this.stateTime = 0.0f;
+				
+				// Если при ударе ногой игрок не находится в воздухе то останавливаем его мгновенно
+				if (this.JUMP_HEIGHT == 0) {
+					this.CURENT_SPEED_X = 0.0f;
+					this.CURENT_SPEED_Y = 0.0f;
+				}
+			break;
+			
+			case PASS:
+				disableDirections();
+				actionsListener.disableAction(Controls.ACTION2, this.PLAYER_ID);
+				this.stateTime = 0.0f;
+				
+				// Если при ударе ногой игрок не находится в воздухе то останавливаем его мгновенно
+				if (this.JUMP_HEIGHT == 0) {
+					this.CURENT_SPEED_X = 0.0f;
+					this.CURENT_SPEED_Y = 0.0f;
+				}
 			break;
 			
 			case LEFT_HAND_KICK: 
@@ -295,18 +368,23 @@ public class Player extends Actor {
 			
 			case JUMP: 
 				actionsListener.disableAction(Controls.ACTION3, this.PLAYER_ID);
+				this.stateTime = 0.0f;
+				this.setJumpVelocity(this.STRENGTH / this.MASS);
 			break;
 			
 			case RUN: 
-				this.CURENT_SPEED_X = (this.direction == Directions.RIGHT) ? this.RUN_SPEED : -this.RUN_SPEED;
-			break;
-			
-			case WALKING: 
-				this.CURENT_SPEED_X = (this.direction == Directions.RIGHT) ? this.WALKING_SPEED : -this.WALKING_SPEED;
+				this.CURENT_SPEED_X = this.RUN_SPEED;
 			break;
 			
 			case STAY: 
 				this.CURENT_SPEED_X = 0.0f;
+				this.CURENT_SPEED_Y = 0.0f;
+			break;
+			
+			case SIT: 
+				this.stateTime = 0.0f;
+				this.CURENT_SPEED_X = 0.0f;
+				this.CURENT_SPEED_Y = 0.0f;
 			break;
 		}
 		
@@ -348,23 +426,27 @@ public class Player extends Actor {
 	@Override
 	public void act(float delta) {
 		
+//		System.out.println(curentState());
+		
 		if (actionsListener.getActionStateFor(Controls.UP, this.PLAYER_ID).pressed) { 
 			// Если персонаж не бежи, и нажата клавиша вверх
 			if (curentState() != States.RUN && Can(States.WALKING)) {
+				this.CURENT_SPEED_Y = this.WALKING_SPEED;
 				Do(States.WALKING, true);
 			}
-			if (curentState() != States.JUMP) {
-				movePlayerBy(new Vector2(0, this.WALKING_SPEED));
+			if (curentState() != States.JUMP && curentState() != States.SIT) {
+				this.CURENT_SPEED_Y = this.WALKING_SPEED;
 			}
 		}
 		
 		if (actionsListener.getActionStateFor(Controls.DOWN, this.PLAYER_ID).pressed) { 
 			// Если персонаж не бежи, и нажата клавиша вниз
 			if (curentState() != States.RUN && Can(States.WALKING)) {
+				this.CURENT_SPEED_Y = -this.WALKING_SPEED;
 				Do(States.WALKING, true);
 			}
-			if (curentState() != States.JUMP) {
-				movePlayerBy(new Vector2(0, -this.WALKING_SPEED));
+			if (curentState() != States.JUMP && curentState() != States.SIT) {
+				this.CURENT_SPEED_Y = -this.WALKING_SPEED;
 			}
 		}
 		
@@ -377,6 +459,7 @@ public class Player extends Actor {
 				Do(States.RUN, true);
 			} 
 			else if (Can(States.WALKING)) {
+				this.CURENT_SPEED_X = -this.WALKING_SPEED;
 				Do(States.WALKING, true);
 			}
 		}
@@ -388,31 +471,38 @@ public class Player extends Actor {
 				Do(States.RUN, true);
 			} 
 			else if (Can(States.WALKING)) {
+				this.CURENT_SPEED_X = this.WALKING_SPEED;
 				Do(States.WALKING, true);
 			}
 		}
 		
-		// Перемещение персонажа
-		movePlayerBy(new Vector2(this.CURENT_SPEED_X, 0));
-		
-		// Удар правой ногой
-		if (actionsListener.getActionStateFor(Controls.ACTION1, this.PLAYER_ID).pressed && Can(States.RIGHT_FOOT_KICK)) {
-			stateTime = 0.0f;
-			
-			Do(States.RIGHT_FOOT_KICK, true);
+		// Меняем вектор направления скорости в зависимости от направления движения персонажа
+		if (this.CURENT_SPEED_X > 0) {
+			if (this.direction == Directions.LEFT) { 
+				 this.CURENT_SPEED_X = -this.CURENT_SPEED_X;
+			}
+		}
+		else {
+			if (this.direction == Directions.RIGHT) { 
+				 this.CURENT_SPEED_X = -this.CURENT_SPEED_X;
+			}
 		}
 		
-		// Удар левой рукой
-		if (actionsListener.getActionStateFor(Controls.ACTION2, this.PLAYER_ID).pressed && Can(States.LEFT_HAND_KICK)) {
-			stateTime = 0.0f;
-			
-			Do(States.LEFT_HAND_KICK, true);
+		// Перемещение персонажа
+		this.movePlayerBy(new Vector2(this.CURENT_SPEED_X, this.CURENT_SPEED_Y));
+		
+		// Удар правой ногой
+		if (actionsListener.getActionStateFor(Controls.ACTION1, this.PLAYER_ID).pressed && Can(States.FOOT_KICK)) {
+			Do(States.FOOT_KICK, true);
+		}
+		
+		// Пас
+		if (actionsListener.getActionStateFor(Controls.ACTION2, this.PLAYER_ID).pressed && Can(States.PASS)) {
+			Do(States.PASS, true);
 		}
 		
 		// Прыжок
 		if (actionsListener.getActionStateFor(Controls.ACTION3, this.PLAYER_ID).pressed && Can(States.JUMP)) {
-			stateTime = 0.0f;
-			
 			Do(States.JUMP, true);
 		}
 		
@@ -430,38 +520,23 @@ public class Player extends Actor {
 				Do(States.STAY, true);
 			}
 		}
-
-		// Если ничего не нажималось, но нужно выполнять какуюто анимацию
-		if (curentState() == States.RUN) {
-			if (this.direction == Directions.RIGHT) {
-				movePlayerBy(new Vector2(this.RUN_SPEED, 0));
-			} 
-			else if (this.direction == Directions.LEFT) {
-				movePlayerBy(new Vector2(-this.RUN_SPEED, 0));
-			}
-		} 
-		else if (curentState() == States.JUMP) {
-			this.CURENT_JUMP_HEIGHT += this.JUMP_INCREMENT;
+		
+		// Если персонаж бежит и не нажата кнопка
+		if (!actionsListener.getActionStateFor(Controls.UP, this.PLAYER_ID).pressed && 
+			!actionsListener.getActionStateFor(Controls.DOWN, this.PLAYER_ID).pressed &&
+			 state.get(States.RUN)) 
+		{
+			this.CURENT_SPEED_Y = 0.0f;
+		}
+		
+		// Реализация гравитации
+		if (curentState() == States.JUMP || this.JUMP_HEIGHT > 0) {
+			this.JUMP_VELOCITY -= 15.0f * Gdx.graphics.getDeltaTime();
+			this.JUMP_HEIGHT += this.JUMP_VELOCITY;
 			
-			movePlayerBy(new Vector2(this.CURENT_SPEED_X, 0));
-			
-			// Если персонаж достиг наивысшей точки прыжка, начинаем его приземление
-			if (this.CURENT_JUMP_HEIGHT >= this.MAX_JUMP_HEIGHT) {
-				this.JUMP_INCREMENT = -this.JUMP_INCREMENT;
-			}
-			
-			if (this.JUMP_INCREMENT > 0) {
-				this.JUMP_INCREMENT *= 0.94f;
-			}
-			else {
-				this.JUMP_INCREMENT *= 1.11f;
-			}
-			
-			if (this.CURENT_JUMP_HEIGHT <= 0) {
-				Do(States.STAY, true);
-				this.CURENT_JUMP_HEIGHT = 0;
-				this.JUMP_INCREMENT = -this.JUMP_INCREMENT;
-				this.JUMP_INCREMENT = 9; 
+			if (this.JUMP_HEIGHT <= 0) {
+				Do(States.SIT, true);
+				this.JUMP_HEIGHT = 0.0f;
 			}
 		}
 	}
@@ -485,7 +560,7 @@ public class Player extends Actor {
         spriteBatch.draw(
     		currentFrame.getTexture(), 
     		this.getX(), 
-    		this.getY() + this.CURENT_JUMP_HEIGHT, 
+    		this.getY() + this.JUMP_HEIGHT, 
     		0, 
     		0, 
     		this.SPRITE_WIDTH, 
@@ -504,7 +579,7 @@ public class Player extends Actor {
         
         // Ресование тени персонажа
         shadow.setXY(getX() + 25, getY()-5);
-        shadow.setVisibility(this.CURENT_JUMP_HEIGHT > 0);
+        shadow.setVisibility(this.JUMP_HEIGHT > 0);
         shadow.draw();
 	}
 }

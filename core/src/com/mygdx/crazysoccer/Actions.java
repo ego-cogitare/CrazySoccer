@@ -46,7 +46,7 @@ public class Actions {
 		
 		actions.put(action, true);
 		actionTime.put(action, timeAction);
-		//debug();
+		debug();
 	}
 	
 	public ActionDescription get(Action action) {

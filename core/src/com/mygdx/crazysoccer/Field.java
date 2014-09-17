@@ -17,8 +17,6 @@ import com.badlogic.gdx.math.Polyline;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
-import com.mygdx.crazysoccer.Player.Directions;
-import com.mygdx.crazysoccer.Player.States;
 
 public class Field extends Stage {
 	
@@ -26,6 +24,9 @@ public class Field extends Stage {
 	
 	// Екземпляр класса описывающего игрока
 	private Player[] players = new Player[2];
+	
+	// Листья
+	private Leaf[] leafs = new Leaf[10];
 	
 	// Четыре точки определяющие размеры поля
 	private Vector2 leftBottom;
@@ -60,27 +61,33 @@ public class Field extends Stage {
 	public Field(ScreenViewport screenViewport) {
 		super(screenViewport);
 		
-		// Создание первого игрока
-		players[0] = new Player(1);
-		// Привязка слушателя ввода для игрока
-		players[0].setActionsListener(actions);
-		// Добавление игрока (актера) на сцену (поле)
-		this.addActor(players[0]);
+		for (int i = 0; i < players.length; i++) {
+			// Создание первого игрока
+			players[i] = new Player(i+1);
+			// Привязка слушателя ввода для игрока
+			players[i].setActionsListener(actions);
+			// Добавление игрока (актера) на сцену (поле)
+			this.addActor(players[i]);
+		}
+		players[1].setX(100);
 		
-		
-		// Создание второго игрока
-		players[1] = new Player(2);
-		// Привязка слушателя ввода для игрока
-		players[1].setActionsListener(actions);
-		// Добавление игрока (актера) на сцену (поле)
-		this.addActor(players[1]);
+		// Создание листов
+		for (int i = 0; i < leafs.length; i++) {
+			leafs[i] = new Leaf();
+			leafs[i].setPosition(
+				(float)Math.random() * Gdx.graphics.getWidth(), 
+				(float)Math.random() * Gdx.graphics.getHeight()
+			);
+			
+			this.addActor(leafs[i]);
+		}
 		
 		// Для отрисовки линий поля
 		shapeRenderer = new ShapeRenderer();
 		
 		// Создание камеры
 		camera = new OrthographicCamera(Vars.WINDOW_WIDTH, Vars.WINDOW_HEIGHT);
-//        camera.position.set(Vars.WINDOW_WIDTH / 2.0f, Vars.WINDOW_HEIGHT / 2.0f, 0);
+		
         camera.update();
 	}
 	

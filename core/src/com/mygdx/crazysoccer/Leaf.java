@@ -6,38 +6,29 @@ import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.mygdx.crazysoccer.Wind.WindDirections;
 
 public class Leaf extends Actor {
 	
 	private float rotation;
 	private float velocityX, velocityY;
+	private float minVelocity = 0.0f;
+	private float maxVelocity = 0.0f;
 	
 	public Texture leaf;
 	public SpriteBatch leafSprite;
-	
-	public static enum WindDirections {
-		LEFT_RIGHT,
-		LEFT_BOTTOM,
-		LEFT_TOP,
-		TOP_DOWN,
-		TOP_LEFT,
-		TOP_RIGHT,
-		RIGHT_LEFT,
-		RIGHT_BOTTOM,
-		RIGHT_TOP,
-		BOTTOM_TOP,
-		BOTTOM_LEFT,
-		BOTTOM_RIGHT
-	}
-	
 	public WindDirections windDirection;
 	
-	public Leaf() {
+	public Leaf(WindDirections wd) {
 		leaf = new Texture(Gdx.files.internal("leaf.png"));
-		leafSprite = new SpriteBatch(); 
-		windDirection = WindDirections.LEFT_RIGHT;
-		
-		setRandomVelocity();
+		leafSprite = new SpriteBatch();
+		windDirection = wd;
+		setWindDirection(windDirection);
+	}
+	
+	public void setWindVelocity(float v) {
+		this.maxVelocity = v;
+		this.minVelocity = this.maxVelocity * 0.5f;
 	}
 	
 	public void setWindDirection(WindDirections wd) {
@@ -45,40 +36,81 @@ public class Leaf extends Actor {
 		
 		switch (wd) {
 			case LEFT_RIGHT:
-				this.velocityY = 0;
+				this.velocityX = getRandomVelocity();
+				this.velocityY = randomDeviation();
 			break;
 			
 			case LEFT_BOTTOM:
-				this.velocityY = this.velocityX;
+				this.velocityX = getRandomVelocity();
+				this.velocityY = this.velocityX * randomDeviation();
+				//this.velocityY = getRandomVelocity() * -1;
 			break;
 			
 			case LEFT_TOP:
-				this.velocityY = this.velocityX;
+				this.velocityX = getRandomVelocity();
+				this.velocityY = this.velocityX * randomDeviation();
+				//this.velocityY = getRandomVelocity();
 			break;
 			
 			case TOP_DOWN:
-				this.velocityY = this.velocityX;
-				this.velocityX = 0.0f;
+				this.velocityX = randomDeviation();
+				this.velocityY = getRandomVelocity() * -1;
 			break;
 			
 			case TOP_LEFT:
-				this.velocityY = -this.velocityX;
-				this.velocityX = -this.velocityX;
+				this.velocityX = getRandomVelocity() * -1;
+				this.velocityY = this.velocityX * randomDeviation();
+				//this.velocityY = getRandomVelocity() * -1;
 			break;
 			
 			case TOP_RIGHT:
-				this.velocityY = this.velocityX;
+				this.velocityX = getRandomVelocity();
+				this.velocityY = -this.velocityX * randomDeviation();
+				//this.velocityY = getRandomVelocity() * -1;
 			break;
 			
-//			case TOP_DOWN:
-//				this.velocityY = this.velocityX;
-//				this.velocityX = 0.0f;
-//			break;
+			case RIGHT_LEFT:
+				this.velocityX = getRandomVelocity() * -1;
+				this.velocityY = randomDeviation();
+			break;
+			
+			case RIGHT_BOTTOM:
+				this.velocityX = getRandomVelocity() * -1;
+				//this.velocityY = getRandomVelocity() * -1;
+				this.velocityY = this.velocityX * randomDeviation();
+			break;
+			
+			case RIGHT_TOP:
+				this.velocityX = getRandomVelocity() * -1;
+				//this.velocityY = getRandomVelocity();
+				this.velocityY = -this.velocityX * randomDeviation();
+			break;
+			
+			case BOTTOM_TOP:
+				this.velocityX = randomDeviation();
+				this.velocityY = getRandomVelocity();
+			break;
+			
+			case BOTTOM_LEFT:
+				this.velocityX = getRandomVelocity() * -1;
+				//this.velocityY = getRandomVelocity();
+				this.velocityY = -this.velocityX * randomDeviation();
+			break;
+			
+			case BOTTOM_RIGHT:
+				this.velocityX = getRandomVelocity();
+				//this.velocityY = getRandomVelocity();
+				this.velocityY = this.velocityX * randomDeviation();
+			break;
 		}
 	}
 	
-	public void setRandomVelocity() {
-		this.velocityX = (float)Math.random() * 20 + 8;
+	private float randomDeviation() {
+		return (float)Math.random() + 0.5f;
+	}
+	
+	private float getRandomVelocity() {
+		return (float)Math.random() * (maxVelocity - minVelocity) + minVelocity;
 	}
 	
 	public float getRotation() {
@@ -89,8 +121,8 @@ public class Leaf extends Actor {
 		this.rotation = r;
 	}
 	
-	public void setRandomAngle() {
-		this.rotation = (float)Math.random() * 360.0f;
+	public float getRandomAngle() {
+		return (float)Math.random() * 360.0f;
 	}
 	
 	@Override
@@ -114,22 +146,25 @@ public class Leaf extends Actor {
 			this.setY(Gdx.graphics.getHeight());
 		}
 		
-		// Произвольно меняем направление листьев
-		if (Math.random() > 0.95f) {
-			// Произвольный поворот листа
-			setRandomAngle();
-			
+		// Произвольно меняем скорость листья в допустимых пределах
+		if (Math.random() > 0.9f) {			
 			// Проверка направления движения листка
-			boolean vNegative = (this.velocityX < 0);
-			setRandomVelocity();
-			if (vNegative) this.velocityX *= -1;
+			this.velocityX = (this.velocityX < 0) ? getRandomVelocity() * -1 : getRandomVelocity();
+			this.velocityY = (this.velocityY < 0) ? Math.abs(this.velocityX) * -1 : Math.abs(this.velocityX);
+		}
+		
+		// Случайный поворот листка
+		if (Math.random() > 0.99f) {	
+			setRotation(getRandomAngle());
 		}
 	}
 	
 	@Override
 	public void draw(Batch batch, float parentAlpha) {
-		leafSprite.begin();
-		leafSprite.draw(new TextureRegion(leaf), getX(), getY(), 10, 10, 20, 20, 1.0f, 1.0f, rotation);
-		leafSprite.end();
+		if (windDirection != WindDirections.NONE) {
+			leafSprite.begin();
+			leafSprite.draw(new TextureRegion(leaf), getX(), getY(), 10, 10, 20, 20, 0.9f, 0.9f, rotation);
+			leafSprite.end();
+		}
 	}
 }

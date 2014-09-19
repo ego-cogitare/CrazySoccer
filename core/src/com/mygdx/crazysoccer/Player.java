@@ -18,6 +18,8 @@ import com.mygdx.crazysoccer.Vars;
 
 public class Player extends Actor {
 	
+	private Field field;
+	
 	// Идентификатор игрока (используется при определении нажатия управляющих кнопок)
 	private int PLAYER_ID = 0;
 		
@@ -36,7 +38,7 @@ public class Player extends Actor {
     private float JUMP_HEIGHT = 0;
     
     // Масса персонажа
-    private float MASS = 63.0f;
+    private float MASS = 62.0f;
     
     // Сила персонажа
     private float STRENGTH = 400.0f;
@@ -48,8 +50,10 @@ public class Player extends Actor {
     // Параметры персонажа
     public float CURENT_SPEED_X = 0.0f;
     public float CURENT_SPEED_Y = 0.0f;
-    public float WALKING_SPEED = 1.5f;
-    public float RUN_SPEED = 4.0f;
+    public float WALKING_SPEED = 2.0f;
+    public float RUN_SPEED = 5.0f;
+    public float POS_X = 100.0f;
+    public float POS_Y = 100.0f;
     
 	// Перечень возможных состояний героя
 	public static enum States {
@@ -117,11 +121,7 @@ public class Player extends Actor {
 		
 		animations = new HashMap<States, Animation>();
 		
-		setX(Vars.WINDOW_WIDTH / 2.0f);
-        setY(Vars.WINDOW_HEIGHT / 2.0f);        
-        
         // Первоначальная инициализация состояний анимаций персонажа
-//        stopAll();
         Do(States.STAY, true);
         
         // Изначальное направление персонажа
@@ -147,7 +147,7 @@ public class Player extends Actor {
         walkFrames[1] = animationMap[0][0];
         walkFrames[2] = animationMap[0][2];
         walkFrames[3] = animationMap[0][0];
-        animations.put(States.WALKING, new Animation(0.15f, walkFrames));
+        animations.put(States.WALKING, new Animation(0.13f, walkFrames));
         
         // Создаем анимацию бега
         runFrames = new TextureRegion[2];
@@ -196,6 +196,10 @@ public class Player extends Actor {
         shadow = new Shadow();
 	}
 	
+	public void attachField(Field f) {
+		this.field = f;
+	}
+	
 	// Проверка необходимости зеркалирования спрайта персонажа
 	private boolean getFlipX() {
 		return (this.direction == Directions.LEFT);
@@ -232,26 +236,6 @@ public class Player extends Actor {
 	
 	public void setActionsListener(Actions al) {
 		this.actionsListener = al;
-	}
-	
-	public void movePlayerBy(Vector2 movePoint) {
-		
-		if (Field.camera.position.x <= Vars.WINDOW_WIDTH / 2.0f) {
-			if (getX() + movePoint.x > 0) {
-				setX(getX() + movePoint.x);
-			} else {
-				setX(1);
-			}
-			
-			Field.camera.position.set(Vars.WINDOW_WIDTH / 2.0f, Field.camera.position.y, 0);
-			
-			if (getX() > Vars.WINDOW_WIDTH / 2.0f) {
-				Field.camera.position.set(Vars.WINDOW_WIDTH / 2.0f + 1, Field.camera.position.y, 0);
-			}
-		} else if (getX() > Vars.WINDOW_WIDTH / 2.0f) {
-			Field.camera.position.set(Field.camera.position.x + movePoint.x, Field.camera.position.y + movePoint.y, 0);
-			Field.camera.update();
-		}
 	}
 	
 	// Проверка может ли персонаж выполнить действие
@@ -489,7 +473,7 @@ public class Player extends Actor {
 		}
 		
 		// Перемещение персонажа
-		this.movePlayerBy(new Vector2(this.CURENT_SPEED_X, this.CURENT_SPEED_Y));
+		movePlayerBy(new Vector2(this.CURENT_SPEED_X, this.CURENT_SPEED_Y));
 		
 		// Удар правой ногой
 		if (actionsListener.getActionStateFor(Controls.ACTION1, this.PLAYER_ID).pressed && Can(States.FOOT_KICK)) {
@@ -531,12 +515,156 @@ public class Player extends Actor {
 		
 		// Реализация гравитации
 		if (curentState() == States.JUMP || this.JUMP_HEIGHT > 0) {
-			this.JUMP_VELOCITY -= 15.0f * Gdx.graphics.getDeltaTime();
+			this.JUMP_VELOCITY -= 18.0f * Gdx.graphics.getDeltaTime();
 			this.JUMP_HEIGHT += this.JUMP_VELOCITY;
 			
 			if (this.JUMP_HEIGHT <= 0) {
 				Do(States.SIT, true);
 				this.JUMP_HEIGHT = 0.0f;
+			}
+		}
+	}
+	
+	private void movePlayerBy(Vector2 movePoint) {
+		float w = Gdx.graphics.getWidth();
+		float h = Gdx.graphics.getHeight();
+		float camX = Field.camera.position.x;
+		float camY = Field.camera.position.y;
+		
+		boolean doStop = false;
+		
+		if (this.POS_X >= 0 && this.POS_X <= field.worldWidth && this.POS_Y >= 0 && this.POS_Y <= field.worldHeight) {
+			
+			// Ограничение выхода персонажа за пределы поля
+			if (this.POS_X + movePoint.x < 0) {
+				movePoint.x = -this.POS_X;
+				doStop = true;
+			}
+			else if (this.POS_X + movePoint.x > field.worldWidth) { 
+				movePoint.x = field.worldWidth - this.POS_X;
+				doStop = true;
+			}
+			
+			if (this.POS_Y + movePoint.y < 0) {
+				movePoint.y = -this.POS_Y;
+				doStop = true;
+			}
+			else if (this.POS_Y + movePoint.y > field.worldHeight) { 
+				movePoint.y = field.worldHeight - this.POS_Y;
+				doStop = true;
+			}
+			
+			// Если персонаж достик границы игрового мира, то останавливаем его
+			if (doStop) Do(States.STAY,true);
+			
+			// Камера будет следить за первым игроком
+			if (this.PLAYER_ID == 1) {
+				
+				// Перемещение по оси X
+				if (this.POS_X < field.fieldMaxWidth / 2.0f) {
+					if (this.POS_X >= w / 2) {
+						if (this.POS_X + movePoint.x < w / 2.0f) {
+							field.camera.position.set(w / 2.0f, camY, 0);
+							setX(movePoint.x + this.POS_X);
+						}
+						else {
+							field.camera.position.set(camX + movePoint.x, camY, 0);
+						}
+						this.POS_X += movePoint.x;
+					} 
+					else {
+						if (this.POS_X + movePoint.x > w / 2.0f) {
+							setX(w / 2.0f);
+							field.camera.position.set(camX + this.POS_X + movePoint.x - w / 2.0f, camY, 0);
+						}
+						else {
+							setX(getX() + movePoint.x);
+						}
+						this.POS_X += movePoint.x;
+					}
+				}
+				else {
+					if (getX() <= w / 2.0f) {
+						if (this.POS_X + movePoint.x <= field.camMaxX) {
+							field.camera.position.set(camX + movePoint.x, camY, 0);
+						}
+						else {
+							field.camera.position.set(field.camMaxX, camY, 0);
+							setX(w / 2.0f + this.POS_X + movePoint.x - field.camMaxX);
+						}
+						this.POS_X += movePoint.x;
+					} 
+					else {
+						if (this.POS_X + movePoint.x > field.camMaxX) {
+							field.camera.position.set(field.camMaxX, camY, 0);
+							setX(w / 2.0f + this.POS_X + movePoint.x - field.camMaxX);
+						}
+						else {
+							field.camera.position.set(this.POS_X + movePoint.x, camY, 0);
+							setX(w / 2.0f);
+						}
+						this.POS_X += movePoint.x;
+					}
+				}
+				
+				// Перемещение по оси Y
+				camX = Field.camera.position.x;
+				camY = Field.camera.position.y;
+				
+				if (this.POS_Y < field.fieldHeight / 2.0f) {
+					if (this.POS_Y >= h / 2) {
+						if (this.POS_Y + movePoint.y < h / 2.0f) {
+							field.camera.position.set(camX, h / 2.0f, 0);
+							setY(movePoint.y + this.POS_Y);
+						}
+						else {
+							field.camera.position.set(camX, camY + movePoint.y, 0);
+						}
+						this.POS_Y += movePoint.y;
+					} 
+					else {
+						if (this.POS_Y + movePoint.y > h / 2.0f) {
+							setY(h / 2.0f);
+							field.camera.position.set(camX, camY + this.POS_Y + movePoint.y - h / 2.0f, 0);
+						}
+						else {
+							setY(getY() + movePoint.y);
+						}
+						this.POS_Y += movePoint.y;
+					}
+				}
+				else {
+					if (getY() <= h / 2.0f) {
+						if (this.POS_Y + movePoint.y <= field.camMaxY) {
+							field.camera.position.set(camX, camY + movePoint.y, 0);
+						}
+						else {
+							field.camera.position.set(camX, field.camMaxY, 0);
+							setY(h / 2.0f + this.POS_Y + movePoint.y - field.camMaxY);
+						}
+						this.POS_Y += movePoint.y;
+					}
+					else {
+						if (this.POS_Y + movePoint.y > field.camMaxY) {
+							field.camera.position.set(camX, field.camMaxY, 0);
+							setY(h / 2.0f + this.POS_Y + movePoint.y - field.camMaxY);
+						}
+						else {
+							field.camera.position.set(camX, this.POS_Y + movePoint.y, 0);
+							setY(h / 2.0f);
+						}
+						this.POS_Y += movePoint.y;
+					}
+				}
+				
+				// Перемещение всех спрайтов относительно актера, за которым следит камера
+				field.moveCamera();
+			}
+			else {
+				this.POS_X += movePoint.x;
+				this.POS_Y += movePoint.y;
+				
+				moveBy(movePoint.x, movePoint.y);
 			}
 		}
 	}
@@ -578,7 +706,8 @@ public class Player extends Actor {
         spriteBatch.end();
         
         // Ресование тени персонажа
-        shadow.setXY(getX() + 25, getY()-5);
+        shadow.setX(getX() + 25);
+        shadow.setY(getY() - 5);
         shadow.setVisibility(this.JUMP_HEIGHT > 0);
         shadow.draw();
 	}

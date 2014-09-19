@@ -17,6 +17,7 @@ import com.badlogic.gdx.math.Polyline;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.mygdx.crazysoccer.Wind.WindDirections;
 
 public class Field extends Stage {
 	
@@ -26,7 +27,7 @@ public class Field extends Stage {
 	private Player[] players = new Player[2];
 	
 	// Листья
-	private Leaf[] leafs = new Leaf[10];
+	private Leaf[] leafs = new Leaf[30];
 	
 	// Четыре точки определяющие размеры поля
 	private Vector2 leftBottom;
@@ -35,9 +36,9 @@ public class Field extends Stage {
 	private Vector2 leftTop;
 	
 	// Размры игрового (футбольного) поля
-	private int fieldMinWidth;
-	private int fieldMaxWidth;
-	private int fieldHeight;
+	public int fieldMinWidth;
+	public int fieldMaxWidth;
+	public int fieldHeight;
 	
 	// Размеры штрафной
 	int innerBoxWidth = 130;
@@ -45,9 +46,15 @@ public class Field extends Stage {
 	int outerBoxWidth = 300;
 	int outerBoxHeight = 280;
 	
+	// Параметры игрового экрана
+	public float camMaxX;
+	public float camMaxY;
+	public float worldWidth;
+	public float worldHeight;
+	
 	// Смещение игрового поля относительно карты (левого нижнего угла)
-	private int fieldOffsetX;
-	private int fieldOffsetY;
+	public int fieldOffsetX;
+	public int fieldOffsetY;
 	
 	public TiledMap fieldMap;
     public TiledMapRenderer fieldMapRenderer;
@@ -68,12 +75,13 @@ public class Field extends Stage {
 			players[i].setActionsListener(actions);
 			// Добавление игрока (актера) на сцену (поле)
 			this.addActor(players[i]);
+			
+			players[i].attachField(this);
 		}
-		players[1].setX(100);
 		
 		// Создание листов
 		for (int i = 0; i < leafs.length; i++) {
-			leafs[i] = new Leaf();
+			leafs[i] = new Leaf(WindDirections.RIGHT_LEFT);
 			leafs[i].setPosition(
 				(float)Math.random() * Gdx.graphics.getWidth(), 
 				(float)Math.random() * Gdx.graphics.getHeight()
@@ -119,13 +127,37 @@ public class Field extends Stage {
         		fieldOffsetX = Math.round(ma.getProperties().get("x", Float.class));
         		fieldOffsetY = Math.round(ma.getProperties().get("y", Float.class));
         		
-        		camera.position.set(0, fieldOffsetY + fieldHeight / 2.0f, 0);
+        		camera.position.set(Gdx.graphics.getWidth() / 2.0f, fieldOffsetY + fieldHeight / 2.0f, 0);
+        		
+        		// Определение наибольшей координаты X, в которую можно смещать камеру     
+        		camMaxX = fieldMaxWidth + 4 * fieldOffsetX - Gdx.graphics.getWidth() / 2.0f;
+        		camMaxY = fieldHeight + 2 * fieldOffsetY - Gdx.graphics.getHeight() / 2.0f;
+        		
+        		// Ширина игрового мира. Подсчет ведется с учетом того, что смещение справа такое же как и слева
+        		worldWidth = fieldMaxWidth + 2 * fieldOffsetX; 
+        		worldHeight = fieldHeight + 2 * fieldOffsetY - 10; 
+        		
+        		players[0].setX(100);
+        		players[0].setY(Gdx.graphics.getHeight() / 2.0f);
+        		players[0].POS_X = 100;
+        		players[0].POS_Y = fieldOffsetY + fieldHeight / 2.0f;
+        		
+        		players[1].setX(100);
+        		players[1].setY(Gdx.graphics.getHeight() / 2.0f);
+        		players[1].POS_X = 200;
+        		players[1].POS_Y = fieldOffsetY + fieldHeight / 2.0f;
         		
 //        		for (int h = 0; h < fieldHeight; h++) {
 //        			System.out.println(h+" "+mGetSideLineProjection(h));
 //        		}
         	}
 		}
+	}
+	
+	public void moveCamera() {
+		// Перемещение всех персонажей относительно камеры
+		players[1].setX(players[1].POS_X - camera.position.x + Gdx.graphics.getWidth() / 2.0f);
+		players[1].setY(players[1].POS_Y - camera.position.y + Gdx.graphics.getHeight() / 2.0f);
 	}
 	
 	// Получение длины проекции отрезка на ось аута поля (используется для проверки
@@ -200,9 +232,46 @@ public class Field extends Stage {
 		 shapeRenderer.circle(fieldOffsetX + fieldMaxWidth / 2.0f, fieldOffsetX + fieldHeight / 2.0f, 15);
 		 shapeRenderer.end();
 	}
-
+	
 	public void processGame() { 
 		drawField();
+		
+		// Изменение силы ветра
+		if (Math.random() > 0.99f) {
+			float windVelocity = (float)Math.random() * 25 + 5;
+			
+			for (int i = 0; i < leafs.length; i++) {
+				leafs[i].setWindVelocity(windVelocity);
+				
+				if (windVelocity / 40.0f >= Math.random() || windVelocity / 40.0f >= Math.random()) {
+					leafs[i].setWindDirection(WindDirections.LEFT_RIGHT);
+				} 
+				else {
+					leafs[i].setWindDirection(WindDirections.NONE);
+				}
+			}
+		}
+		
+		
+		// Произвольное изменение направления ветра
+		if (Math.random() > 0.999f) {
+			int j = (int)Math.round(Math.random() * WindDirections.values().length);
+			if (j >= WindDirections.values().length) j = WindDirections.values().length - 1;
+			for (int i = 0; i < leafs.length; i++) {
+				leafs[i].setWindDirection(WindDirections.values()[j]);
+			}
+		}
+		
+		
+		// Сортировка спрайтов по z-index
+		if (players[0].POS_Y > players[1].POS_Y) {
+			players[0].setZIndex(1);
+			players[1].setZIndex(2);
+		}
+		else {
+			players[0].setZIndex(2);
+			players[1].setZIndex(1);
+		}
 	}
 
 	public void dispose() {

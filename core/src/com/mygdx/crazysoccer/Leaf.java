@@ -15,12 +15,13 @@ public class Leaf extends Actor {
 	private float minVelocity = 0.0f;
 	private float maxVelocity = 0.0f;
 	
-	public Texture leaf;
+	public TextureRegion leaf;
 	public SpriteBatch leafSprite;
 	public WindDirections windDirection;
 	
 	public Leaf(WindDirections wd) {
-		leaf = new Texture(Gdx.files.internal("leaf.png"));
+		leaf = new TextureRegion(Field.sprites);
+		leaf.setRegion(45,5,8,8);
 		leafSprite = new SpriteBatch();
 		windDirection = wd;
 		setWindDirection(windDirection);

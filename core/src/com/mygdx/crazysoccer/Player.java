@@ -14,7 +14,6 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.mygdx.crazysoccer.Actions.Action;
 import com.mygdx.crazysoccer.Actions.Controls;
-import com.mygdx.crazysoccer.Vars;
 
 public class Player extends Actor {
 	
@@ -30,9 +29,9 @@ public class Player extends Actor {
     public SpriteBatch spriteBatch;
     
     // Параметры спрайта
-    private int SPRITE_WIDTH = 32;
-    private int SPRITE_HEIGHT = 32;
-    private float SPRITE_SCALE = 3.0f;
+    private int SPRITE_WIDTH = 96;
+    private int SPRITE_HEIGHT = 96;
+    private float SPRITE_SCALE = 1.0f;
     
     // Парамерты прыжка персонажа
     private float JUMP_HEIGHT = 0;
@@ -52,8 +51,8 @@ public class Player extends Actor {
     public float CURENT_SPEED_Y = 0.0f;
     public float WALKING_SPEED = 2.0f;
     public float RUN_SPEED = 5.0f;
-    public float POS_X = 100.0f;
-    public float POS_Y = 100.0f;
+    public float POS_X = 0.0f;
+    public float POS_Y = 0.0f;
     
 	// Перечень возможных состояний героя
 	public static enum States {
@@ -128,7 +127,7 @@ public class Player extends Actor {
         direction = Directions.RIGHT;
 		
         // Загрузка изображения с анимацией персонажа
-        animationSheet = new Texture(Gdx.files.internal("kunio.png"));
+        animationSheet = new Texture(Gdx.files.internal("kuniohq.png"));
         
         // Загрузка карты анимаций персонажа
         animationMap = TextureRegion.split(animationSheet, animationSheet.getWidth()/FRAME_COLS, animationSheet.getHeight()/FRAME_ROWS);
@@ -198,6 +197,10 @@ public class Player extends Actor {
 	
 	public void attachField(Field f) {
 		this.field = f;
+	}
+	
+	public int getPlayerId() {
+		return this.PLAYER_ID;
 	}
 	
 	// Проверка необходимости зеркалирования спрайта персонажа
@@ -404,13 +407,10 @@ public class Player extends Actor {
 		for (int i = 0; i < States.values().length; i++) {
 			state.put(States.values()[i], false);
 		}
-		//this.CURENT_SPEED_X = 0.0f;
 	}
 	
 	@Override
 	public void act(float delta) {
-		
-//		System.out.println(curentState());
 		
 		if (actionsListener.getActionStateFor(Controls.UP, this.PLAYER_ID).pressed) { 
 			// Если персонаж не бежи, и нажата клавиша вверх
@@ -557,115 +557,10 @@ public class Player extends Actor {
 			// Если персонаж достик границы игрового мира, то останавливаем его
 			if (doStop) Do(States.STAY,true);
 			
-			// Камера будет следить за первым игроком
-			if (this.PLAYER_ID == 1) {
-				
-				// Перемещение по оси X
-				if (this.POS_X < field.fieldMaxWidth / 2.0f) {
-					if (this.POS_X >= w / 2) {
-						if (this.POS_X + movePoint.x < w / 2.0f) {
-							field.camera.position.set(w / 2.0f, camY, 0);
-							setX(movePoint.x + this.POS_X);
-						}
-						else {
-							field.camera.position.set(camX + movePoint.x, camY, 0);
-						}
-						this.POS_X += movePoint.x;
-					} 
-					else {
-						if (this.POS_X + movePoint.x > w / 2.0f) {
-							setX(w / 2.0f);
-							field.camera.position.set(camX + this.POS_X + movePoint.x - w / 2.0f, camY, 0);
-						}
-						else {
-							setX(getX() + movePoint.x);
-						}
-						this.POS_X += movePoint.x;
-					}
-				}
-				else {
-					if (getX() <= w / 2.0f) {
-						if (this.POS_X + movePoint.x <= field.camMaxX) {
-							field.camera.position.set(camX + movePoint.x, camY, 0);
-						}
-						else {
-							field.camera.position.set(field.camMaxX, camY, 0);
-							setX(w / 2.0f + this.POS_X + movePoint.x - field.camMaxX);
-						}
-						this.POS_X += movePoint.x;
-					} 
-					else {
-						if (this.POS_X + movePoint.x > field.camMaxX) {
-							field.camera.position.set(field.camMaxX, camY, 0);
-							setX(w / 2.0f + this.POS_X + movePoint.x - field.camMaxX);
-						}
-						else {
-							field.camera.position.set(this.POS_X + movePoint.x, camY, 0);
-							setX(w / 2.0f);
-						}
-						this.POS_X += movePoint.x;
-					}
-				}
-				
-				// Перемещение по оси Y
-				camX = Field.camera.position.x;
-				camY = Field.camera.position.y;
-				
-				if (this.POS_Y < field.fieldHeight / 2.0f) {
-					if (this.POS_Y >= h / 2) {
-						if (this.POS_Y + movePoint.y < h / 2.0f) {
-							field.camera.position.set(camX, h / 2.0f, 0);
-							setY(movePoint.y + this.POS_Y);
-						}
-						else {
-							field.camera.position.set(camX, camY + movePoint.y, 0);
-						}
-						this.POS_Y += movePoint.y;
-					} 
-					else {
-						if (this.POS_Y + movePoint.y > h / 2.0f) {
-							setY(h / 2.0f);
-							field.camera.position.set(camX, camY + this.POS_Y + movePoint.y - h / 2.0f, 0);
-						}
-						else {
-							setY(getY() + movePoint.y);
-						}
-						this.POS_Y += movePoint.y;
-					}
-				}
-				else {
-					if (getY() <= h / 2.0f) {
-						if (this.POS_Y + movePoint.y <= field.camMaxY) {
-							field.camera.position.set(camX, camY + movePoint.y, 0);
-						}
-						else {
-							field.camera.position.set(camX, field.camMaxY, 0);
-							setY(h / 2.0f + this.POS_Y + movePoint.y - field.camMaxY);
-						}
-						this.POS_Y += movePoint.y;
-					}
-					else {
-						if (this.POS_Y + movePoint.y > field.camMaxY) {
-							field.camera.position.set(camX, field.camMaxY, 0);
-							setY(h / 2.0f + this.POS_Y + movePoint.y - field.camMaxY);
-						}
-						else {
-							field.camera.position.set(camX, this.POS_Y + movePoint.y, 0);
-							setY(h / 2.0f);
-						}
-						this.POS_Y += movePoint.y;
-					}
-				}
-				
-				// Перемещение всех спрайтов относительно актера, за которым следит камера
-				field.moveCamera();
-			}
-			else {
-				this.POS_X += movePoint.x;
-				this.POS_Y += movePoint.y;
-				
-				moveBy(movePoint.x, movePoint.y);
-			}
+			this.POS_X += movePoint.x;
+			this.POS_Y += movePoint.y;
+			
+			moveBy(movePoint.x, movePoint.y);
 		}
 	}
 	

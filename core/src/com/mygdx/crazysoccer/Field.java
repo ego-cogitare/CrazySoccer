@@ -1,10 +1,19 @@
 package com.mygdx.crazysoccer;
 
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.Arrays;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.maps.MapObject;
@@ -17,14 +26,27 @@ import com.badlogic.gdx.math.Polyline;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.mygdx.crazysoccer.Player.Directions;
+import com.mygdx.crazysoccer.Player.States;
 import com.mygdx.crazysoccer.Wind.WindDirections;
 
 public class Field extends Stage {
 	
-	private Stage stage;
+	// Количество игроков на поле
+	private final int PLAYERS_AMOUNT = 5;
+	
+	private int Z_INDEX;
+	
+	private HashMap<Integer,Float> Z_POSITIONS = new HashMap<Integer,Float>();
+	
+	// Текстура для хранения спрайтов
+	public static Texture sprites;
+	
+	// Екземпляр мяча
+	private Ball ball;
 	
 	// Екземпляр класса описывающего игрока
-	private Player[] players = new Player[2];
+	private Player[] players = new Player[PLAYERS_AMOUNT];
 	
 	// Листья
 	private Leaf[] leafs = new Leaf[30];
@@ -64,13 +86,43 @@ public class Field extends Stage {
 	
     // Сохранение нажатых клавиш и их времени
     public Actions actions = new Actions();
+    
+    // Сортировка коллекции по ключам
+    private static HashMap sortByValues(HashMap map) { 
+        List list = new LinkedList(map.entrySet());
+        // Defined Custom Comparator here
+        Collections.sort(list, new Comparator() {
+             public int compare(Object o1, Object o2) {
+                return ((Comparable) ((Map.Entry) (o1)).getValue())
+                   .compareTo(((Map.Entry) (o2)).getValue());
+             }
+        });
+
+        // Here I am copying the sorted list in HashMap
+        // using LinkedHashMap to preserve the insertion order
+        HashMap sortedHashMap = new LinkedHashMap();
+        for (Iterator it = list.iterator(); it.hasNext();) {
+		   Map.Entry entry = (Map.Entry) it.next();
+		   sortedHashMap.put(entry.getKey(), entry.getValue());
+        } 
+        return sortedHashMap;
+    }
 	
 	public Field(ScreenViewport screenViewport) {
 		super(screenViewport);
 		
+		// Загрузка спрайтов
+		sprites = new Texture(Gdx.files.internal("sprites.png"));
+		
+		// Создание мяча
+		ball = new Ball();
+		ball.setActionsListener(actions);
+		this.addActor(ball);
+		ball.attachField(this);
+		
 		for (int i = 0; i < players.length; i++) {
 			// Создание первого игрока
-			players[i] = new Player(i+1);
+			players[i] = new Player(i);
 			// Привязка слушателя ввода для игрока
 			players[i].setActionsListener(actions);
 			// Добавление игрока (актера) на сцену (поле)
@@ -127,37 +179,24 @@ public class Field extends Stage {
         		fieldOffsetX = Math.round(ma.getProperties().get("x", Float.class));
         		fieldOffsetY = Math.round(ma.getProperties().get("y", Float.class));
         		
-        		camera.position.set(Gdx.graphics.getWidth() / 2.0f, fieldOffsetY + fieldHeight / 2.0f, 0);
+//        		camera.position.set(Gdx.graphics.getWidth() / 2.0f, fieldOffsetY + fieldHeight / 2.0f, 0);
         		
         		// Определение наибольшей координаты X, в которую можно смещать камеру     
         		camMaxX = fieldMaxWidth + 4 * fieldOffsetX - Gdx.graphics.getWidth() / 2.0f;
         		camMaxY = fieldHeight + 2 * fieldOffsetY - Gdx.graphics.getHeight() / 2.0f;
         		
         		// Ширина игрового мира. Подсчет ведется с учетом того, что смещение справа такое же как и слева
-        		worldWidth = fieldMaxWidth + 2 * fieldOffsetX; 
-        		worldHeight = fieldHeight + 2 * fieldOffsetY - 10; 
+        		worldWidth = fieldMaxWidth + 4 * fieldOffsetX; 
+        		worldHeight = fieldHeight + 2 * fieldOffsetY; 
         		
-        		players[0].setX(100);
-        		players[0].setY(Gdx.graphics.getHeight() / 2.0f);
-        		players[0].POS_X = 100;
-        		players[0].POS_Y = fieldOffsetY + fieldHeight / 2.0f;
-        		
-        		players[1].setX(100);
-        		players[1].setY(Gdx.graphics.getHeight() / 2.0f);
-        		players[1].POS_X = 200;
-        		players[1].POS_Y = fieldOffsetY + fieldHeight / 2.0f;
+        		// Расстановка игроков
+        		actorsArrangement();
         		
 //        		for (int h = 0; h < fieldHeight; h++) {
 //        			System.out.println(h+" "+mGetSideLineProjection(h));
 //        		}
         	}
 		}
-	}
-	
-	public void moveCamera() {
-		// Перемещение всех персонажей относительно камеры
-		players[1].setX(players[1].POS_X - camera.position.x + Gdx.graphics.getWidth() / 2.0f);
-		players[1].setY(players[1].POS_Y - camera.position.y + Gdx.graphics.getHeight() / 2.0f);
 	}
 	
 	// Получение длины проекции отрезка на ось аута поля (используется для проверки
@@ -178,7 +217,7 @@ public class Field extends Stage {
 	
 	public void resize (int width, int height) {
 	    // See below for what true means.
-	    stage.getViewport().update(width, height, true);
+	    this.getViewport().update(width, height, true);
 	}
 	
 	// Отрисовка поля
@@ -233,6 +272,38 @@ public class Field extends Stage {
 		 shapeRenderer.end();
 	}
 	
+	// Расположение игроков по полю
+	public void actorsArrangement() {
+		ball.POS_X = worldWidth / 2.0f - fieldOffsetX;
+		ball.POS_Y = fieldOffsetY + fieldHeight / 2.0f - 4;
+		
+		players[0].POS_X = worldWidth / 2.0f;
+		players[0].POS_Y = fieldOffsetY + fieldHeight / 2.0f;
+		
+		players[1].POS_X = 600;
+		players[1].POS_Y = 500;
+		
+		players[2].POS_X = 600;
+		players[2].POS_Y = worldHeight - 500;
+		
+		players[3].POS_X = worldWidth / 2.0f - 350;
+		players[3].POS_Y = 500;
+		
+		players[4].POS_X = worldWidth / 2.0f - 350;
+		players[4].POS_Y = worldHeight - 500;
+	}
+	
+	public void moveCamera() {
+		// Перемещение всех персонажей относительно камеры
+		for (int i = 0; i < players.length; i++) {
+			players[i].setX(players[i].POS_X - camera.position.x + Gdx.graphics.getWidth() / 2.0f);
+			players[i].setY(players[i].POS_Y - camera.position.y + Gdx.graphics.getHeight() / 2.0f);
+		}
+		
+		ball.setX(ball.POS_X - camera.position.x + Gdx.graphics.getWidth() / 2.0f);
+		ball.setY(ball.POS_Y - camera.position.y + Gdx.graphics.getHeight() / 2.0f);
+	}
+	
 	public void processGame() { 
 		drawField();
 		
@@ -263,19 +334,27 @@ public class Field extends Stage {
 		}
 		
 		
-		// Сортировка спрайтов по z-index
-		if (players[0].POS_Y > players[1].POS_Y) {
-			players[0].setZIndex(1);
-			players[1].setZIndex(2);
+		
+		// Сортировка по глубине
+		for (int i = 0; i < players.length; i++) {
+			Z_POSITIONS.put(players[i].getPlayerId(), players[i].getY());
 		}
-		else {
-			players[0].setZIndex(2);
-			players[1].setZIndex(1);
+		Z_POSITIONS.put(PLAYERS_AMOUNT+1, ball.getY());
+		// Сортировка по глубине
+		Z_POSITIONS = sortByValues(Z_POSITIONS);
+		Z_INDEX = PLAYERS_AMOUNT + 1;
+		for (Map.Entry<Integer, Float> entry : Z_POSITIONS.entrySet()) {
+			if (entry.getKey() == PLAYERS_AMOUNT + 1)   // If ball
+				ball.setZIndex(Z_INDEX);
+			else 										// If player
+				players[entry.getKey()].setZIndex(Z_INDEX);
+			
+			Z_INDEX--;
 		}
 	}
 
 	public void dispose() {
-	    stage.dispose();
+		this.dispose();
 	}
 	
 	@Override
@@ -339,6 +418,36 @@ public class Field extends Stage {
 			
 			case Keys.NUMPAD_8:
 				actions.remove(Actions.Action.UP_2);
+			break;
+			
+			
+			
+			case Keys.Z:
+				actions.remove(Actions.Action.ACTION1_3);
+			break;
+			
+			case Keys.X:
+				actions.remove(Actions.Action.ACTION2_3);
+			break;
+			
+			case Keys.C:
+				actions.remove(Actions.Action.ACTION3_3);
+			break;
+			
+			case Keys.NUM_1:
+				actions.remove(Actions.Action.LEFT_3);
+			break;
+			
+			case Keys.NUM_2:
+				actions.remove(Actions.Action.RIGHT_3);
+			break;
+			
+			case Keys.NUM_3:
+				actions.remove(Actions.Action.DOWN_3);
+			break;
+			
+			case Keys.NUM_4:
+				actions.remove(Actions.Action.UP_3);
 			break;
 		}
 		
@@ -409,9 +518,47 @@ public class Field extends Stage {
 			case Keys.NUMPAD_8:
 				actions.add(Actions.Action.UP_2);
 			break;
+			
+			
+			// Кнопки управления вторым игроком
+			case Keys.Z:
+				actions.add(Actions.Action.ACTION1_3);
+			break;
+			
+			case Keys.X:
+				actions.add(Actions.Action.ACTION2_3);
+			break;
+			
+			case Keys.C:
+				actions.add(Actions.Action.ACTION3_3);
+			break;
+			
+			case Keys.NUM_1:
+				actions.add(Actions.Action.LEFT_3);
+			break;
+			
+			case Keys.NUM_2:
+				actions.add(Actions.Action.RIGHT_3);
+			break;
+			
+			case Keys.NUM_3:
+				actions.add(Actions.Action.DOWN_3);
+			break;
+			
+			case Keys.NUM_4:
+				actions.add(Actions.Action.UP_3);
+			break;
 		}
 		
 //		actions.debug();
 		return false;
+	}
+	
+	 @Override
+	public boolean touchDown (int x, int y, int pointer, int button) {
+		 players[0].direction = (players[0].direction == Directions.LEFT) ? Directions.RIGHT : Directions.LEFT;
+		 players[0].Do(States.RUN, true);
+		 
+		 return false;
 	}
 }

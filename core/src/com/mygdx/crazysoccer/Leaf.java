@@ -162,7 +162,7 @@ public class Leaf extends Actor {
 	
 	@Override
 	public void draw(Batch batch, float parentAlpha) {
-		if (windDirection != WindDirections.NONE) {
+		if (velocityX > 0 || velocityY > 0) {
 			leafSprite.begin();
 			leafSprite.draw(new TextureRegion(leaf), getX(), getY(), 10, 10, 20, 20, 0.9f, 0.9f, rotation);
 			leafSprite.end();

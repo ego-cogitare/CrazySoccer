@@ -29,9 +29,13 @@ public class Player extends Actor {
     public SpriteBatch spriteBatch;
     
     // Параметры спрайта
-    private int SPRITE_WIDTH = 96;
-    private int SPRITE_HEIGHT = 96;
-    private float SPRITE_SCALE = 1.0f;
+    private int SPRITE_WIDTH = 32;
+    private int SPRITE_HEIGHT = 32;
+    private float SPRITE_SCALE = 3.0f;
+    
+    // Размеры игрока с учетом масштабирования
+    private float PLAYER_WIDTH = SPRITE_SCALE * SPRITE_WIDTH;
+    private float PLAYER_HEIGHT = SPRITE_SCALE * SPRITE_HEIGHT;
     
     // Парамерты прыжка персонажа
     private float JUMP_HEIGHT = 0;
@@ -127,7 +131,7 @@ public class Player extends Actor {
         direction = Directions.RIGHT;
 		
         // Загрузка изображения с анимацией персонажа
-        animationSheet = new Texture(Gdx.files.internal("kuniohq.png"));
+        animationSheet = new Texture(Gdx.files.internal("kunio.png"));
         
         // Загрузка карты анимаций персонажа
         animationMap = TextureRegion.split(animationSheet, animationSheet.getWidth()/FRAME_COLS, animationSheet.getHeight()/FRAME_ROWS);
@@ -203,6 +207,10 @@ public class Player extends Actor {
 		return this.PLAYER_ID;
 	}
 	
+	public float width() {
+		return this.SPRITE_SCALE * this.SPRITE_WIDTH;
+	}
+	
 	// Проверка необходимости зеркалирования спрайта персонажа
 	private boolean getFlipX() {
 		return (this.direction == Directions.LEFT);
@@ -235,6 +243,26 @@ public class Player extends Actor {
 	
 	public void setStrength(float f) {
 		this.STRENGTH = f;
+	}
+	
+	public float getWidth() {
+		return this.PLAYER_WIDTH;
+	}
+	
+	public float getHeight() {
+		return this.PLAYER_HEIGHT;
+	}
+	
+	public float x() {
+		return this.POS_X;
+	}
+	
+	public float y() {
+		return this.POS_Y;
+	}
+	
+	public float h() {
+		return this.JUMP_HEIGHT;
 	}
 	
 	public void setActionsListener(Actions al) {
@@ -523,13 +551,15 @@ public class Player extends Actor {
 				this.JUMP_HEIGHT = 0.0f;
 			}
 		}
+		
+		if (this.PLAYER_ID == 0) System.out.println("Player X/Y/H:"+POS_X+"/"+POS_Y+"/"+JUMP_HEIGHT);
 	}
 	
 	private void movePlayerBy(Vector2 movePoint) {
 		float w = Gdx.graphics.getWidth();
 		float h = Gdx.graphics.getHeight();
-		float camX = Field.camera.position.x;
-		float camY = Field.camera.position.y;
+		float camX = field.camera.position.x;
+		float camY = field.camera.position.y;
 		
 		boolean doStop = false;
 		
@@ -582,7 +612,7 @@ public class Player extends Actor {
         spriteBatch.begin();
         spriteBatch.draw(
     		currentFrame.getTexture(), 
-    		this.getX(), 
+    		this.getX() - this.width() / 2.0f, 
     		this.getY() + this.JUMP_HEIGHT, 
     		0, 
     		0, 
@@ -601,9 +631,9 @@ public class Player extends Actor {
         spriteBatch.end();
         
         // Ресование тени персонажа
-        shadow.setX(getX() + 25);
-        shadow.setY(getY() - 5);
+        shadow.setX(getX() - 10);
+        shadow.setY(getY());
         shadow.setVisibility(this.JUMP_HEIGHT > 0);
-        shadow.draw();
+//        shadow.draw();
 	}
 }

@@ -51,6 +51,10 @@ public class Field extends Stage {
 	// Листья
 	private Leaf[] leafs = new Leaf[30];
 	
+	// Размеры поля в клетках
+	private int CELLS_X;
+	private int CELLS_Y;
+	
 	// Четыре точки определяющие размеры поля
 	private Vector2 leftBottom;
 	private Vector2 rightBottom;
@@ -80,7 +84,7 @@ public class Field extends Stage {
 	
 	public TiledMap fieldMap;
     public TiledMapRenderer fieldMapRenderer;
-    public static OrthographicCamera camera;
+    public OrthographicCamera camera;
     
     public ShapeRenderer shapeRenderer;
 	
@@ -88,7 +92,7 @@ public class Field extends Stage {
     public Actions actions = new Actions();
     
     // Сортировка коллекции по ключам
-    private static HashMap sortByValues(HashMap map) { 
+    private static HashMap<Integer, Float> sortByValues(HashMap map) { 
         List list = new LinkedList(map.entrySet());
         // Defined Custom Comparator here
         Collections.sort(list, new Comparator() {
@@ -118,8 +122,10 @@ public class Field extends Stage {
 		ball = new Ball();
 		ball.setActionsListener(actions);
 		this.addActor(ball);
+		this.addActor(ball.shadow);
 		ball.attachField(this);
 		
+		// Создание игроковs
 		for (int i = 0; i < players.length; i++) {
 			// Создание первого игрока
 			players[i] = new Player(i);
@@ -127,18 +133,18 @@ public class Field extends Stage {
 			players[i].setActionsListener(actions);
 			// Добавление игрока (актера) на сцену (поле)
 			this.addActor(players[i]);
+			this.addActor(players[i].shadow);
 			
 			players[i].attachField(this);
 		}
 		
-		// Создание листов
+		// Создание листьев
 		for (int i = 0; i < leafs.length; i++) {
-			leafs[i] = new Leaf(WindDirections.RIGHT_LEFT);
+			leafs[i] = new Leaf(WindDirections.NONE);
 			leafs[i].setPosition(
 				(float)Math.random() * Gdx.graphics.getWidth(), 
 				(float)Math.random() * Gdx.graphics.getHeight()
 			);
-			
 			this.addActor(leafs[i]);
 		}
 		
@@ -155,7 +161,6 @@ public class Field extends Stage {
 		fieldMap = new TmxMapLoader().load(mapName);
 		fieldMapRenderer = new OrthogonalTiledMapRenderer(fieldMap, 1.0f);
 		
-		
 		for (int i = 0; i < fieldMap.getLayers().get("field").getObjects().getCount(); i++) {
         	MapObject ma = (MapObject)fieldMap.getLayers().get("field").getObjects().get(i);
         	
@@ -171,26 +176,27 @@ public class Field extends Stage {
         		Arrays.sort(polyline.getVertices());
         		
         		// Получение размеров игрового поля
-        		fieldMinWidth = (int)polyline.getVertices()[9] - (int)polyline.getVertices()[0];
-        		fieldMaxWidth = (int)polyline.getVertices()[8] - (int)polyline.getVertices()[5];
-        		fieldHeight   = (int)polyline.getVertices()[6] - (int)polyline.getVertices()[0];
+        		this.fieldMinWidth = (int)polyline.getVertices()[9] - (int)polyline.getVertices()[0];
+        		this.fieldMaxWidth = (int)polyline.getVertices()[8] - (int)polyline.getVertices()[5];
+        		this.fieldHeight   = (int)polyline.getVertices()[6] - (int)polyline.getVertices()[0];
         		
         		// Получение смещения разметки поля относительно карты
-        		fieldOffsetX = Math.round(ma.getProperties().get("x", Float.class));
-        		fieldOffsetY = Math.round(ma.getProperties().get("y", Float.class));
+        		this.fieldOffsetX = Math.round(ma.getProperties().get("x", Float.class));
+        		this.fieldOffsetY = Math.round(ma.getProperties().get("y", Float.class));
         		
-//        		camera.position.set(Gdx.graphics.getWidth() / 2.0f, fieldOffsetY + fieldHeight / 2.0f, 0);
-        		
-        		// Определение наибольшей координаты X, в которую можно смещать камеру     
-        		camMaxX = fieldMaxWidth + 4 * fieldOffsetX - Gdx.graphics.getWidth() / 2.0f;
-        		camMaxY = fieldHeight + 2 * fieldOffsetY - Gdx.graphics.getHeight() / 2.0f;
+        		this.CELLS_X = this.fieldMap.getProperties().get("width", Integer.class);
+        		this.CELLS_Y = this.fieldMap.getProperties().get("height", Integer.class);
         		
         		// Ширина игрового мира. Подсчет ведется с учетом того, что смещение справа такое же как и слева
-        		worldWidth = fieldMaxWidth + 4 * fieldOffsetX; 
-        		worldHeight = fieldHeight + 2 * fieldOffsetY; 
+        		this.worldWidth = this.CELLS_X * 32;
+        		this.worldHeight = this.CELLS_Y * 32;
+        		
+        		// Определение наибольшей координаты X, в которую можно смещать камеру     
+        		this.camMaxX = this.worldWidth - Gdx.graphics.getWidth() / 2.0f;
+        		this.camMaxY = this.worldHeight - Gdx.graphics.getHeight() / 2.0f;
         		
         		// Расстановка игроков
-        		actorsArrangement();
+        		this.actorsArrangement();
         		
 //        		for (int h = 0; h < fieldHeight; h++) {
 //        			System.out.println(h+" "+mGetSideLineProjection(h));
@@ -237,7 +243,7 @@ public class Field extends Stage {
 		 shapeRenderer.line(leftBottom.x + fieldMaxWidth / 2.0f + fieldOffsetX, leftBottom.y + fieldOffsetY, leftBottom.x + fieldMaxWidth / 2.0f + fieldOffsetX, leftTop.y + fieldOffsetY);
 		 
 		 // Круг в центре поля
-		 shapeRenderer.circle(leftBottom.x + fieldMaxWidth / 2.0f + fieldOffsetX, leftBottom.y + fieldHeight / 2.0f + fieldOffsetY, 200);
+		 shapeRenderer.circle(leftBottom.x + fieldMaxWidth / 2.0f + fieldOffsetX, fieldHeight / 2.0f + fieldOffsetY, 200);
 		 
 		 // Кружки для подачи угловых
 		 shapeRenderer.arc(leftBottom.x + fieldOffsetX, leftBottom.y + fieldOffsetY, 60, 0, 88);
@@ -266,16 +272,16 @@ public class Field extends Stage {
 		 
 		 shapeRenderer.end();
 		 
-		 // Точка в центра поля
+		 // Точка в центрe поля
 		 shapeRenderer.begin(ShapeType.Filled);
-		 shapeRenderer.circle(fieldOffsetX + fieldMaxWidth / 2.0f, fieldOffsetX + fieldHeight / 2.0f, 15);
+		 shapeRenderer.circle(fieldOffsetX + fieldMaxWidth / 2.0f, fieldOffsetY + fieldHeight / 2.0f, 15);
 		 shapeRenderer.end();
 	}
 	
 	// Расположение игроков по полю
 	public void actorsArrangement() {
-		ball.POS_X = worldWidth / 2.0f - fieldOffsetX;
-		ball.POS_Y = fieldOffsetY + fieldHeight / 2.0f - 4;
+		ball.POS_X = worldWidth / 2.0f;
+		ball.POS_Y = worldHeight / 2.0f;
 		
 		players[0].POS_X = worldWidth / 2.0f;
 		players[0].POS_Y = fieldOffsetY + fieldHeight / 2.0f;
@@ -294,7 +300,7 @@ public class Field extends Stage {
 	}
 	
 	public void moveCamera() {
-		// Перемещение всех персонажей относительно камеры
+		// Перемещение всех персонажей относительно персонажа (мяча) за которым следит камера
 		for (int i = 0; i < players.length; i++) {
 			players[i].setX(players[i].POS_X - camera.position.x + Gdx.graphics.getWidth() / 2.0f);
 			players[i].setY(players[i].POS_Y - camera.position.y + Gdx.graphics.getHeight() / 2.0f);
@@ -346,10 +352,35 @@ public class Field extends Stage {
 		for (Map.Entry<Integer, Float> entry : Z_POSITIONS.entrySet()) {
 			if (entry.getKey() == PLAYERS_AMOUNT + 1)   // If ball
 				ball.setZIndex(Z_INDEX);
-			else 										// If player
+			else 									 	// If player
 				players[entry.getKey()].setZIndex(Z_INDEX);
 			
 			Z_INDEX--;
+		}
+		
+		// Поскольку для тени при устанавливается такой же z-index как и для класса в котором
+		// она создавалась, то при каждой отрисовке нужно прятать тени спрайтов, перенося их
+		// назад, устанавливая минимальный z-index
+		hideShadows();
+		
+		// Отслеживание столкновений
+		detectCollisions();
+	}
+	
+	// Отслеживание столкновений
+	private void detectCollisions() {
+		if (Math.abs(ball.x() - players[0].x()) <= 40 && ball.y() - players[0].y() >= -40 && ball.y() - players[0].y() <= 20
+				&& ball.h() + ball.getDiameter() > players[0].h() && ball.h() < players[0].h() +  players[0].getHeight()) {
+			
+			System.out.println("!!!");
+		}
+	}
+	
+	// Переносим тени от персонажей в самую глубину чтобы не перекрывать спрайты
+	private void hideShadows() {
+		ball.shadow.setZIndex(0);
+		for (int i = 0; i < players.length; i++) {
+			players[i].shadow.setZIndex(0);
 		}
 	}
 

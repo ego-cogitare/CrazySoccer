@@ -29,12 +29,12 @@ public class Ball extends Actor {
     public float SPRITE_SCALE = 3.0f;
     
     // Параметры скорости и расположения мяча
- 	public float CURENT_SPEED_X = 0.0f;
-    public float CURENT_SPEED_Y = 0.0f;
-    public float POS_X = 0.0f;
-    public float POS_Y = 0.0f;
-    public float MASS = 3.0f;
-    public float DIAMETER = SPRITE_SCALE * SPRITE_WIDTH;
+ 	private float CURENT_SPEED_X = 0.0f;
+ 	private float CURENT_SPEED_Y = 0.0f;
+ 	private float POS_X = 0.0f;
+ 	private float POS_Y = 0.0f;
+ 	private float MASS = 3.0f;
+ 	private float DIAMETER = SPRITE_SCALE * SPRITE_WIDTH;
     
     // Парамерты высоты расположения мяча
     private float JUMP_HEIGHT = 0;
@@ -48,6 +48,9 @@ public class Ball extends Actor {
     
     // Коефициент отпрыгивания мяча от газона
     private float RESTITUTION = 0.6f;
+    
+    // Контролируется ли мяч какимто из игроков
+    private boolean CATCHED = false;
     
     // Набор анимаций мяча
     public Map<States, Animation> animations;
@@ -75,7 +78,6 @@ public class Ball extends Actor {
  	public TextureRegion[][] animationMap;
  	
     public float stateTime = 0.0f; 
-    
     
     
     // Слушатель ввода
@@ -199,20 +201,56 @@ public class Ball extends Actor {
 		return DIAMETER;
 	}
 	
-	public float x() {
+	public float getAbsX() {
 		return this.POS_X;
 	}
 	
-	public float y() {
+	public float getAbsY() {
 		return this.POS_Y;
 	}
 	
-	public float h() {
+	public float getAbsH() {
 		return this.JUMP_HEIGHT;
 	}
 	
+	public void setAbsX(float x) {
+		this.POS_X = x;
+	}
+	
+	public void setAbsY(float y) {
+		this.POS_Y = y;
+	}
+	
+	public void setAbsH(float h) {
+		this.JUMP_HEIGHT = h;
+	}
+	
+	public float getVelocityX() {
+		return this.CURENT_SPEED_X;
+	}
+	
+	public float getVelocityY() {
+		return this.CURENT_SPEED_Y;
+	}
+	
+	public void setVelocityX(float v) {
+		this.CURENT_SPEED_X = v;
+	}
+	
+	public void setVelocityY(float v) {
+		this.CURENT_SPEED_Y = v;
+	}
+	
+	public void isCatched(boolean c) {
+		this.CATCHED = c;
+	}
+	
+	public boolean isCatched() {
+		return this.CATCHED;
+	}
+	
 	// Механизм передвижения мяча и камеры относительно него
-	private void moveBallBy(Vector2 movePoint) {
+	public void moveBallBy(Vector2 movePoint) {
 		
 		float w = Gdx.graphics.getWidth();
 		float h = Gdx.graphics.getHeight();
@@ -348,7 +386,7 @@ public class Ball extends Actor {
 	}
 	
 	// Полностью остановить анимации
-	private void stopAll() {
+	public void stopAll() {
 		for (int i = 0; i < States.values().length; i++) {
 			state.put(States.values()[i], false);
 		}
@@ -402,7 +440,6 @@ public class Ball extends Actor {
 			
 			// Устанавливаем окончательный угол поворота мяча и останавливаем анимацию
 			stateTime = animations.get(States.FLY_SLOW).getKeyFrameIndex(stateTime) * animations.get(States.STOP).getFrameDuration();
-			
 //			System.out.println(animations.get(States.FLY_SLOW).getKeyFrameIndex(stateTime));
 			
 			Do(States.STOP, true);
@@ -434,8 +471,6 @@ public class Ball extends Actor {
 		
 		// Перемещение мяча
 		moveBallBy(new Vector2(this.CURENT_SPEED_X, this.CURENT_SPEED_Y));
-		
-		System.out.println("Ball X/Y/H:"+POS_X+"/"+POS_Y+"/"+JUMP_HEIGHT);
 	}
 	
 	private boolean getFlip() {

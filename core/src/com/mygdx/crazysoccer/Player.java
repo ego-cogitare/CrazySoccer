@@ -18,6 +18,7 @@ import com.mygdx.crazysoccer.Actions.Controls;
 public class Player extends Actor {
 	
 	private Field field;
+	private Ball ball;
 	
 	// Идентификатор игрока (используется при определении нажатия управляющих кнопок)
 	private int PLAYER_ID = 0;
@@ -44,19 +45,22 @@ public class Player extends Actor {
     private float MASS = 62.0f;
     
     // Сила персонажа
-    private float STRENGTH = 400.0f;
+    private float STRENGTH = 500.0f;
     
     // Текущая скорость движения персонажа при прыжке 
     private float JUMP_VELOCITY = 0.0f;
     
     
     // Параметры персонажа
-    public float CURENT_SPEED_X = 0.0f;
-    public float CURENT_SPEED_Y = 0.0f;
-    public float WALKING_SPEED = 2.0f;
-    public float RUN_SPEED = 5.0f;
-    public float POS_X = 0.0f;
-    public float POS_Y = 0.0f;
+    private float CURENT_SPEED_X = 0.0f;
+    private float CURENT_SPEED_Y = 0.0f;
+    private float WALKING_SPEED = 3.0f;
+    private float RUN_SPEED = 6.0f;
+    private float POS_X = 0.0f;
+    private float POS_Y = 0.0f;
+    
+    // Флаг принимает значение true если игрок контролирует мяч
+    private boolean CATCH_BALL = false;
     
 	// Перечень возможных состояний героя
 	public static enum States {
@@ -203,6 +207,10 @@ public class Player extends Actor {
 		this.field = f;
 	}
 	
+	public void attachBall(Ball b) {
+		this.ball = b;
+	}
+	
 	public int getPlayerId() {
 		return this.PLAYER_ID;
 	}
@@ -253,20 +261,48 @@ public class Player extends Actor {
 		return this.PLAYER_HEIGHT;
 	}
 	
-	public float x() {
+	public float getAbsX() {
 		return this.POS_X;
 	}
 	
-	public float y() {
+	public float getAbsY() {
 		return this.POS_Y;
 	}
 	
-	public float h() {
+	public float getAbsH() {
 		return this.JUMP_HEIGHT;
+	}
+	
+	public void setAbsX(float x) {
+		this.POS_X = x;
+	}
+	
+	public void setAbsY(float y) {
+		this.POS_Y = y;
+	}
+	
+	public void setAbsH(float h) {
+		this.JUMP_HEIGHT = h;
 	}
 	
 	public void setActionsListener(Actions al) {
 		this.actionsListener = al;
+	}
+	
+	public void setVelocityX(float v) {
+		this.CURENT_SPEED_X = v;
+	}
+	
+	public void setVelocityY(float v) {
+		this.CURENT_SPEED_Y = v;
+	}
+	
+	public float getVelocityX() {
+		return this.CURENT_SPEED_X;
+	}
+	
+	public float getVelocityY() {
+		return this.CURENT_SPEED_Y;
 	}
 	
 	// Проверка может ли персонаж выполнить действие
@@ -437,6 +473,10 @@ public class Player extends Actor {
 		}
 	}
 	
+	private int currentFrame() {
+		return animations.get(this.curentState()).getKeyFrameIndex(stateTime);
+	}
+	
 	@Override
 	public void act(float delta) {
 		
@@ -503,6 +543,29 @@ public class Player extends Actor {
 		// Перемещение персонажа
 		movePlayerBy(new Vector2(this.CURENT_SPEED_X, this.CURENT_SPEED_Y));
 		
+		
+		// Если игрок находится в непосредственной близости возле мяча
+		if (this.ballIsNear()) {
+			
+			// Если в настоящий момент игроком производится удар по мячу
+			if (curentState() == States.FOOT_KICK && currentFrame() >= 2 && currentFrame() <= 4) {
+				if (direction == Directions.RIGHT) 
+					ball.kick(50, 90);
+				else 
+					ball.kick(50, 270);
+				
+				// Отмечаем что игрок потерял мяч
+				this.catchBall(false);
+			}
+			// Если персонаж ничего не делает и мяч никем не контролируется
+			else if (!ball.isCatched()) {
+				// Отмечаем что игрок заполучил мяч
+				this.catchBall(true);
+				ball.setVelocityX(0);
+			}
+		}
+		
+		
 		// Удар правой ногой
 		if (actionsListener.getActionStateFor(Controls.ACTION1, this.PLAYER_ID).pressed && Can(States.FOOT_KICK)) {
 			Do(States.FOOT_KICK, true);
@@ -552,14 +615,20 @@ public class Player extends Actor {
 			}
 		}
 		
-		if (this.PLAYER_ID == 0) System.out.println("Player X/Y/H:"+POS_X+"/"+POS_Y+"/"+JUMP_HEIGHT);
+		//if (this.PLAYER_ID == 0) System.out.println("Player X / Y / H:"+POS_X+" / "+POS_Y+" / "+JUMP_HEIGHT);
+	}
+	
+	
+	// Находится ли мяч рядом
+	public boolean ballIsNear() {
+		return Math.abs(ball.getAbsX() - this.getAbsX()) <= 40 && 
+				ball.getAbsY() - this.getAbsY() >= -40 && 
+				ball.getAbsY() - this.getAbsY() <= 20 &&
+				ball.getAbsH() + ball.getDiameter() > this.getAbsH() && 
+				ball.getAbsH() < this.getAbsH() + this.getHeight();
 	}
 	
 	private void movePlayerBy(Vector2 movePoint) {
-		float w = Gdx.graphics.getWidth();
-		float h = Gdx.graphics.getHeight();
-		float camX = field.camera.position.x;
-		float camY = field.camera.position.y;
 		
 		boolean doStop = false;
 		
@@ -590,8 +659,32 @@ public class Player extends Actor {
 			this.POS_X += movePoint.x;
 			this.POS_Y += movePoint.y;
 			
-			moveBy(movePoint.x, movePoint.y);
+			
+			// Если игрок владеет мячом то привязываем перемещение мяча к этом игроку
+			if (this.catchBall()) {
+//				ball.setVelocityX(this.getVelocityX());
+//				ball.setVelocityY(this.getVelocityY());
+				
+				if (this.direction == Directions.RIGHT) {
+					ball.moveBallBy(new Vector2(this.getAbsX()-ball.getAbsX() + 33, this.getAbsY()-ball.getAbsY()-1));
+				}
+				else {
+					ball.moveBallBy(new Vector2(this.getAbsX()-ball.getAbsX() - 33, this.getAbsY()-ball.getAbsY()-1));
+				}
+				ball.setAbsH(this.getAbsH());
+			}
 		}
+	}
+	
+	
+	// Контролирует ли мяч игрок
+	public boolean catchBall() {
+		return this.CATCH_BALL;
+	}
+	
+	public void catchBall(boolean c) {
+		ball.isCatched(c);
+		this.CATCH_BALL = c;
 	}
 	
 	@Override

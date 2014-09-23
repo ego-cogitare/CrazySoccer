@@ -49,7 +49,7 @@ public class Field extends Stage {
 	private Player[] players = new Player[PLAYERS_AMOUNT];
 	
 	// Листья
-	private Leaf[] leafs = new Leaf[30];
+	private Leaf[] leafs = new Leaf[10];
 	
 	// Размеры поля в клетках
 	private int CELLS_X;
@@ -136,6 +136,7 @@ public class Field extends Stage {
 			this.addActor(players[i].shadow);
 			
 			players[i].attachField(this);
+			players[i].attachBall(ball);
 		}
 		
 		// Создание листьев
@@ -280,34 +281,34 @@ public class Field extends Stage {
 	
 	// Расположение игроков по полю
 	public void actorsArrangement() {
-		ball.POS_X = worldWidth / 2.0f;
-		ball.POS_Y = worldHeight / 2.0f;
+		ball.setAbsX(worldWidth / 2.0f);
+		ball.setAbsY(worldHeight / 2.0f);
 		
-		players[0].POS_X = worldWidth / 2.0f;
-		players[0].POS_Y = fieldOffsetY + fieldHeight / 2.0f;
+		players[0].setAbsX(worldWidth / 2.0f);
+		players[0].setAbsY(fieldOffsetY + fieldHeight / 2.0f);
 		
-		players[1].POS_X = 600;
-		players[1].POS_Y = 500;
+		players[1].setAbsX(600);
+		players[1].setAbsY(500);
 		
-		players[2].POS_X = 600;
-		players[2].POS_Y = worldHeight - 500;
+		players[2].setAbsX(600);
+		players[2].setAbsY(worldHeight - 500);
 		
-		players[3].POS_X = worldWidth / 2.0f - 350;
-		players[3].POS_Y = 500;
+		players[3].setAbsX(worldWidth / 2.0f - 350);
+		players[3].setAbsY(500);
 		
-		players[4].POS_X = worldWidth / 2.0f - 350;
-		players[4].POS_Y = worldHeight - 500;
+		players[4].setAbsX(worldWidth / 2.0f - 350);
+		players[4].setAbsY(worldHeight - 500);
 	}
 	
 	public void moveCamera() {
 		// Перемещение всех персонажей относительно персонажа (мяча) за которым следит камера
 		for (int i = 0; i < players.length; i++) {
-			players[i].setX(players[i].POS_X - camera.position.x + Gdx.graphics.getWidth() / 2.0f);
-			players[i].setY(players[i].POS_Y - camera.position.y + Gdx.graphics.getHeight() / 2.0f);
+			players[i].setX(players[i].getAbsX() - camera.position.x + Gdx.graphics.getWidth() / 2.0f);
+			players[i].setY(players[i].getAbsY() - camera.position.y + Gdx.graphics.getHeight() / 2.0f);
 		}
 		
-		ball.setX(ball.POS_X - camera.position.x + Gdx.graphics.getWidth() / 2.0f);
-		ball.setY(ball.POS_Y - camera.position.y + Gdx.graphics.getHeight() / 2.0f);
+		ball.setX(ball.getAbsX() - camera.position.x + Gdx.graphics.getWidth() / 2.0f);
+		ball.setY(ball.getAbsY() - camera.position.y + Gdx.graphics.getHeight() / 2.0f);
 	}
 	
 	public void processGame() { 
@@ -369,11 +370,15 @@ public class Field extends Stage {
 	
 	// Отслеживание столкновений
 	private void detectCollisions() {
-		if (Math.abs(ball.x() - players[0].x()) <= 40 && ball.y() - players[0].y() >= -40 && ball.y() - players[0].y() <= 20
-				&& ball.h() + ball.getDiameter() > players[0].h() && ball.h() < players[0].h() +  players[0].getHeight()) {
-			
-			System.out.println("!!!");
-		}
+//		for (int i = 0; i < players.length; i++) {
+//			if (Math.abs(ball.getAbsX() - players[i].getAbsX()) <= 40 && 
+//				ball.getAbsY() - players[i].getAbsY() >= -40 && ball.getAbsY() - players[i].getAbsY() <= 20 &&
+//				ball.getAbsH() + ball.getDiameter() > players[i].getAbsH() && 
+//				ball.getAbsH() < players[i].getAbsH() +  players[0].getHeight()) 
+//			{
+//				players[i].catchBall(true);
+//			}
+//		}
 	}
 	
 	// Переносим тени от персонажей в самую глубину чтобы не перекрывать спрайты

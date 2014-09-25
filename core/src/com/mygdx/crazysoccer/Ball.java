@@ -44,7 +44,7 @@ public class Ball extends Actor {
     private float AIR_FRICTION = -0.010f;
     
     // Коэффициент трения мяча о газон
-    private float GRASS_FRICTION = -0.018f;
+    private float GRASS_FRICTION = -0.03f;
     
     // Коефициент отпрыгивания мяча от газона
     private float RESTITUTION = 0.6f;
@@ -143,7 +143,7 @@ public class Ball extends Actor {
 	}
 	
 	// Подбор анимации в зависимости от скорости полета мяча
-	private States getAnimationByVelocity(float v) {
+	public States getAnimationByVelocity(float v) {
 		if (v >= 10) {
 			return States.FLY_FAST;
 		}
@@ -392,6 +392,14 @@ public class Ball extends Actor {
 		}
 	}
 	
+	public boolean inField() {
+		return 
+		    this.getAbsY() + 8 > field.fieldOffsetY && 
+		    this.getAbsY() - 4 < field.fieldOffsetY + field.fieldHeight &&
+		    this.getAbsX() + 12 > field.fieldOffsetX + field.mGetSideLineProjection(this.getAbsY()) &&
+			this.getAbsX() - 12 < field.fieldOffsetX + field.fieldMaxWidth - field.mGetSideLineProjection(this.getAbsY());
+	}
+	
 	@Override
 	public void act(float delta) {
 		
@@ -427,27 +435,24 @@ public class Ball extends Actor {
 		this.CURENT_SPEED_X += this.CURENT_SPEED_X * this.AIR_FRICTION; 
 		this.CURENT_SPEED_Y += this.CURENT_SPEED_Y * this.AIR_FRICTION;
 		
-		// Полная скорость движения мяча по осям OX / OY 
-		float absSpeed = Math.abs(this.CURENT_SPEED_X) + Math.abs(this.CURENT_SPEED_Y); 
-		
-		Do(getAnimationByVelocity(absSpeed), true);
-		
 		// Останавливаем мяч, если его суммарная скорость по осям
-		if (absSpeed < 0.25f && curentState() != States.STOP) {
+		if (this.absVelocity() < 0.25f && curentState() != States.STOP) {
 			this.CURENT_SPEED_X = 0.0f;
 			this.CURENT_SPEED_Y = 0.0f;
 			this.JUMP_VELOCITY = 0.0f;
 			
 			// Устанавливаем окончательный угол поворота мяча и останавливаем анимацию
 			stateTime = animations.get(States.FLY_SLOW).getKeyFrameIndex(stateTime) * animations.get(States.STOP).getFrameDuration();
-//			System.out.println(animations.get(States.FLY_SLOW).getKeyFrameIndex(stateTime));
-			
+
 			Do(States.STOP, true);
 		}
 		
+		Do(getAnimationByVelocity(this.absVelocity()), true);
+
+		
 		// Реализация гравитации (гравитация начинает действовать только когда сумма абсолютных
 		// скоростей по осям OX и OY < 15)
-		if (absSpeed < 14 && (this.JUMP_HEIGHT > 0 || this.JUMP_VELOCITY > 0)) {
+		if (this.absVelocity() < 14 && (this.JUMP_HEIGHT > 0 || this.JUMP_VELOCITY > 0)) {
 			// Текущая вертикальная скорость мяча
 			this.JUMP_VELOCITY -= 6.0f * Gdx.graphics.getDeltaTime();
 			
@@ -473,6 +478,11 @@ public class Ball extends Actor {
 		moveBallBy(new Vector2(this.CURENT_SPEED_X, this.CURENT_SPEED_Y));
 	}
 	
+	// Суммарная скорость мяча по осям
+	public float absVelocity() {
+		return Math.abs(this.CURENT_SPEED_X) + Math.abs(this.CURENT_SPEED_Y);
+	}
+	
 	private boolean getFlip() {
 		if (this.CURENT_SPEED_X < 0 || this.CURENT_SPEED_Y < 0) {
 			return true;
@@ -482,12 +492,11 @@ public class Ball extends Actor {
 	
 	@Override
 	public void draw(Batch batch, float parentAlpha) {
-		
 		stateTime += Gdx.graphics.getDeltaTime();
 		
 		// Анимирование мяча
 		animations.get(this.curentState()).setPlayMode(PlayMode.LOOP);
-		currentFrame = animations.get(this.curentState()).getKeyFrame(stateTime, true); 
+		currentFrame = animations.get(curentState()).getKeyFrame(stateTime, true); 
 		
 		spriteBatch.begin();
         spriteBatch.draw(

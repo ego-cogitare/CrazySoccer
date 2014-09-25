@@ -14,6 +14,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.maps.MapObject;
@@ -42,8 +43,14 @@ public class Field extends Stage {
 	// Текстура для хранения спрайтов
 	public static Texture sprites;
 	
+	// Спрайт для отрисовки ворот
+	public SpriteBatch gate;
+	
 	// Екземпляр мяча
 	private Ball ball;
+	
+	// Ворота
+	private Gate[] gates = new Gate[2];
 	
 	// Екземпляр класса описывающего игрока
 	private Player[] players = new Player[PLAYERS_AMOUNT];
@@ -91,32 +98,13 @@ public class Field extends Stage {
     // Сохранение нажатых клавиш и их времени
     public Actions actions = new Actions();
     
-    // Сортировка коллекции по ключам
-    private static HashMap<Integer, Float> sortByValues(HashMap map) { 
-        List list = new LinkedList(map.entrySet());
-        // Defined Custom Comparator here
-        Collections.sort(list, new Comparator() {
-             public int compare(Object o1, Object o2) {
-                return ((Comparable) ((Map.Entry) (o1)).getValue())
-                   .compareTo(((Map.Entry) (o2)).getValue());
-             }
-        });
-
-        // Here I am copying the sorted list in HashMap
-        // using LinkedHashMap to preserve the insertion order
-        HashMap sortedHashMap = new LinkedHashMap();
-        for (Iterator it = list.iterator(); it.hasNext();) {
-		   Map.Entry entry = (Map.Entry) it.next();
-		   sortedHashMap.put(entry.getKey(), entry.getValue());
-        } 
-        return sortedHashMap;
-    }
-	
 	public Field(ScreenViewport screenViewport) {
 		super(screenViewport);
 		
 		// Загрузка спрайтов
 		sprites = new Texture(Gdx.files.internal("sprites.png"));
+		
+		gate = new SpriteBatch(); 
 		
 		// Создание мяча
 		ball = new Ball();
@@ -125,9 +113,18 @@ public class Field extends Stage {
 		this.addActor(ball.shadow);
 		ball.attachField(this);
 		
-		// Создание игроковs
-		for (int i = 0; i < players.length; i++) {
+		// Создание ворот
+		for (int i = 0; i < gates.length; i++) {
 			// Создание первого игрока
+			gates[i] = new Gate(i);
+
+			// Добавление игрока (актера) на сцену (поле)
+			this.addActor(gates[i]);
+		}
+		
+		// Создание игроков
+		for (int i = 0; i < players.length; i++) {
+			// Создание игрока
 			players[i] = new Player(i);
 			// Привязка слушателя ввода для игрока
 			players[i].setActionsListener(actions);
@@ -177,8 +174,8 @@ public class Field extends Stage {
         		Arrays.sort(polyline.getVertices());
         		
         		// Получение размеров игрового поля
-        		this.fieldMinWidth = (int)polyline.getVertices()[9] - (int)polyline.getVertices()[0];
-        		this.fieldMaxWidth = (int)polyline.getVertices()[8] - (int)polyline.getVertices()[5];
+        		this.fieldMaxWidth = (int)polyline.getVertices()[9] - (int)polyline.getVertices()[0];
+        		this.fieldMinWidth = (int)polyline.getVertices()[8] - (int)polyline.getVertices()[5];
         		this.fieldHeight   = (int)polyline.getVertices()[6] - (int)polyline.getVertices()[0];
         		
         		// Получение смещения разметки поля относительно карты
@@ -199,6 +196,7 @@ public class Field extends Stage {
         		// Расстановка игроков
         		this.actorsArrangement();
         		
+        		
 //        		for (int h = 0; h < fieldHeight; h++) {
 //        			System.out.println(h+" "+mGetSideLineProjection(h));
 //        		}
@@ -206,9 +204,30 @@ public class Field extends Stage {
 		}
 	}
 	
+    // Сортировка коллекции по ключам
+    private static HashMap<Integer, Float> sortByValues(HashMap map) { 
+        List list = new LinkedList(map.entrySet());
+        // Defined Custom Comparator here
+        Collections.sort(list, new Comparator() {
+             public int compare(Object o1, Object o2) {
+                return ((Comparable) ((Map.Entry) (o1)).getValue())
+                   .compareTo(((Map.Entry) (o2)).getValue());
+             }
+        });
+
+        // Here I am copying the sorted list in HashMap
+        // using LinkedHashMap to preserve the insertion order
+        HashMap sortedHashMap = new LinkedHashMap();
+        for (Iterator it = list.iterator(); it.hasNext();) {
+		   Map.Entry entry = (Map.Entry) it.next();
+		   sortedHashMap.put(entry.getKey(), entry.getValue());
+        } 
+        return sortedHashMap;
+    }
+	
 	// Получение длины проекции отрезка на ось аута поля (используется для проверки
 	// находится ли объект в пределах поля)
-	private float mGetSideLineProjection(int h) {
+	public float mGetSideLineProjection(float h) {
 		float b = (fieldMaxWidth - fieldMinWidth) / 2.0f;
 		float c = (float)Math.sqrt(fieldHeight * fieldHeight + b * b);
 		float sinAlpha = (float)fieldHeight / c;
@@ -229,7 +248,7 @@ public class Field extends Stage {
 	
 	// Отрисовка поля
 	public void drawField() {
-		 Gdx.gl20.glLineWidth(6);
+		 Gdx.gl20.glLineWidth(8);
 		 shapeRenderer.setProjectionMatrix(camera.combined);
 		 shapeRenderer.begin(ShapeType.Line);
 		 shapeRenderer.setColor(1, 1, 1, 1);
@@ -247,10 +266,10 @@ public class Field extends Stage {
 		 shapeRenderer.circle(leftBottom.x + fieldMaxWidth / 2.0f + fieldOffsetX, fieldHeight / 2.0f + fieldOffsetY, 200);
 		 
 		 // Кружки для подачи угловых
-		 shapeRenderer.arc(leftBottom.x + fieldOffsetX, leftBottom.y + fieldOffsetY, 60, 0, 88);
-		 shapeRenderer.arc(leftTop.x + fieldOffsetX, leftTop.y + fieldOffsetY, 60, -91, 91);
-		 shapeRenderer.arc(rightTop.x + fieldOffsetX, rightTop.y + fieldOffsetY, 60, 180, 91);
-		 shapeRenderer.arc(rightBottom.x + fieldOffsetX, rightBottom.y + fieldOffsetY, 60, 92, 88);
+		 shapeRenderer.arc(leftBottom.x + fieldOffsetX, leftBottom.y + fieldOffsetY, 60, 0, 82);
+		 shapeRenderer.arc(leftTop.x + fieldOffsetX, leftTop.y + fieldOffsetY, 60, -97, 97);
+		 shapeRenderer.arc(rightTop.x + fieldOffsetX, rightTop.y + fieldOffsetY, 60, 180, 97);
+		 shapeRenderer.arc(rightBottom.x + fieldOffsetX, rightBottom.y + fieldOffsetY, 60, 97, 82);
 		 
 		 // Левые ворота
 		 float yCenter = leftBottom.y + fieldHeight / 2.0f + fieldOffsetY;
@@ -260,7 +279,7 @@ public class Field extends Stage {
 		 shapeRenderer.line(leftBottom.x + fieldOffsetX + mGetSideLineProjection(Math.round(yCenter + outerBoxHeight)), yCenter + outerBoxHeight, outerBoxWidth + fieldOffsetX + mGetSideLineProjection(Math.round(yCenter + outerBoxHeight)), yCenter + outerBoxHeight);
 		 shapeRenderer.line(leftBottom.x + fieldOffsetX + mGetSideLineProjection(Math.round(yCenter - outerBoxHeight)), yCenter - outerBoxHeight, outerBoxWidth + fieldOffsetX + mGetSideLineProjection(Math.round(yCenter - outerBoxHeight)), yCenter - outerBoxHeight);
 		 shapeRenderer.line(outerBoxWidth + fieldOffsetX + mGetSideLineProjection(Math.round(yCenter + outerBoxHeight)), yCenter + outerBoxHeight, outerBoxWidth + fieldOffsetX + mGetSideLineProjection(Math.round(yCenter - outerBoxHeight)), yCenter - outerBoxHeight);
-		 shapeRenderer.arc(outerBoxWidth + fieldOffsetX + mGetSideLineProjection(Math.round(yCenter)), yCenter, 100, 268.5f, 180);
+		 shapeRenderer.arc(outerBoxWidth + fieldOffsetX + mGetSideLineProjection(Math.round(yCenter)), yCenter, 100, 263f, 180);
 		 
 		 // Правые ворота
 		 shapeRenderer.line(rightBottom.x - mGetSideLineProjection(Math.round(yCenter + innerBoxHeight)) + fieldOffsetX, yCenter + innerBoxHeight, rightBottom.x - mGetSideLineProjection(Math.round(yCenter + innerBoxHeight)) - innerBoxWidth + fieldOffsetX, yCenter + innerBoxHeight);
@@ -269,7 +288,7 @@ public class Field extends Stage {
 		 shapeRenderer.line(rightBottom.x - mGetSideLineProjection(Math.round(yCenter + outerBoxHeight)) + fieldOffsetX, yCenter + outerBoxHeight, rightBottom.x - mGetSideLineProjection(Math.round(yCenter + outerBoxHeight)) - outerBoxWidth + fieldOffsetX, yCenter + outerBoxHeight);
 		 shapeRenderer.line(rightBottom.x - mGetSideLineProjection(Math.round(yCenter - outerBoxHeight)) + fieldOffsetX, yCenter - outerBoxHeight, rightBottom.x - mGetSideLineProjection(Math.round(yCenter - outerBoxHeight)) - outerBoxWidth + fieldOffsetX, yCenter - outerBoxHeight);
 		 shapeRenderer.line(rightBottom.x - mGetSideLineProjection(Math.round(yCenter + outerBoxHeight)) - outerBoxWidth + fieldOffsetX, yCenter + outerBoxHeight, rightBottom.x - mGetSideLineProjection(Math.round(yCenter - outerBoxHeight)) - outerBoxWidth + fieldOffsetX, yCenter - outerBoxHeight);
-		 shapeRenderer.arc(rightBottom.x - mGetSideLineProjection(Math.round(yCenter)) - outerBoxWidth + fieldOffsetX, yCenter, 100, 91.0f, 180);
+		 shapeRenderer.arc(rightBottom.x - mGetSideLineProjection(Math.round(yCenter)) - outerBoxWidth + fieldOffsetX, yCenter, 100, 97f, 180);
 		 
 		 shapeRenderer.end();
 		 
@@ -277,6 +296,8 @@ public class Field extends Stage {
 		 shapeRenderer.begin(ShapeType.Filled);
 		 shapeRenderer.circle(fieldOffsetX + fieldMaxWidth / 2.0f, fieldOffsetY + fieldHeight / 2.0f, 15);
 		 shapeRenderer.end();
+		 
+//         System.out.println(Gdx.graphics.getFramesPerSecond());
 	}
 	
 	// Расположение игроков по полю
@@ -298,6 +319,12 @@ public class Field extends Stage {
 		
 		players[4].setAbsX(worldWidth / 2.0f - 350);
 		players[4].setAbsY(worldHeight - 500);
+		
+		gates[0].setAbsX(290);
+		gates[0].setAbsY(worldHeight / 2 - 100);
+		
+		gates[1].setAbsX(3448);
+		gates[1].setAbsY(worldHeight / 2 - 100);
 	}
 	
 	public void moveCamera() {
@@ -309,6 +336,11 @@ public class Field extends Stage {
 		
 		ball.setX(ball.getAbsX() - camera.position.x + Gdx.graphics.getWidth() / 2.0f);
 		ball.setY(ball.getAbsY() - camera.position.y + Gdx.graphics.getHeight() / 2.0f);
+		
+		for (int i = 0; i < gates.length; i++) {
+			gates[i].setX(gates[i].getAbsX() - camera.position.x + Gdx.graphics.getWidth() / 2.0f);
+			gates[i].setY(gates[i].getAbsY() - camera.position.y + Gdx.graphics.getHeight() / 2.0f);
+		}
 	}
 	
 	public void processGame() { 
@@ -370,15 +402,6 @@ public class Field extends Stage {
 	
 	// Отслеживание столкновений
 	private void detectCollisions() {
-//		for (int i = 0; i < players.length; i++) {
-//			if (Math.abs(ball.getAbsX() - players[i].getAbsX()) <= 40 && 
-//				ball.getAbsY() - players[i].getAbsY() >= -40 && ball.getAbsY() - players[i].getAbsY() <= 20 &&
-//				ball.getAbsH() + ball.getDiameter() > players[i].getAbsH() && 
-//				ball.getAbsH() < players[i].getAbsH() +  players[0].getHeight()) 
-//			{
-//				players[i].catchBall(true);
-//			}
-//		}
 	}
 	
 	// Переносим тени от персонажей в самую глубину чтобы не перекрывать спрайты

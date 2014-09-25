@@ -9,8 +9,8 @@
   </data>
  </layer>
  <objectgroup name="field" width="120" height="52">
-  <object x="352" y="1600">
-   <polyline points="0,0 3136,0 3104,-1536 32,-1536 0,0"/>
+  <object x="320" y="1600">
+   <polyline points="0,0 3232,0 3040,-1536 192,-1536 0,0"/>
   </object>
  </objectgroup>
 </map>

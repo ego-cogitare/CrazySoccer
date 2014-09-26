@@ -196,6 +196,14 @@ public class Field extends Stage {
         		// Расстановка игроков
         		this.actorsArrangement();
         		
+        		// Определение кооридат штанг
+        		float y1 = this.worldHeight / 2.0f - gates[0].height() / 2.0f;
+        		float y2 = this.worldHeight / 2.0f + gates[0].width() / 2.0f;
+        		gates[0].setBottomBar(new Vector2(fieldOffsetX + this.mGetSideLineProjection(y1), y1));
+        		gates[0].setTopBar(new Vector2(fieldOffsetX + this.mGetSideLineProjection(y2), y2));
+        		
+        		gates[1].setBottomBar(new Vector2(fieldOffsetX + fieldMaxWidth - this.mGetSideLineProjection(y1), y1));
+        		gates[1].setTopBar(new Vector2(fieldOffsetX + fieldMaxWidth - this.mGetSideLineProjection(y2), y2));
         		
 //        		for (int h = 0; h < fieldHeight; h++) {
 //        			System.out.println(h+" "+mGetSideLineProjection(h));
@@ -395,6 +403,17 @@ public class Field extends Stage {
 		// она создавалась, то при каждой отрисовке нужно прятать тени спрайтов, перенося их
 		// назад, устанавливая минимальный z-index
 		hideShadows();
+		
+		// Если мяч попадает штангу
+		if (((Math.abs(ball.getAbsY() - gates[0].getBottomBar().y) <= 10 && ball.getAbsX() < gates[0].getBottomBar().x + 10) || 
+			 (Math.abs(ball.getAbsY() - gates[0].getTopBar().y) <= 10 && ball.getAbsX() < gates[0].getTopBar().x + 10)) ||
+			
+			((Math.abs(ball.getAbsY() - gates[1].getBottomBar().y) <= 10 && ball.getAbsX() > gates[1].getBottomBar().x - 10) || 
+			 (Math.abs(ball.getAbsY() - gates[1].getTopBar().y) <= 10 && ball.getAbsX() > gates[1].getTopBar().x - 10))
+				) {
+			
+			ball.setVelocityX(-ball.getVelocityX());
+		}
 		
 		// Отслеживание столкновений
 		detectCollisions();

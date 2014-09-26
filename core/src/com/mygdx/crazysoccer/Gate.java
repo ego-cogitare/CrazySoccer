@@ -3,14 +3,19 @@ package com.mygdx.crazysoccer;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 
 public class Gate extends Actor {
-
-	private int id;
-	
+	// 930 732
+	private int ID;
 	private float POS_X;
 	private float POS_Y;
+	
+	private float WIDTH = 195.0f;
+	private float HEIGHT = 195.0f;
+	private Vector2 BOTTOM_BAR;
+	private Vector2 TOP_BAR;
 	
 	private TextureRegion gate;
 	private SpriteBatch gateSprite;
@@ -18,12 +23,26 @@ public class Gate extends Actor {
 	public Gate(int id) {
 		super();
 		
-		this.id = id;
-		
+		this.ID = id;
 		gate = new TextureRegion(Field.sprites);
 		gate.setRegion(0,0,45,125);
-		
 		gateSprite = new SpriteBatch();
+	}
+	
+	public Vector2 getBottomBar() {
+		return this.BOTTOM_BAR;
+	}
+	
+	public Vector2 getTopBar() {
+		return this.TOP_BAR;
+	}
+	
+	public void setBottomBar(Vector2 p) {
+		this.BOTTOM_BAR = p;
+	}
+	
+	public void setTopBar(Vector2 p) {
+		this.TOP_BAR = p;
 	}
 	
 	public float getAbsX() {
@@ -32,6 +51,14 @@ public class Gate extends Actor {
 	
 	public float getAbsY() {
 		return this.POS_Y;
+	}
+	
+	public float height() {
+		return this.HEIGHT;
+	}
+	
+	public float width() {
+		return this.WIDTH;
 	}
 	
 	public void setAbsX(float x) {
@@ -47,8 +74,14 @@ public class Gate extends Actor {
 		
 	}
 	
+	
 	@Override
 	public void draw(Batch batch, float parentAlpha) {
+//		System.out.println(ID);
+//		System.out.println(BOTTOM_BAR);
+//		System.out.println(TOP_BAR);
+//		System.out.println();
+		
 		gateSprite.begin();
 		gateSprite.draw(
 			gate.getTexture(), 
@@ -65,7 +98,7 @@ public class Gate extends Actor {
     		gate.getRegionY(), 
     		45, 
     		125, 
-    		id == 0, 
+    		ID == 0, 
     		false
 		);
 		gateSprite.end();

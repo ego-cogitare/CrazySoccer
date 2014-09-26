@@ -45,7 +45,7 @@ public class Player extends Actor {
     private float MASS = 62.0f;
     
     // Сила персонажа
-    private float STRENGTH = 320.0f;
+    private float STRENGTH = 260.0f;
     
     // Текущая скорость движения персонажа при прыжке 
     private float JUMP_VELOCITY = 0.0f;
@@ -449,8 +449,13 @@ public class Player extends Actor {
 						!state.get(States.DEAD) &&
 						!state.get(States.SIT) &&
 						!state.get(States.LAY_BACK) &&
-						!state.get(States.LAY_BELLY) &&
-						!state.get(States.DEAD);
+						!state.get(States.LAY_BELLY);
+			break;
+			
+			case DEAD:
+				isCan = !state.get(States.DEAD) &&
+						!state.get(States.LAY_BACK) &&
+						!state.get(States.LAY_BELLY);
 			break;
 		}
 		
@@ -492,7 +497,6 @@ public class Player extends Actor {
 				actionsListener.disableAction(Controls.ACTION3, this.PLAYER_ID);
 				this.stateTime = 0.0f;
 				this.setJumpVelocity(this.STRENGTH / this.MASS);
-				//this.setAbsH(0.01f);
 			break;
 			
 			case RUN: 
@@ -500,8 +504,11 @@ public class Player extends Actor {
 			break;
 			
 			case STAY: 
-				this.CURENT_SPEED_X = 0.0f;
-				this.CURENT_SPEED_Y = 0.0f;
+				// Если игрок не находится в воздухе то устанавливаем его скорости по осям равными 0
+				if (this.getAbsH() == 0) {
+					this.CURENT_SPEED_X = 0.0f;
+					this.CURENT_SPEED_Y = 0.0f;
+				}
 			break;
 			
 			case SIT: 
@@ -547,6 +554,12 @@ public class Player extends Actor {
 		return States.STAY;
 	}
 	
+	// Установка текущего состояния персонажа (для подмены анимации)
+	public void curentState(States s) {
+		this.stopAll();
+		state.put(States.JUMP, true); 
+	}
+	
 	// Отключение действия
 	private void disableAction(Action disableAction) {
 		actionsListener.remove(disableAction);
@@ -590,27 +603,33 @@ public class Player extends Actor {
 		
 		
 		if (actionsListener.getActionStateFor(Controls.LEFT, this.PLAYER_ID).pressed) { 
-			this.direction = Directions.LEFT;
-			
-			// Если было двойное нажатие кнопки, то делаем персонаж бегущим
-			if (actionsListener.getActionStateFor(Controls.LEFT, this.PLAYER_ID).doublePressed && Can(States.RUN)) {
-				Do(States.RUN, true);
-			} 
-			else if (Can(States.WALKING)) {
-				this.CURENT_SPEED_X = -this.WALKING_SPEED;
-				Do(States.WALKING, true);
+			// Персонаж может менять свое направления только находясь на земле
+			if (this.getAbsH() == 0) {
+				this.direction = Directions.LEFT;
+				
+				// Если было двойное нажатие кнопки, то делаем персонаж бегущим
+				if (actionsListener.getActionStateFor(Controls.LEFT, this.PLAYER_ID).doublePressed && Can(States.RUN)) {
+					Do(States.RUN, true);
+				} 
+				else if (Can(States.WALKING)) {
+					this.CURENT_SPEED_X = -this.WALKING_SPEED;
+					Do(States.WALKING, true);
+				}
 			}
 		}
 		
-		if (actionsListener.getActionStateFor(Controls.RIGHT, this.PLAYER_ID).pressed) { 
-			this.direction = Directions.RIGHT;
-			
-			if (actionsListener.getActionStateFor(Controls.RIGHT, this.PLAYER_ID).doublePressed && Can(States.RUN)) {
-				Do(States.RUN, true);
-			} 
-			else if (Can(States.WALKING)) {
-				this.CURENT_SPEED_X = this.WALKING_SPEED;
-				Do(States.WALKING, true);
+		if (actionsListener.getActionStateFor(Controls.RIGHT, this.PLAYER_ID).pressed) {
+			// Персонаж может менять свое направления только находясь на земле
+			if (this.getAbsH() == 0) {
+				this.direction = Directions.RIGHT;
+				
+				if (actionsListener.getActionStateFor(Controls.RIGHT, this.PLAYER_ID).doublePressed && Can(States.RUN)) {
+					Do(States.RUN, true);
+				} 
+				else if (Can(States.WALKING)) {
+					this.CURENT_SPEED_X = this.WALKING_SPEED;
+					Do(States.WALKING, true);
+				}
 			}
 		}
 		
@@ -629,20 +648,31 @@ public class Player extends Actor {
 		// Перемещение персонажа
 		movePlayerBy(new Vector2(this.CURENT_SPEED_X, this.CURENT_SPEED_Y));
 		
-//		if (curentState() == States.FOOT_KICK)
-//		System.out.println(currentFrame());
-		
 		// Если игрок находится в непосредственной близости возле мяча
 		if (this.ballIsNear()) {
 			// Если в настоящий момент игроком производится удар по мячу
-			if (curentState() == States.FOOT_KICK && currentFrame() >= 5 && currentFrame() <= 6) {
-				if (direction == Directions.RIGHT) 
-					ball.kick(50, 90);
-				else 
-					ball.kick(50, 270);
+			if (curentState() == States.FOOT_KICK) {
+	
+				// Если при ударе игрок уже приземляется то придаем ему небольшой импульс
+				// чтобы он успел выполнить удар по мячу до момента соприкосновения с землей
+				if (this.JUMP_VELOCITY < 0 && this.catchBall()) this.setJumpVelocity(3f);
 				
-				// Отмечаем что игрок потерял мяч
-				this.catchBall(false);
+				if (currentFrame() >= 4 && currentFrame() <= 7) {
+					if (direction == Directions.RIGHT) 
+						ball.kick(40, 90);
+					else 
+						ball.kick(40, 270);
+					
+					// Отмечаем что игрок потерял мяч
+					this.catchBall(false);
+				}
+				else if (currentFrame() < 5 && this.getAbsH() > 0 ) {
+					if (direction == Directions.RIGHT) 
+						ball.setVelocityX(4);
+					else 
+						ball.setVelocityX(-4);
+				}
+				
 			}
 			// Если персонаж ничего не делает и мяч никем не контролируется
 			else if (!ball.isCatched()) {
@@ -675,9 +705,11 @@ public class Player extends Actor {
 					ball.setVelocityY(0);
 				}
 				// Если скорость больше 14 то мяч убивает игрока
-				else {
-					Do(States.DEAD, true);
-					this.setJumpVelocity(this.STRENGTH / this.MASS / 1.5f);
+				else if (ball.absVelocity() >= 14) {
+					if (Can(States.DEAD)) {
+						Do(States.DEAD, true);
+						this.setJumpVelocity(this.STRENGTH / this.MASS / 1.5f);
+					}
 					
 					// Отмечаем что игрок потерял мяч
 					this.catchBall(false);
@@ -723,6 +755,13 @@ public class Player extends Actor {
 			this.CURENT_SPEED_Y = 0.0f;
 		}
 		
+		// Если игрок находится в воздухе и его анимация "STAY" то подменяем ее на "JUMP"
+		if (this.curentState() == States.STAY && this.getAbsH() > 0) {
+			this.curentState(States.JUMP);
+		}
+		
+		
+		
 		
 		
 		/**********************************************************************
@@ -730,7 +769,7 @@ public class Player extends Actor {
 		 **********************************************************************/
 		
 		// Пока персонаж находится в воздухе его скорость взлета / падения меняется
-		this.JUMP_VELOCITY += this.JUMP_HEIGHT > 0 ? -12.0f * Gdx.graphics.getDeltaTime() : 0;
+		this.JUMP_VELOCITY += this.JUMP_HEIGHT > 0 ? -9.81f * Gdx.graphics.getDeltaTime() : 0;
 		this.JUMP_HEIGHT += this.JUMP_VELOCITY;
 		
 		// Если игрок приземлился
@@ -752,7 +791,6 @@ public class Player extends Actor {
 			this.JUMP_VELOCITY = 0.0f;
 		}
 	}
-	
 	
 	// Находится ли мяч рядом
 	public boolean ballIsNear() {
@@ -788,7 +826,7 @@ public class Player extends Actor {
 				doStop = true;
 			}
 			
-			// Если персонаж достик границы игрового мира, то останавливаем его
+			// Если персонаж достиг границы игрового мира, то останавливаем его
 			if (doStop) Do(States.STAY,true);
 			
 			this.POS_X += movePoint.x;
@@ -826,7 +864,7 @@ public class Player extends Actor {
 		// Анимирование персонажа
 		animations.get(this.curentState()).setPlayMode(PlayMode.LOOP);
 		currentFrame = animations.get(this.curentState()).getKeyFrame(stateTime, true); 
-		
+
 		// Если окончено текущее действие
 		if (animations.get(this.curentState()).isAnimationFinished(stateTime)) {
 			/* Если игрок лежал после получение удара, то перед тем как встать должна 

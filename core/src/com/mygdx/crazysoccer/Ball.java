@@ -178,7 +178,9 @@ public class Ball extends Actor {
 		if (stopAll) this.stopAll();
 		
 		switch (state) {
-			case FLY_FAST:
+			case STOP:
+				this.setVelocityX(0);
+				this.setVelocityY(0);
 			break;
 		}
 
@@ -280,8 +282,8 @@ public class Ball extends Actor {
 				doStop = true;
 			}
 			
-			// Если персонаж достик границы игрового мира, то останавливаем его
-			if (doStop) Do(States.STOP,true);
+			// Если мяч достиг границы игрового мира, то останавливаем его
+			if (doStop) Do(States.STOP, true);
 			
 			// Перемещение по оси X
 			if (this.POS_X < field.fieldMaxWidth / 2.0f) {
@@ -492,6 +494,7 @@ public class Ball extends Actor {
 	
 	@Override
 	public void draw(Batch batch, float parentAlpha) {
+//		System.out.println(this.absVelocity());
 		stateTime += Gdx.graphics.getDeltaTime();
 		
 		// Анимирование мяча
@@ -518,7 +521,7 @@ public class Ball extends Actor {
     		false
 		);
         spriteBatch.end();
-		
+        
 		// Ресование тени персонажа
         shadow.setX(getX() - 12);
         shadow.setY(getY() - 2);

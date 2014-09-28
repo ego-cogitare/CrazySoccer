@@ -19,6 +19,7 @@ public class Gate extends Actor {
 	
 	private TextureRegion gate;
 	private SpriteBatch gateSprite;
+	public Object getBottomBar;
 	
 	public Gate(int id) {
 		super();

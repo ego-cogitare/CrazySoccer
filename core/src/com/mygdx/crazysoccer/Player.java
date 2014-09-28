@@ -1,9 +1,13 @@
 package com.mygdx.crazysoccer;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.Animation.PlayMode;
@@ -45,7 +49,7 @@ public class Player extends Actor {
     private float MASS = 62.0f;
     
     // Сила персонажа
-    private float STRENGTH = 260.0f;
+    private float STRENGTH = 220.0f;
     
     // Текущая скорость движения персонажа при прыжке 
     private float JUMP_VELOCITY = 0.0f;
@@ -95,32 +99,6 @@ public class Player extends Actor {
     // Набор анимаций персонажа
     public Map<States, Animation> animations;
     
-	// Кадры анимации покоя
-	public TextureRegion[] stayFrames; 
-	// Кадры анимации хотьбы
-	public TextureRegion[] walkFrames; 
-	// Кадры анимации бега
-	public TextureRegion[] runFrames;
-	// Кадры анимации приседания
-	public TextureRegion[] sitFrames;
-	// Кадры анимации праздования победы
-	public TextureRegion[] passFrames;
-	// Кадры анимации приема мяча ногой
-	public TextureRegion[] kneeCatch;
-	// Кадры анимации приема мяча грудью
-	public TextureRegion[] chestCatch;
-	// Кадры анимации праздования победы
-	public TextureRegion[] rightFootHitFrames;
-	// Кадры анимации праздования победы
-	public TextureRegion[] jumpFrames;
-	// Кадры анимации ударенного мячом игрока
-	public TextureRegion[] deadFrames;
-	// Кадры анимации лежания на спине
-	public TextureRegion[] layBackFrames;
-	// Кадры анимации лежания на животе
-	public TextureRegion[] layBellyFrames;
-	
-	
 	// Текущий кадр анимации
 	public TextureRegion currentFrame; 
 	
@@ -166,79 +144,102 @@ public class Player extends Actor {
         spriteBatch = new SpriteBatch(); 
         
         // Создаем анимацию покоя
-        stayFrames = new TextureRegion[1];
-        stayFrames[0] = animationMap[0][0];
-        animations.put(States.STAY, new Animation(1.0f, stayFrames));
+        animations.put(States.STAY, 
+    		new Animation(1.0f, 
+				animationMap[0][0]
+			)
+        );
         
         // Создаем анимацию ходьбы
-        walkFrames = new TextureRegion[4];
-        walkFrames[0] = animationMap[0][1];
-        walkFrames[1] = animationMap[0][0];
-        walkFrames[2] = animationMap[0][2];
-        walkFrames[3] = animationMap[0][0];
-        animations.put(States.WALKING, new Animation(0.13f, walkFrames));
+        animations.put(States.WALKING, 
+    		new Animation(0.13f, 
+				animationMap[0][1], 
+				animationMap[0][0], 
+				animationMap[0][2],
+				animationMap[0][0]
+			)
+		);
         
         // Создаем анимацию бега
-        runFrames = new TextureRegion[2];
-        runFrames[0] = animationMap[1][4];
-        runFrames[1] = animationMap[0][0];
-        animations.put(States.RUN, new Animation(0.13f, runFrames));
+        animations.put(States.RUN, 
+    		new Animation(0.13f, 
+				animationMap[1][4], 
+				animationMap[0][0]
+			)
+        );
         
         // Создаем анимацию приседания
-        sitFrames = new TextureRegion[1];
-        sitFrames[0] = animationMap[0][3];
-        animations.put(States.SIT, new Animation(0.20f, sitFrames));
+        animations.put(States.SIT, 
+    		new Animation(0.20f, 
+				animationMap[0][3]
+			)
+		);
         
         // Создаем анимацию паса
-        passFrames = new TextureRegion[2];
-        passFrames[0] = animationMap[0][5];
-        passFrames[1] = animationMap[0][6];
-        animations.put(States.PASS, new Animation(0.25f, passFrames));
+        animations.put(States.PASS, 
+    		new Animation(0.25f, 
+				animationMap[0][5], 
+				animationMap[0][6]
+			)
+        );
         
         // Создаем анимацию приема мяча ногой
-        kneeCatch = new TextureRegion[1];
-        kneeCatch[0] = animationMap[1][5];
-        animations.put(States.KNEE_CATCH, new Animation(0.3f, kneeCatch));
+        animations.put(States.KNEE_CATCH, 
+    		new Animation(0.3f, 
+				animationMap[1][5]
+			)
+        );
         
         // Создаем анимацию приема мяча грудью
-        chestCatch = new TextureRegion[1];
-        chestCatch[0] = animationMap[1][6];
-        animations.put(States.CHEST_CATCH, new Animation(0.6f, chestCatch));
+        animations.put(States.CHEST_CATCH, 
+    		new Animation(0.6f, 
+				animationMap[1][6]
+			)
+        );
         
-        // Создаем анимацию удара левой рукой
-        rightFootHitFrames = new TextureRegion[11];
-        rightFootHitFrames[0] = animationMap[0][0];
-        rightFootHitFrames[1] = animationMap[0][7];
-        rightFootHitFrames[2] = animationMap[0][7];
-        rightFootHitFrames[3] = animationMap[0][7];
-        rightFootHitFrames[4] = animationMap[1][0];
-        rightFootHitFrames[5] = animationMap[1][1];
-        rightFootHitFrames[6] = animationMap[1][1];
-        rightFootHitFrames[7] = animationMap[1][1];
-        rightFootHitFrames[8] = animationMap[1][1];
-        rightFootHitFrames[9] = animationMap[1][1];
-        rightFootHitFrames[10] = animationMap[1][1];
-        animations.put(States.FOOT_KICK, new Animation(0.05f, rightFootHitFrames));
+        animations.put(States.FOOT_KICK, 
+    		new Animation(0.05f, 
+	    		animationMap[0][0], 
+	    		animationMap[0][7],
+	    		animationMap[0][7],
+	    		animationMap[0][7],
+	    		animationMap[1][0],
+	    		animationMap[1][1],
+	    		animationMap[1][1],
+	    		animationMap[1][1],
+	    		animationMap[1][1],
+	    		animationMap[1][1],
+	    		animationMap[1][1]
+		)
+        );
         
         // Создаем анимацию прыжка
-        jumpFrames = new TextureRegion[1];
-        jumpFrames[0] = animationMap[0][4];
-        animations.put(States.JUMP, new Animation(0.2f, jumpFrames));
+        animations.put(States.JUMP, 
+    		new Animation(0.2f, 
+				animationMap[0][4]
+			)
+		);
         
         // Создаем анимацию ударенного мячом игрока
-        deadFrames = new TextureRegion[1];
-        deadFrames[0] = animationStatesMap[0][0];
-        animations.put(States.DEAD, new Animation(10.0f, deadFrames));
+        animations.put(States.DEAD, 
+    		new Animation(10.0f, 
+				animationStatesMap[0][0]
+			)
+        );
         
         // Создаем анимацию игрока лежащего на спине
-        layBackFrames = new TextureRegion[1];
-        layBackFrames[0] = animationStatesMap[0][1];
-        animations.put(States.LAY_BACK, new Animation(3.0f, layBackFrames));
+        animations.put(States.LAY_BACK, 
+    		new Animation(3.0f, 
+				animationStatesMap[0][1]
+			)
+        );
         
         // Создаем анимацию игрока лежащего на животе
-        layBellyFrames = new TextureRegion[1];
-        layBellyFrames[0] = animationStatesMap[0][2];
-        animations.put(States.LAY_BELLY, new Animation(3.0f, layBellyFrames));
+        animations.put(States.LAY_BELLY, 
+    		new Animation(3.0f, 
+				animationStatesMap[0][2]
+			)
+        );
         
         shadow = new Shadow();
 	}
@@ -501,6 +502,9 @@ public class Player extends Actor {
 			
 			case RUN: 
 				this.CURENT_SPEED_X = this.RUN_SPEED;
+				
+				field.sounds.play("run01");
+				field.sounds.loop("run01", true);
 			break;
 			
 			case STAY: 
@@ -535,6 +539,16 @@ public class Player extends Actor {
 		// Добавляем задачу на исполнение
 		this.state.put(state, true);
 	}
+	
+//	public void Stop(States state) {
+//		switch (state) {
+//			case RUN:
+//				field.sounds.stop("run01");
+//			break;
+//		}
+//		
+//		this.state.put(state, false);
+//	}
 	
 	// Отключение всех действий к перемещению персонажа
 	private void disableDirections() {
@@ -655,22 +669,28 @@ public class Player extends Actor {
 	
 				// Если при ударе игрок уже приземляется то придаем ему небольшой импульс
 				// чтобы он успел выполнить удар по мячу до момента соприкосновения с землей
-				if (this.JUMP_VELOCITY < 0 && this.catchBall()) this.setJumpVelocity(3f);
+				if (this.JUMP_VELOCITY < 0 && this.catchBall()) {
+					//this.setVelocityX(this.getVelocityX() / 1.5f);
+					this.setJumpVelocity(3f);
+				}
 				
 				if (currentFrame() >= 4 && currentFrame() <= 7) {
 					if (direction == Directions.RIGHT) 
-						ball.kick(40, 90);
+						ball.kick(52, 90);
 					else 
-						ball.kick(40, 270);
+						ball.kick(52, 270);
 					
 					// Отмечаем что игрок потерял мяч
 					this.catchBall(false);
+					
+					// Звук удара мяча
+					field.sounds.play("kick01", true);
 				}
 				else if (currentFrame() < 5 && this.getAbsH() > 0 ) {
 					if (direction == Directions.RIGHT) 
-						ball.setVelocityX(4);
+						ball.setVelocityX(2);
 					else 
-						ball.setVelocityX(-4);
+						ball.setVelocityX(-2);
 				}
 				
 			}
@@ -761,15 +781,12 @@ public class Player extends Actor {
 		}
 		
 		
-		
-		
-		
 		/**********************************************************************
 		 *                       Реализация гравитации                        *
 		 **********************************************************************/
 		
 		// Пока персонаж находится в воздухе его скорость взлета / падения меняется
-		this.JUMP_VELOCITY += this.JUMP_HEIGHT > 0 ? -9.81f * Gdx.graphics.getDeltaTime() : 0;
+		this.JUMP_VELOCITY += this.JUMP_HEIGHT > 0 ? -8.0f * Gdx.graphics.getDeltaTime() : 0;
 		this.JUMP_HEIGHT += this.JUMP_VELOCITY;
 		
 		// Если игрок приземлился
@@ -789,6 +806,9 @@ public class Player extends Actor {
 			}
 			this.JUMP_HEIGHT = 0.0f;
 			this.JUMP_VELOCITY = 0.0f;
+			
+			// Проигрывание звука приземления
+			field.sounds.play("landing01", true);
 		}
 	}
 	
@@ -853,6 +873,7 @@ public class Player extends Actor {
 	}
 	
 	public void catchBall(boolean c) {
+		if (c) field.sounds.play("catchball01",true);
 		ball.isCatched(c);
 		this.CATCH_BALL = c;
 	}
@@ -874,7 +895,7 @@ public class Player extends Actor {
 			}
 			else if (this.curentState() != States.RUN && this.curentState() != States.JUMP) {
 				Do(States.STAY, true);
-			} 
+			}
 		}
 
         spriteBatch.begin();

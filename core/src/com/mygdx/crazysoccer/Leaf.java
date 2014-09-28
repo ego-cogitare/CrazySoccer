@@ -30,6 +30,12 @@ public class Leaf extends Actor {
 	public void setWindVelocity(float v) {
 		this.maxVelocity = v;
 		this.minVelocity = this.maxVelocity * 0.5f;
+		
+		if (windDirection == WindDirections.TOP_DOWN || windDirection == WindDirections.NONE) this.maxVelocity = this.minVelocity = 0;
+	}
+	
+	public WindDirections getWindDirection() {
+		return windDirection;
 	}
 	
 	public void setWindDirection(WindDirections wd) {
@@ -43,66 +49,60 @@ public class Leaf extends Actor {
 			
 			case LEFT_BOTTOM:
 				this.velocityX = getRandomVelocity();
-				this.velocityY = this.velocityX * randomDeviation();
-				//this.velocityY = getRandomVelocity() * -1;
+				this.velocityY = -Math.abs(this.velocityX * randomDeviation());
 			break;
 			
-			case LEFT_TOP:
-				this.velocityX = getRandomVelocity();
-				this.velocityY = this.velocityX * randomDeviation();
-				//this.velocityY = getRandomVelocity();
-			break;
+//			case LEFT_TOP:
+//				this.velocityX = getRandomVelocity();
+//				this.velocityY = this.velocityX * randomDeviation();
+//			break;
 			
 			case TOP_DOWN:
 				this.velocityX = randomDeviation();
-				this.velocityY = getRandomVelocity() * -1;
+				this.velocityY = -Math.abs(getRandomVelocity());
 			break;
 			
 			case TOP_LEFT:
-				this.velocityX = getRandomVelocity() * -1;
-				this.velocityY = this.velocityX * randomDeviation();
-				//this.velocityY = getRandomVelocity() * -1;
+				this.velocityX = -Math.abs(getRandomVelocity());
+				this.velocityY = -Math.abs(this.velocityX * randomDeviation());
 			break;
 			
 			case TOP_RIGHT:
-				this.velocityX = getRandomVelocity();
-				this.velocityY = -this.velocityX * randomDeviation();
-				//this.velocityY = getRandomVelocity() * -1;
+				this.velocityX = Math.abs(getRandomVelocity());
+				this.velocityY = -Math.abs(this.velocityX * randomDeviation());
 			break;
 			
 			case RIGHT_LEFT:
-				this.velocityX = getRandomVelocity() * -1;
+				this.velocityX = -Math.abs(getRandomVelocity());
 				this.velocityY = randomDeviation();
 			break;
 			
 			case RIGHT_BOTTOM:
-				this.velocityX = getRandomVelocity() * -1;
-				//this.velocityY = getRandomVelocity() * -1;
-				this.velocityY = this.velocityX * randomDeviation();
+				this.velocityX = -Math.abs(getRandomVelocity());
+				this.velocityY = -Math.abs(this.velocityX * randomDeviation());
 			break;
 			
-			case RIGHT_TOP:
-				this.velocityX = getRandomVelocity() * -1;
-				//this.velocityY = getRandomVelocity();
-				this.velocityY = -this.velocityX * randomDeviation();
-			break;
+//			case RIGHT_TOP:
+//				this.velocityX = getRandomVelocity() * -1;
+//				this.velocityY = Math.abs(this.velocityX * randomDeviation());
+//			break;
 			
-			case BOTTOM_TOP:
-				this.velocityX = randomDeviation();
-				this.velocityY = getRandomVelocity();
-			break;
-			
-			case BOTTOM_LEFT:
-				this.velocityX = getRandomVelocity() * -1;
-				//this.velocityY = getRandomVelocity();
-				this.velocityY = -this.velocityX * randomDeviation();
-			break;
-			
-			case BOTTOM_RIGHT:
-				this.velocityX = getRandomVelocity();
-				//this.velocityY = getRandomVelocity();
-				this.velocityY = this.velocityX * randomDeviation();
-			break;
+//			case BOTTOM_TOP:
+//				this.velocityX = randomDeviation();
+//				this.velocityY = getRandomVelocity();
+//			break;
+//			
+//			case BOTTOM_LEFT:
+//				this.velocityX = getRandomVelocity() * -1;
+//				//this.velocityY = getRandomVelocity();
+//				this.velocityY = -this.velocityX * randomDeviation();
+//			break;
+//			
+//			case BOTTOM_RIGHT:
+//				this.velocityX = getRandomVelocity();
+//				//this.velocityY = getRandomVelocity();
+//				this.velocityY = this.velocityX * randomDeviation();
+//			break;
 		}
 	}
 	
@@ -129,7 +129,7 @@ public class Leaf extends Actor {
 	@Override
 	public void act(float delta) {
 		
-		moveBy(this.velocityX, this.velocityY);
+		moveBy(this.velocityX, -Math.abs(this.velocityY));
 		
 		if (getX() > Gdx.graphics.getWidth()) {
 			this.setX(0);
@@ -162,9 +162,9 @@ public class Leaf extends Actor {
 	
 	@Override
 	public void draw(Batch batch, float parentAlpha) {
-		if (velocityX > 0 || velocityY > 0) {
+		if (Math.abs(velocityX) > 0 || Math.abs(velocityY) > 0) {
 			leafSprite.begin();
-			leafSprite.draw(new TextureRegion(leaf), getX(), getY(), 10, 10, 20, 20, 0.9f, 0.9f, rotation);
+			leafSprite.draw(leaf, getX(), getY(), 8, 8, 8, 8, 2.0f, 2.0f, rotation);
 			leafSprite.end();
 		}
 	}

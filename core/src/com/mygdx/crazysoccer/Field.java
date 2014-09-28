@@ -14,7 +14,6 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.maps.MapObject;
@@ -27,6 +26,7 @@ import com.badlogic.gdx.math.Polyline;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+
 import com.mygdx.crazysoccer.Player.Directions;
 import com.mygdx.crazysoccer.Player.States;
 import com.mygdx.crazysoccer.Wind.WindDirections;
@@ -43,9 +43,6 @@ public class Field extends Stage {
 	// Текстура для хранения спрайтов
 	public static Texture sprites;
 	
-	// Спрайт для отрисовки ворот
-	public SpriteBatch gate;
-	
 	// Екземпляр мяча
 	private Ball ball;
 	
@@ -57,6 +54,9 @@ public class Field extends Stage {
 	
 	// Листья
 	private Leaf[] leafs = new Leaf[10];
+	
+	// Капли
+	private Drop[] drops = new Drop[10];
 	
 	// Размеры поля в клетках
 	private int CELLS_X;
@@ -91,20 +91,24 @@ public class Field extends Stage {
 	
 	public TiledMap fieldMap;
     public TiledMapRenderer fieldMapRenderer;
-    public OrthographicCamera camera;
+    public static OrthographicCamera camera;
     
     public ShapeRenderer shapeRenderer;
 	
     // Сохранение нажатых клавиш и их времени
     public Actions actions = new Actions();
     
+    // Класс для работы со звуком
+	public Sounds sounds;
+    
 	public Field(ScreenViewport screenViewport) {
 		super(screenViewport);
 		
+		//Загрузка музыки и звуковых эффектов  *
+		loadSounds();
+		
 		// Загрузка спрайтов
 		sprites = new Texture(Gdx.files.internal("sprites.png"));
-		
-		gate = new SpriteBatch(); 
 		
 		// Создание мяча
 		ball = new Ball();
@@ -138,7 +142,7 @@ public class Field extends Stage {
 		
 		// Создание листьев
 		for (int i = 0; i < leafs.length; i++) {
-			leafs[i] = new Leaf(WindDirections.NONE);
+			leafs[i] = new Leaf(WindDirections.TOP_DOWN);
 			leafs[i].setPosition(
 				(float)Math.random() * Gdx.graphics.getWidth(), 
 				(float)Math.random() * Gdx.graphics.getHeight()
@@ -146,13 +150,40 @@ public class Field extends Stage {
 			this.addActor(leafs[i]);
 		}
 		
+		// Создание капель
+		for (int i = 0; i < drops.length; i++) {
+			drops[i] = new Drop();
+			this.addActor(drops[i]);
+		}
+		
 		// Для отрисовки линий поля
 		shapeRenderer = new ShapeRenderer();
 		
 		// Создание камеры
 		camera = new OrthographicCamera(Vars.WINDOW_WIDTH, Vars.WINDOW_HEIGHT);
-		
         camera.update();
+	}
+	
+	private void loadSounds() {
+		// Класс для работы с музыкой и звуковыми эффектами
+		sounds = new Sounds();
+		
+		// Загрузка фоновой музыки
+		sounds.load("bg01", "sound/bg/background01.ogg");
+		sounds.play("bg01");
+		sounds.loop("bg01", true);
+		
+		// Звук полята мяча после удара
+		sounds.load("kick01", "sound/sfx/kick01.ogg");
+		
+		// Звук пробежки
+		sounds.load("run01", "sound/sfx/run01.ogg");
+		
+		// Звук приземления игрока
+		sounds.load("landing01", "sound/sfx/landing01.ogg");
+		
+		// Звук приема мяча полевым игроком
+		sounds.load("catchball01", "sound/sfx/catchball01.ogg");
 	}
 	
 	public void LoadMap(String mapName) {
@@ -360,28 +391,67 @@ public class Field extends Stage {
 			
 			for (int i = 0; i < leafs.length; i++) {
 				leafs[i].setWindVelocity(windVelocity);
-				
-				if (windVelocity / 40.0f >= Math.random() || windVelocity / 40.0f >= Math.random()) {
-					leafs[i].setWindDirection(WindDirections.LEFT_RIGHT);
-				} 
-				else {
-					leafs[i].setWindDirection(WindDirections.NONE);
-				}
+				drops[i].setWindVelocity(windVelocity / 3);
 			}
 		}
 		
 		
 		// Произвольное изменение направления ветра
-		if (Math.random() > 0.999f) {
+		if (Math.random() > 0.995f) {
 			int j = (int)Math.round(Math.random() * WindDirections.values().length);
 			if (j >= WindDirections.values().length) j = WindDirections.values().length - 1;
+			
+			System.out.println(WindDirections.values()[j]);
+			
 			for (int i = 0; i < leafs.length; i++) {
 				leafs[i].setWindDirection(WindDirections.values()[j]);
+				drops[i].setWindDirection(WindDirections.values()[j]);
 			}
 		}
 		
+		// Сортировака спрайтов по глубине
+		zIndexSorting();
 		
+		loopSfxCheck();
 		
+		// Если мяч попадает штангу
+		if (((Math.abs(ball.getAbsY() - gates[0].getBottomBar().y) <= 10 && ball.getAbsX() < gates[0].getBottomBar().x + 10) || 
+			 (Math.abs(ball.getAbsY() - gates[0].getTopBar().y) <= 10 && ball.getAbsX() < gates[0].getTopBar().x + 10)) ||
+			
+			((Math.abs(ball.getAbsY() - gates[1].getBottomBar().y) <= 10 && ball.getAbsX() > gates[1].getBottomBar().x - 10) || 
+			 (Math.abs(ball.getAbsY() - gates[1].getTopBar().y) <= 10 && ball.getAbsX() > gates[1].getTopBar().x - 10))
+				) {
+			
+			ball.setVelocityX(-ball.getVelocityX());
+		}
+		
+		// Отслеживание столкновений
+		detectCollisions();
+	}
+	
+	public void loopSfxCheck() {
+		// Проверка, нужно ли включить проигрывание звука пробежки
+		if (ball.isCatched()) {
+			for (int i = 0; i < players.length; i++) {
+				if (players[i].catchBall()) {
+					if (players[i].curentState() == States.RUN) {
+						sounds.play("run01");
+						sounds.loop("run01", true);
+					}
+					else {
+						sounds.stop("run01");
+						sounds.loop("run01", false);
+					}
+				}
+			}
+		}
+		else {
+			sounds.stop("run01");
+			sounds.loop("run01", false);
+		}
+	}
+	
+	public void zIndexSorting() {
 		// Сортировка по глубине
 		for (int i = 0; i < players.length; i++) {
 			Z_POSITIONS.put(players[i].getPlayerId(), players[i].getY());
@@ -403,20 +473,6 @@ public class Field extends Stage {
 		// она создавалась, то при каждой отрисовке нужно прятать тени спрайтов, перенося их
 		// назад, устанавливая минимальный z-index
 		hideShadows();
-		
-		// Если мяч попадает штангу
-		if (((Math.abs(ball.getAbsY() - gates[0].getBottomBar().y) <= 10 && ball.getAbsX() < gates[0].getBottomBar().x + 10) || 
-			 (Math.abs(ball.getAbsY() - gates[0].getTopBar().y) <= 10 && ball.getAbsX() < gates[0].getTopBar().x + 10)) ||
-			
-			((Math.abs(ball.getAbsY() - gates[1].getBottomBar().y) <= 10 && ball.getAbsX() > gates[1].getBottomBar().x - 10) || 
-			 (Math.abs(ball.getAbsY() - gates[1].getTopBar().y) <= 10 && ball.getAbsX() > gates[1].getTopBar().x - 10))
-				) {
-			
-			ball.setVelocityX(-ball.getVelocityX());
-		}
-		
-		// Отслеживание столкновений
-		detectCollisions();
 	}
 	
 	// Отслеживание столкновений

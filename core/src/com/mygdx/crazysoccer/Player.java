@@ -498,6 +498,7 @@ public class Player extends Actor {
 				actionsListener.disableAction(Controls.ACTION3, this.PLAYER_ID);
 				this.stateTime = 0.0f;
 				this.setJumpVelocity(this.STRENGTH / this.MASS);
+				field.sounds.play("jump01",true);
 			break;
 			
 			case RUN: 

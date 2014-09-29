@@ -184,6 +184,15 @@ public class Field extends Stage {
 		
 		// Звук приема мяча полевым игроком
 		sounds.load("catchball01", "sound/sfx/catchball01.ogg");
+		
+		// Звук начала прыжка
+		sounds.load("jump01", "sound/sfx/jump01.ogg");
+		
+		// Звук несильного ветра
+		sounds.load("wind01", "sound/sfx/wind01.ogg");
+		
+		// Звук сильного ветра
+		sounds.load("wind02", "sound/sfx/wind02.ogg");
 	}
 	
 	public void LoadMap(String mapName) {
@@ -386,22 +395,27 @@ public class Field extends Stage {
 		drawField();
 		
 		// Изменение силы ветра
-		if (Math.random() > 0.99f) {
+		if (Math.random() > 0.995f) {
 			float windVelocity = (float)Math.random() * 25 + 5;
 			
 			for (int i = 0; i < leafs.length; i++) {
 				leafs[i].setWindVelocity(windVelocity);
 				drops[i].setWindVelocity(windVelocity / 3);
 			}
+			
+			// Если сила ветра больше 20 то воспроизводим звук вьюги
+			if (leafs[0].windDirection != WindDirections.NONE && windVelocity > 20) 
+				sounds.play("wind02", true);
+			// При изменении ветра воспроизводим звук ветра
+			else if (leafs[0].windDirection != WindDirections.NONE && windVelocity > 10) 
+				sounds.play("wind01", true);
 		}
 		
 		
 		// Произвольное изменение направления ветра
-		if (Math.random() > 0.995f) {
+		if (Math.random() > 0.993f) {
 			int j = (int)Math.round(Math.random() * WindDirections.values().length);
 			if (j >= WindDirections.values().length) j = WindDirections.values().length - 1;
-			
-			System.out.println(WindDirections.values()[j]);
 			
 			for (int i = 0; i < leafs.length; i++) {
 				leafs[i].setWindDirection(WindDirections.values()[j]);

@@ -34,6 +34,10 @@ public class Leaf extends Actor {
 		if (windDirection == WindDirections.TOP_DOWN || windDirection == WindDirections.NONE) this.maxVelocity = this.minVelocity = 0;
 	}
 	
+	public float getWindVelocity() {
+		return this.velocityX;
+	}
+	
 	public WindDirections getWindDirection() {
 		return windDirection;
 	}

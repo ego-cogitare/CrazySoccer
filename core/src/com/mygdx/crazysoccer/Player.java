@@ -58,8 +58,8 @@ public class Player extends Actor {
     // Параметры персонажа
     private float CURENT_SPEED_X = 0.0f;
     private float CURENT_SPEED_Y = 0.0f;
-    private float WALKING_SPEED = 3.0f;
-    private float RUN_SPEED = 6.0f;
+    private float WALKING_SPEED = 5.0f;
+    private float RUN_SPEED = 10.0f;
     private float POS_X = 0.0f;
     private float POS_Y = 0.0f;
     
@@ -364,7 +364,8 @@ public class Player extends Actor {
 						!state.get(States.DEAD) &&
 						!state.get(States.LAY_BACK) &&
 						!state.get(States.LAY_BELLY) &&
-						!state.get(States.JUMP);
+						!state.get(States.JUMP) &&
+						this.getAbsH() == 0;
 			break;
 			
 			/* 
@@ -591,27 +592,58 @@ public class Player extends Actor {
 		return animations.get(this.curentState()).getKeyFrameIndex(stateTime);
 	}
 	
+	private float calcKickAlpha() {
+		float sinA = 0;
+		float delta = 0;
+		
+		// Получение координаты Х нижней штанги ворот (для определение расстояния к воротам) 
+		float gatesBarX = (this.direction == Directions.RIGHT) ? field.gates[1].getBottomBar().x : field.gates[0].getBottomBar().x;
+		
+		// Опеределение расстояние от игрока до ворот
+		float AC = gatesBarX + 8 - ball.getAbsX();
+		float BC = Math.abs(field.worldHeight / 2.0f - ball.getAbsY());
+		
+		sinA = BC / (float)Math.sqrt(AC * AC + BC * BC);
+		sinA = (float)(sinA * 180 / Math.PI);
+		
+		// Привносим случайную величину отклонения при ударе по воротам
+		// (иначе мяч всегда летит в центр ворот)
+//		delta = (float)Math.random() * 14 - 7;
+//		System.out.println(delta);
+		
+		sinA += delta;
+		
+		if (direction == Directions.RIGHT) {
+			if (ball.getAbsY() < field.worldHeight / 2.0f) sinA = -sinA;
+			sinA += 90;
+		}
+		else {
+			if (ball.getAbsY() > field.worldHeight / 2.0f) sinA = -sinA;
+			sinA += 270;
+		}
+		
+		return sinA;
+	}
+	
 	@Override
 	public void act(float delta) {
 		
 		if (actionsListener.getActionStateFor(Controls.UP, this.PLAYER_ID).pressed) { 
-			// Если персонаж не бежи, и нажата клавиша вверх
-			if (curentState() != States.RUN && Can(States.WALKING)) {
-				this.CURENT_SPEED_Y = this.WALKING_SPEED;
-				Do(States.WALKING, true);
-			}
-			if (curentState() != States.JUMP && curentState() != States.SIT) {
+			if (Can(States.WALKING)) {
+				// Если персонаж не бежит, и нажата клавиша вверх
+				if (curentState() != States.RUN) {
+					Do(States.WALKING, true);
+				}
 				this.CURENT_SPEED_Y = this.WALKING_SPEED;
 			}
 		}
 		
 		if (actionsListener.getActionStateFor(Controls.DOWN, this.PLAYER_ID).pressed) { 
-			// Если персонаж не бежи, и нажата клавиша вниз
-			if (curentState() != States.RUN && Can(States.WALKING)) {
-				this.CURENT_SPEED_Y = -this.WALKING_SPEED;
-				Do(States.WALKING, true);
-			}
-			if (curentState() != States.JUMP && curentState() != States.SIT) {
+			if (Can(States.WALKING)) {
+				// Если персонаж не бежит, и нажата клавиша вверх
+				if (curentState() != States.RUN) {
+					Do(States.WALKING, true);
+				}
 				this.CURENT_SPEED_Y = -this.WALKING_SPEED;
 			}
 		}
@@ -619,7 +651,7 @@ public class Player extends Actor {
 		
 		if (actionsListener.getActionStateFor(Controls.LEFT, this.PLAYER_ID).pressed) { 
 			// Персонаж может менять свое направления только находясь на земле
-			if (this.getAbsH() == 0) {
+			if (Can(States.WALKING)) {
 				this.direction = Directions.LEFT;
 				
 				// Если было двойное нажатие кнопки, то делаем персонаж бегущим
@@ -635,7 +667,7 @@ public class Player extends Actor {
 		
 		if (actionsListener.getActionStateFor(Controls.RIGHT, this.PLAYER_ID).pressed) {
 			// Персонаж может менять свое направления только находясь на земле
-			if (this.getAbsH() == 0) {
+			if (Can(States.WALKING)) {
 				this.direction = Directions.RIGHT;
 				
 				if (actionsListener.getActionStateFor(Controls.RIGHT, this.PLAYER_ID).doublePressed && Can(States.RUN)) {
@@ -675,11 +707,11 @@ public class Player extends Actor {
 					this.setJumpVelocity(3f);
 				}
 				
+				// Если мяч находится рядом с игроком когда он сделал замах по нему
+				// то выполняем удар по мячу
 				if (currentFrame() >= 4 && currentFrame() <= 7) {
-					if (direction == Directions.RIGHT) 
-						ball.kick(52, 90);
-					else 
-						ball.kick(52, 270);
+					
+					ball.kick(55, calcKickAlpha());
 					
 					// Отмечаем что игрок потерял мяч
 					this.catchBall(false);

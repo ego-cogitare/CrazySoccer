@@ -47,7 +47,7 @@ public class Field extends Stage {
 	private Ball ball;
 	
 	// Ворота
-	private Gate[] gates = new Gate[2];
+	public Gate[] gates = new Gate[2];
 	
 	// Екземпляр класса описывающего игрока
 	private Player[] players = new Player[PLAYERS_AMOUNT];
@@ -193,6 +193,9 @@ public class Field extends Stage {
 		
 		// Звук сильного ветра
 		sounds.load("wind02", "sound/sfx/wind02.ogg");
+		
+		// Звук удара мяча о поле
+		sounds.load("balllanding02", "sound/sfx/balllanding02.ogg");
 	}
 	
 	public void LoadMap(String mapName) {

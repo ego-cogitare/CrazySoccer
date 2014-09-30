@@ -461,6 +461,8 @@ public class Ball extends Actor {
 			// Изменение высоты мяча
 			this.JUMP_HEIGHT += this.JUMP_VELOCITY;
 			
+//			System.out.println(this.JUMP_VELOCITY);
+			
 			// Момент контакта мяча с газоном
 			//  1. изменение направление движения мяча по оси OY - вверх
 			//  2. уменьшение скорости на коеффициент трения мяча о газон
@@ -471,6 +473,9 @@ public class Ball extends Actor {
 				// Уменьшаем скорость мяча с учетом коефициента трения газона
 				this.CURENT_SPEED_Y += this.CURENT_SPEED_Y * this.GRASS_FRICTION;
 				this.CURENT_SPEED_X += this.CURENT_SPEED_X * this.GRASS_FRICTION;
+				
+				// Воспроизводим звук удара мяча о газон
+				if (this.JUMP_VELOCITY > 0.075f) field.sounds.play("balllanding02",true);
 				
 				this.JUMP_HEIGHT = 0;
 			}

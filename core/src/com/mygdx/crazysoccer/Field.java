@@ -26,7 +26,6 @@ import com.badlogic.gdx.math.Polyline;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
-
 import com.mygdx.crazysoccer.Player.Directions;
 import com.mygdx.crazysoccer.Player.States;
 import com.mygdx.crazysoccer.Wind.WindDirections;
@@ -50,7 +49,7 @@ public class Field extends Stage {
 	public Gate[] gates = new Gate[2];
 	
 	// Екземпляр класса описывающего игрока
-	private Player[] players = new Player[PLAYERS_AMOUNT];
+	public Player[] players = new Player[PLAYERS_AMOUNT];
 	
 	// Листья
 	private Leaf[] leafs = new Leaf[10];
@@ -431,14 +430,28 @@ public class Field extends Stage {
 		
 		loopSfxCheck();
 		
-		// Если мяч попадает штангу
-		if (((Math.abs(ball.getAbsY() - gates[0].getBottomBar().y) <= 10 && ball.getAbsX() < gates[0].getBottomBar().x + 10) || 
-			 (Math.abs(ball.getAbsY() - gates[0].getTopBar().y) <= 10 && ball.getAbsX() < gates[0].getTopBar().x + 10)) ||
-			
-			((Math.abs(ball.getAbsY() - gates[1].getBottomBar().y) <= 10 && ball.getAbsX() > gates[1].getBottomBar().x - 10) || 
-			 (Math.abs(ball.getAbsY() - gates[1].getTopBar().y) <= 10 && ball.getAbsX() > gates[1].getTopBar().x - 10))
-				) {
-			
+		// Если мяч попадает штангу или в перекладину
+		if (
+			(
+				(Math.abs(ball.getAbsY() - gates[0].getBottomBar().y) <= 10 && ball.getAbsX() < gates[0].getBottomBar().x + 10) || 
+				(Math.abs(ball.getAbsY() - gates[0].getTopBar().y) <= 10 && ball.getAbsX() < gates[0].getTopBar().x + 10)
+			) 
+			||
+			(
+				(Math.abs(ball.getAbsY() - gates[1].getBottomBar().y) <= 10 && ball.getAbsX() > gates[1].getBottomBar().x - 10) || 
+				(Math.abs(ball.getAbsY() - gates[1].getTopBar().y) <= 10 && ball.getAbsX() > gates[1].getTopBar().x - 10)
+			) 
+			||
+				// Проверка столкновения с перекладиной 
+				(
+					(Math.abs(ball.getAbsH() - gates[0].getHeight()) <= 10) && 
+					(
+						(ball.getAbsX() < gates[0].getBottomBar().x+35 && ball.getAbsY() > gates[0].getBottomBar().y - 10 && ball.getAbsY() < gates[0].getTopBar().y + 10) ||
+						(ball.getAbsX() > gates[1].getBottomBar().x-35 && ball.getAbsY() > gates[1].getBottomBar().y - 10 && ball.getAbsY() < gates[1].getTopBar().y + 10)
+					)
+				)
+			) 
+		{
 			ball.setVelocityX(-ball.getVelocityX());
 		}
 		
@@ -473,17 +486,32 @@ public class Field extends Stage {
 		for (int i = 0; i < players.length; i++) {
 			Z_POSITIONS.put(players[i].getPlayerId(), players[i].getY());
 		}
+		
+		// Мяч
 		Z_POSITIONS.put(PLAYERS_AMOUNT+1, ball.getY());
+		
+		// Ворота
+		Z_POSITIONS.put(PLAYERS_AMOUNT+2, gates[0].getY());
+		
 		// Сортировка по глубине
 		Z_POSITIONS = sortByValues(Z_POSITIONS);
-		Z_INDEX = PLAYERS_AMOUNT + 1;
+		Z_INDEX = PLAYERS_AMOUNT + 2;
 		for (Map.Entry<Integer, Float> entry : Z_POSITIONS.entrySet()) {
-			if (entry.getKey() == PLAYERS_AMOUNT + 1)   // If ball
+			if (entry.getKey() == PLAYERS_AMOUNT + 1)   	 // Мяч
 				ball.setZIndex(Z_INDEX);
-			else 									 	// If player
+			else if (entry.getKey() == PLAYERS_AMOUNT + 2) { // Ворота
+				gates[0].setZIndex(Z_INDEX);
+				gates[1].setZIndex(Z_INDEX);
+			}
+			else 									 		 // If player
 				players[entry.getKey()].setZIndex(Z_INDEX);
 			
 			Z_INDEX--;
+		}
+		
+		// Если высота мяча больше высоты ворот, то мяч должен рисоваться поверх ворот
+		if (ball.getAbsH() > gates[0].getHeight()) {
+			ball.setZIndex(31);
 		}
 		
 		// Поскольку для тени при устанавливается такой же z-index как и для класса в котором
@@ -705,7 +733,7 @@ public class Field extends Stage {
 		return false;
 	}
 	
-	 @Override
+	@Override
 	public boolean touchDown (int x, int y, int pointer, int button) {
 		 players[0].direction = (players[0].direction == Directions.LEFT) ? Directions.RIGHT : Directions.LEFT;
 		 players[0].Do(States.RUN, true);

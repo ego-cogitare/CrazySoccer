@@ -30,6 +30,14 @@ public class Gate extends Actor {
 		gateSprite = new SpriteBatch();
 	}
 	
+	public float getHeight() {
+		return this.HEIGHT;
+	}
+	
+	public float getWidth() {
+		return this.WIDTH;
+	}
+	
 	public Vector2 getBottomBar() {
 		return this.BOTTOM_BAR;
 	}
@@ -77,12 +85,7 @@ public class Gate extends Actor {
 	
 	
 	@Override
-	public void draw(Batch batch, float parentAlpha) {
-//		System.out.println(ID);
-//		System.out.println(BOTTOM_BAR);
-//		System.out.println(TOP_BAR);
-//		System.out.println();
-		
+	public void draw(Batch batch, float parentAlpha) {		
 		gateSprite.begin();
 		gateSprite.draw(
 			gate.getTexture(), 

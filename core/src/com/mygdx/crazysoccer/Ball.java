@@ -42,16 +42,19 @@ public class Ball extends Actor {
     private float JUMP_VELOCITY = 0;
     
     // Коэффициент трения мяча о воздух 
-    private float AIR_FRICTION = -0.010f;
+    private float AIR_FRICTION = -0.005f;
     
     // Коэффициент трения мяча о газон
-    private float GRASS_FRICTION = -0.03f;
+    private float GRASS_FRICTION = -0.06f;
     
     // Коефициент отпрыгивания мяча от газона
     private float RESTITUTION = 0.6f;
     
-    // Контролируется ли мяч какимто из игроков
+    // Контролируется ли мяч каким-то из игроков
     private boolean CATCHED = false;
+    
+    // Скорость мяча при которой на мяч начинает действовать гравитация
+    private float ALLOW_GRAVITY_FROM = 0.0f;
     
     // Набор анимаций мяча
     public Map<States, Animation> animations;
@@ -127,19 +130,64 @@ public class Ball extends Actor {
 		this.field = f;
 	}
 	
-	public void kick(float impulse, float alpha) {
+	public void kick(float impulse, float dstX, float dstY, boolean upFlag) {
+		
+		float alpha = calcAlpha(dstX, dstY);
+		
 		// Подсчет скорости при ударе
 		float v = impulse / this.MASS;
 		
 		this.CURENT_SPEED_X = v * (float)Math.sin(alpha * Math.PI / 180.0f);
 		this.CURENT_SPEED_Y = v * (float)Math.cos(alpha * Math.PI / 180.0f);
 		
-		this.JUMP_VELOCITY = 0;
+		// Если осуществляя удар зажата кнопка вверх, то мяч должен лететь по параболе
+		if (upFlag) {
+			this.allowGravityFrom(999);
+			this.JUMP_VELOCITY = 6f;
+		}
+		// Иначе мяч летит прямо, и начинает терять высоту только начиная с момента
+		// когда его скорость станет меншье 14
+		else {
+			this.allowGravityFrom(14);
+			this.JUMP_VELOCITY = 0.0f;
+		}
 		
 		// Если в момент удара мяч находится на земле то поднимаем его на 25px
 		if (this.JUMP_HEIGHT <= 0) this.JUMP_HEIGHT = 30;
 		
 		Do(getAnimationByVelocity(v), true);
+	}
+	
+	public void pass(float dstX, float dstY) {
+		// Расстояние к точке куда давать пас
+		float l = (float)Math.sqrt((dstX - getAbsX()) * (dstX - getAbsX()) + (dstY - getAbsY()) * (dstY - getAbsY()));
+		
+		// Из расчета что при JUMP_VELOCITY = 6 на 1 силы приходится растояние в 31px
+		float f = l / 31.0f; // 1 - 6.5f
+		
+		kick(f, dstX, dstY, true);
+	}
+	
+	// Подсчет угла под которым нужно послать мяч, чтобы он достиг цели
+	private float calcAlpha(float dstX, float dstY) {
+		double sinA = 0;
+		
+		// Опеределение расстояние от игрока до ворот
+		double AC = Math.abs(dstX - getAbsX());
+		double BC = Math.abs(dstY - getAbsY());
+		
+		sinA = Math.asin(BC / Math.sqrt(AC * AC + BC * BC));
+		sinA = (sinA * 180.0f) / Math.PI;
+		
+		if (getAbsX() < dstX) {
+			if (getAbsY() < dstY) sinA = -sinA;
+			sinA += 90;
+		}
+		else {
+			if (getAbsY() > dstY) sinA = -sinA;
+			sinA += 270;
+		}
+		return (float)sinA;
 	}
 	
 	// Подбор анимации в зависимости от скорости полета мяча
@@ -425,14 +473,6 @@ public class Ball extends Actor {
 			this.CURENT_SPEED_Y = 0.0f;
 		}
 
-		if (actionsListener.getActionStateFor(Controls.ACTION1, 2).pressed) { 
-			kick(50, 270);
-		}
-		
-		if (actionsListener.getActionStateFor(Controls.ACTION2, 2).pressed) { 
-			kick(50, 90);
-		}
-		
 		// Замедление полета мяча (трение воздуха)
 		this.CURENT_SPEED_X += this.CURENT_SPEED_X * this.AIR_FRICTION; 
 		this.CURENT_SPEED_Y += this.CURENT_SPEED_Y * this.AIR_FRICTION;
@@ -454,14 +494,12 @@ public class Ball extends Actor {
 		
 		// Реализация гравитации (гравитация начинает действовать только когда сумма абсолютных
 		// скоростей по осям OX и OY < 15)
-		if (this.absVelocity() < 14 && (this.JUMP_HEIGHT > 0 || this.JUMP_VELOCITY > 0)) {
+		if (this.absVelocity() < this.ALLOW_GRAVITY_FROM && (this.JUMP_HEIGHT > 0 || this.JUMP_VELOCITY > 0)) {
 			// Текущая вертикальная скорость мяча
 			this.JUMP_VELOCITY -= 6.0f * Gdx.graphics.getDeltaTime();
 			
 			// Изменение высоты мяча
 			this.JUMP_HEIGHT += this.JUMP_VELOCITY;
-			
-//			System.out.println(this.JUMP_VELOCITY);
 			
 			// Момент контакта мяча с газоном
 			//  1. изменение направление движения мяча по оси OY - вверх
@@ -478,6 +516,10 @@ public class Ball extends Actor {
 				if (this.JUMP_VELOCITY > 0.075f) field.sounds.play("balllanding02",true);
 				
 				this.JUMP_HEIGHT = 0;
+				
+//				System.out.println("Координаты падения "+getAbsX()+","+getAbsY());
+//				double dist = Math.sqrt((1953 - getAbsX()) * (1953 - getAbsX()) + (836 - getAbsY()) * (836 - getAbsY())); 
+//				System.out.println("Мяч пролетел "+ dist);
 			}
 		}
 		
@@ -485,9 +527,17 @@ public class Ball extends Actor {
 		moveBallBy(new Vector2(this.CURENT_SPEED_X, this.CURENT_SPEED_Y));
 	}
 	
+	// Устанавливает значение скорости полета мяча начиная с которой на него начинает действовать 
+	// гравитация. Это нужно для того, чтобы при ударе мяч мог лететь некоторое время не теряя
+	// своей высоты
+	public void allowGravityFrom(float v) {
+		this.ALLOW_GRAVITY_FROM = v;
+	}
+	
 	// Суммарная скорость мяча по осям
 	public float absVelocity() {
-		return Math.abs(this.CURENT_SPEED_X) + Math.abs(this.CURENT_SPEED_Y);
+		return Math.abs(this.CURENT_SPEED_X);
+		//return Math.abs(this.CURENT_SPEED_X) + Math.abs(this.CURENT_SPEED_Y);
 	}
 	
 	private boolean getFlip() {

@@ -525,6 +525,31 @@ public class Ball extends Actor {
 		
 		// Перемещение мяча
 		moveBallBy(new Vector2(this.CURENT_SPEED_X, this.CURENT_SPEED_Y));
+		
+		System.out.println(isGoalIn());
+	}
+	
+	// Проверка находится ли мяч в воротах (гол забит)
+	// Метод возвращает:
+	//  0 - мяч не в воротах
+	//  1 - мяч в левых воротах
+	//  2 - мяч в правых воротах
+	public int isGoalIn() {
+		if (!this.inField()) {
+			
+			if ((this.getAbsH() < field.gates[0].getHeight()) && 
+				(this.getAbsX() + 10 < field.fieldOffsetX + field.mGetSideLineProjection(this.getAbsY()) && this.getAbsY() > field.gates[0].getBottomBar().y && this.getAbsY() < field.gates[0].getTopBar().y)) {
+				
+				return 1;
+			}
+			else if ((this.getAbsH() < field.gates[1].getHeight()) && 
+					 (this.getAbsX() - 10 > field.fieldOffsetX + field.fieldMaxWidth - field.mGetSideLineProjection(this.getAbsY()) && this.getAbsY() > field.gates[1].getBottomBar().y && this.getAbsY() < field.gates[1].getTopBar().y)) {
+				 
+				return 2;
+			}
+			
+		}
+		return 0;
 	}
 	
 	// Устанавливает значение скорости полета мяча начиная с которой на него начинает действовать 

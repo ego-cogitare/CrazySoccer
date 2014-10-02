@@ -35,7 +35,9 @@ public class Field extends Stage {
 	// Количество игроков на поле
 	private final int PLAYERS_AMOUNT = 5;
 	
+	// Служебные переменные
 	private int Z_INDEX;
+	private boolean ballOutPlayed = false;
 	
 	private HashMap<Integer,Float> Z_POSITIONS = new HashMap<Integer,Float>();
 	
@@ -195,6 +197,12 @@ public class Field extends Stage {
 		
 		// Звук удара мяча о поле
 		sounds.load("balllanding02", "sound/sfx/balllanding02.ogg");
+		
+		// Звук выхода мяча за пределы поля
+		sounds.load("ballout01", "sound/sfx/whistle01.ogg");
+		
+		// Звук сигнала о забитом голе
+		sounds.load("goalin01", "sound/sfx/goalin01.ogg");
 	}
 	
 	public void LoadMap(String mapName) {
@@ -428,32 +436,8 @@ public class Field extends Stage {
 		// Сортировака спрайтов по глубине
 		zIndexSorting();
 		
+		// Автоматическая озучка определенных действий
 		loopSfxCheck();
-		
-		// Если мяч попадает штангу или в перекладину
-		if (
-			(
-				(Math.abs(ball.getAbsY() - gates[0].getBottomBar().y) <= 10 && ball.getAbsX() < gates[0].getBottomBar().x + 10) || 
-				(Math.abs(ball.getAbsY() - gates[0].getTopBar().y) <= 10 && ball.getAbsX() < gates[0].getTopBar().x + 10)
-			) 
-			||
-			(
-				(Math.abs(ball.getAbsY() - gates[1].getBottomBar().y) <= 10 && ball.getAbsX() > gates[1].getBottomBar().x - 10) || 
-				(Math.abs(ball.getAbsY() - gates[1].getTopBar().y) <= 10 && ball.getAbsX() > gates[1].getTopBar().x - 10)
-			) 
-			||
-				// Проверка столкновения с перекладиной 
-				(
-					(Math.abs(ball.getAbsH() - gates[0].getHeight()) <= 10) && 
-					(
-						(ball.getAbsX() < gates[0].getBottomBar().x+35 && ball.getAbsY() > gates[0].getBottomBar().y - 10 && ball.getAbsY() < gates[0].getTopBar().y + 10) ||
-						(ball.getAbsX() > gates[1].getBottomBar().x-35 && ball.getAbsY() > gates[1].getBottomBar().y - 10 && ball.getAbsY() < gates[1].getTopBar().y + 10)
-					)
-				)
-			) 
-		{
-			ball.setVelocityX(-ball.getVelocityX());
-		}
 		
 		// Отслеживание столкновений
 		detectCollisions();
@@ -478,6 +462,23 @@ public class Field extends Stage {
 		else {
 			sounds.stop("run01");
 			sounds.loop("run01", false);
+		}
+		
+		
+		// Если мяч вышел за пределы игрового поля
+		if (ball.inField()) {
+			ballOutPlayed = false;
+		}
+		else if (!ball.inField() && !ballOutPlayed) {
+			// Если мяч влетел в ворота
+			if (ball.isGoalIn() > 0) {
+				sounds.play("goalin01", true);
+			}
+			// Если мяч ушел за пределы поля вне ворот
+			else {
+				sounds.play("ballout01", true);
+			}
+			ballOutPlayed = true;
 		}
 	}
 	
@@ -522,6 +523,34 @@ public class Field extends Stage {
 	
 	// Отслеживание столкновений
 	private void detectCollisions() {
+		// Если мяч попадает штангу или в перекладину
+		if (
+			(
+				(Math.abs(ball.getAbsY() - gates[0].getBottomBar().y) <= 10 && ball.getAbsX() < gates[0].getBottomBar().x + 10) || 
+				(Math.abs(ball.getAbsY() - gates[0].getTopBar().y) <= 10 && ball.getAbsX() < gates[0].getTopBar().x + 10)
+			) 
+			||
+			(
+				(Math.abs(ball.getAbsY() - gates[1].getBottomBar().y) <= 10 && ball.getAbsX() > gates[1].getBottomBar().x - 10) || 
+				(Math.abs(ball.getAbsY() - gates[1].getTopBar().y) <= 10 && ball.getAbsX() > gates[1].getTopBar().x - 10)
+			) 
+			||
+				// Проверка столкновения с перекладиной 
+				(
+					(Math.abs(ball.getAbsH() - gates[0].getHeight()) <= 10) && 
+					(
+						(ball.getAbsX() < gates[0].getBottomBar().x+35 && ball.getAbsY() > gates[0].getBottomBar().y - 10 && ball.getAbsY() < gates[0].getTopBar().y + 10) ||
+						(ball.getAbsX() > gates[1].getBottomBar().x-35 && ball.getAbsY() > gates[1].getBottomBar().y - 10 && ball.getAbsY() < gates[1].getTopBar().y + 10)
+					)
+				)
+			) 
+		{
+			// Меняем направление движения мяча на противоположное
+			ball.setVelocityX(-ball.getVelocityX());
+			
+			// Звук удара мяча о каркас ворот
+			sounds.play("balllanding02", true);
+		}
 	}
 	
 	// Переносим тени от персонажей в самую глубину чтобы не перекрывать спрайты

@@ -176,8 +176,12 @@ public class Player extends Actor {
         
         // Создаем анимацию паса
         animations.put(States.PASS, 
-    		new Animation(0.25f, 
+    		new Animation(0.08f, 
 				animationMap[0][5], 
+				animationMap[0][5],
+				animationMap[0][5],
+				animationMap[0][6],
+				animationMap[0][6],
 				animationMap[0][6]
 			)
         );
@@ -685,18 +689,17 @@ public class Player extends Actor {
 		// Перемещение персонажа
 		movePlayerBy(new Vector2(this.CURENT_SPEED_X, this.CURENT_SPEED_Y));
 		
+		// Если при ударе игрок уже приземляется то придаем ему небольшой импульс
+		// чтобы он успел выполнить удар по мячу до момента соприкосновения с землей
+		if (this.JUMP_VELOCITY < 0 && curentState() == States.FOOT_KICK && currentFrame() == 4) {
+			this.setJumpVelocity(2.5f);
+		}
+		
 		// Если игрок находится в непосредственной близости возле мяча
 		if (this.ballIsNear()) {
 			// Если в настоящий момент игроком производится удар по мячу
 			if (curentState() == States.FOOT_KICK) {
 	
-				// Если при ударе игрок уже приземляется то придаем ему небольшой импульс
-				// чтобы он успел выполнить удар по мячу до момента соприкосновения с землей
-				if (this.JUMP_VELOCITY < 0 && this.catchBall()) {
-					//this.setVelocityX(this.getVelocityX() / 1.5f);
-					this.setJumpVelocity(3f);
-				}
-				
 				// Если мяч находится рядом с игроком когда он сделал замах по нему
 				// то выполняем удар по мячу
 				if (currentFrame() >= 4 && currentFrame() <= 7) {
@@ -705,7 +708,7 @@ public class Player extends Actor {
 					float dstX = (this.direction == Directions.RIGHT) ? field.gates[1].getBottomBar().x : field.gates[0].getBottomBar().x;
 					float dstY = field.worldHeight / 2.0f; 
 					
-					ball.kick(50, dstX, dstY, upPressed());
+					ball.kick(55, dstX, dstY, upPressed());
 					
 					// Отмечаем что игрок потерял мяч
 					this.catchBall(false);
@@ -722,11 +725,22 @@ public class Player extends Actor {
 				
 			}
 			else if (curentState() == States.PASS) {
-				this.catchBall(false);
-				if (this.PLAYER_ID == 0)
-					ball.pass(field.players[1].getAbsX(),field.players[1].getAbsY());
-				else 
-					ball.pass(field.players[0].getAbsX(),field.players[0].getAbsY());
+				// Начало полета мяча при пасе не должно начинаться сразу же после начала анимации паса,
+				// а с некоторой задержкой
+				if (currentFrame() >= 2) {
+					
+					// Отмечаем что игрок теряет мяч
+					this.catchBall(false);
+					
+					// Проигрывание звука паса
+					field.sounds.play("pass01", true);
+					
+					// Определение кому отдать пас
+					if (this.PLAYER_ID == 0)
+						ball.pass(field.players[1].getAbsX(),field.players[1].getAbsY());
+					else 
+						ball.pass(field.players[0].getAbsX(),field.players[0].getAbsY());
+				}
 			}
 			// Если персонаж ничего не делает и мяч никем не контролируется
 			else if (!ball.isCatched()) {
@@ -885,7 +899,7 @@ public class Player extends Actor {
 			
 			
 			// Если игрок владеет мячом то привязываем перемещение мяча к этом игроку
-			if (this.catchBall()/* && ball.inField()*/) {
+			if (this.catchBall() && ball.inField()) {
 				if (this.direction == Directions.RIGHT) {
 					ball.moveBallBy(new Vector2(this.getAbsX()-ball.getAbsX() + 33, this.getAbsY()-ball.getAbsY() - 1));
 				}

@@ -174,6 +174,9 @@ public class Field extends Stage {
 		sounds.play("bg01");
 		sounds.loop("bg01", true);
 		
+		// Звук паса
+		sounds.load("pass01", "sound/sfx/pass01.ogg");
+		
 		// Звук полята мяча после удара
 		sounds.load("kick01", "sound/sfx/kick01.ogg");
 		
@@ -354,8 +357,6 @@ public class Field extends Stage {
 		 shapeRenderer.begin(ShapeType.Filled);
 		 shapeRenderer.circle(fieldOffsetX + fieldMaxWidth / 2.0f, fieldOffsetY + fieldHeight / 2.0f, 15);
 		 shapeRenderer.end();
-		 
-//         System.out.println(Gdx.graphics.getFramesPerSecond());
 	}
 	
 	// Расположение игроков по полю
@@ -523,33 +524,37 @@ public class Field extends Stage {
 	
 	// Отслеживание столкновений
 	private void detectCollisions() {
-		// Если мяч попадает штангу или в перекладину
-		if (
-			(
-				(Math.abs(ball.getAbsY() - gates[0].getBottomBar().y) <= 10 && ball.getAbsX() < gates[0].getBottomBar().x + 10) || 
-				(Math.abs(ball.getAbsY() - gates[0].getTopBar().y) <= 10 && ball.getAbsX() < gates[0].getTopBar().x + 10)
-			) 
-			||
-			(
-				(Math.abs(ball.getAbsY() - gates[1].getBottomBar().y) <= 10 && ball.getAbsX() > gates[1].getBottomBar().x - 10) || 
-				(Math.abs(ball.getAbsY() - gates[1].getTopBar().y) <= 10 && ball.getAbsX() > gates[1].getTopBar().x - 10)
-			) 
-			||
-				// Проверка столкновения с перекладиной 
+		
+		// Обработка столкновений производится лишь в случае когда мяч находится в поле
+		if (ball.inField()) {
+			// Если мяч попадает штангу или в перекладину
+			if (
 				(
-					(Math.abs(ball.getAbsH() - gates[0].getHeight()) <= 10) && 
+					(ball.getVelocityX() < 0 && Math.abs(ball.getAbsY() - gates[0].getBottomBar().y) <= 10 && ball.getAbsX() < gates[0].getBottomBar().x + 10) || 
+					(ball.getVelocityX() < 0 && Math.abs(ball.getAbsY() - gates[0].getTopBar().y) <= 10 && ball.getAbsX() < gates[0].getTopBar().x + 10)
+				) 
+				||
+				(
+					(ball.getVelocityX() > 0 && Math.abs(ball.getAbsY() - gates[1].getBottomBar().y) <= 10 && ball.getAbsX() > gates[1].getBottomBar().x - 10) || 
+					(ball.getVelocityX() > 0 && Math.abs(ball.getAbsY() - gates[1].getTopBar().y) <= 10 && ball.getAbsX() > gates[1].getTopBar().x - 10)
+				) 
+				||
+					// Проверка столкновения с перекладиной 
 					(
-						(ball.getAbsX() < gates[0].getBottomBar().x+35 && ball.getAbsY() > gates[0].getBottomBar().y - 10 && ball.getAbsY() < gates[0].getTopBar().y + 10) ||
-						(ball.getAbsX() > gates[1].getBottomBar().x-35 && ball.getAbsY() > gates[1].getBottomBar().y - 10 && ball.getAbsY() < gates[1].getTopBar().y + 10)
+						(Math.abs(ball.getAbsH() - gates[0].getHeight()) <= 10) && 
+						(
+							(ball.getVelocityX() < 0 && ball.getAbsX() < gates[0].getBottomBar().x+35 && ball.getAbsY() > gates[0].getBottomBar().y - 10 && ball.getAbsY() < gates[0].getTopBar().y + 10) ||
+							(ball.getVelocityX() > 0 && ball.getAbsX() > gates[1].getBottomBar().x-35 && ball.getAbsY() > gates[1].getBottomBar().y - 10 && ball.getAbsY() < gates[1].getTopBar().y + 10)
+						)
 					)
-				)
-			) 
-		{
-			// Меняем направление движения мяча на противоположное
-			ball.setVelocityX(-ball.getVelocityX());
-			
-			// Звук удара мяча о каркас ворот
-			sounds.play("balllanding02", true);
+				) 
+			{
+				// Меняем направление движения мяча на противоположное
+				ball.setVelocityX(-ball.getVelocityX());
+				
+				// Звук удара мяча о каркас ворот
+				sounds.play("balllanding02", true);
+			}
 		}
 	}
 	

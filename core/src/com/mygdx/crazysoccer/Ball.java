@@ -36,6 +36,7 @@ public class Ball extends Actor {
  	private float POS_Y = 0.0f;
  	private float MASS = 3.0f;
  	private float DIAMETER = SPRITE_SCALE * SPRITE_WIDTH;
+ 	private float PASS_IMPULSE = 30.0f;
     
     // Парамерты высоты расположения мяча
     private float JUMP_HEIGHT = 0;
@@ -45,7 +46,7 @@ public class Ball extends Actor {
     private float AIR_FRICTION = -0.005f;
     
     // Коэффициент трения мяча о газон
-    private float GRASS_FRICTION = -0.06f;
+    private float GRASS_FRICTION = -0.04f;
     
     // Коефициент отпрыгивания мяча от газона
     private float RESTITUTION = 0.6f;
@@ -55,6 +56,15 @@ public class Ball extends Actor {
     
     // Скорость мяча при которой на мяч начинает действовать гравитация
     private float ALLOW_GRAVITY_FROM = 0.0f;
+    
+    // Скорость полета мяча при ударе, начиная с которой на него начинает действовать гравитация
+    private float ALLOW_GRAVITY_KICK = 14.0f;
+    
+    // Максимальное растояние на котороем можно отдать пас
+    private float MAX_PASS_LENGTH = 1700.0f;
+    
+    // Угол Alpha под которым последний раз направлялся мяч
+    private float LAST_BALL_ALPHA = 0.0f;
     
     // Набор анимаций мяча
     public Map<States, Animation> animations;
@@ -130,122 +140,6 @@ public class Ball extends Actor {
 		this.field = f;
 	}
 	
-	public void kick(float impulse, float dstX, float dstY, boolean upFlag) {
-		
-		float alpha = calcAlpha(dstX, dstY);
-		
-		// Подсчет скорости при ударе
-		float v = impulse / this.MASS;
-		
-		this.CURENT_SPEED_X = v * (float)Math.sin(alpha * Math.PI / 180.0f);
-		this.CURENT_SPEED_Y = v * (float)Math.cos(alpha * Math.PI / 180.0f);
-		
-		// Если осуществляя удар зажата кнопка вверх, то мяч должен лететь по параболе
-		if (upFlag) {
-			this.allowGravityFrom(999);
-			this.JUMP_VELOCITY = 6f;
-		}
-		// Иначе мяч летит прямо, и начинает терять высоту только начиная с момента
-		// когда его скорость станет меншье 14
-		else {
-			this.allowGravityFrom(14);
-			this.JUMP_VELOCITY = 0.0f;
-		}
-		
-		// Если в момент удара мяч находится на земле то поднимаем его на 25px
-		if (this.JUMP_HEIGHT <= 0) this.JUMP_HEIGHT = 30;
-		
-		Do(getAnimationByVelocity(v), true);
-	}
-	
-	public void pass(float dstX, float dstY) {
-		// Расстояние к точке куда давать пас
-		float l = (float)Math.sqrt((dstX - getAbsX()) * (dstX - getAbsX()) + (dstY - getAbsY()) * (dstY - getAbsY()));
-		
-		// Из расчета что при JUMP_VELOCITY = 6 на 1 силы приходится растояние в 31px
-		float f = l / 31.0f; // 1 - 6.5f
-		
-		kick(f, dstX, dstY, true);
-	}
-	
-	// Подсчет угла под которым нужно послать мяч, чтобы он достиг цели
-	private float calcAlpha(float dstX, float dstY) {
-		double sinA = 0;
-		
-		// Опеределение расстояние от игрока до ворот
-		double AC = Math.abs(dstX - getAbsX());
-		double BC = Math.abs(dstY - getAbsY());
-		
-		sinA = Math.asin(BC / Math.sqrt(AC * AC + BC * BC));
-		sinA = (sinA * 180.0f) / Math.PI;
-		
-		if (getAbsX() < dstX) {
-			if (getAbsY() < dstY) sinA = -sinA;
-			sinA += 90;
-		}
-		else {
-			if (getAbsY() > dstY) sinA = -sinA;
-			sinA += 270;
-		}
-		return (float)sinA;
-	}
-	
-	// Подбор анимации в зависимости от скорости полета мяча
-	public States getAnimationByVelocity(float v) {
-		if (v >= 10) {
-			return States.FLY_FAST;
-		}
-		else if (v >= 3) {			
-			return States.FLY_MEDIUM;
-		} 
-		else if (v > 0) {
-			return States.FLY_SLOW;
-		}
-		else {
-			return States.STOP;
-		}
-	}
-	
-	public void setJumpVelocity(float v) {
-		this.JUMP_VELOCITY = v;
-	}
-	
-	public boolean Can(States stateToCheck) {
-		boolean isCan = false;
-		
-		switch (stateToCheck) {
-		
-		}
-		
-		return isCan;
-	}
-	
-	// Постановка задания на выполнение действия
-	public void Do(States state, boolean stopAll) {
-		// Если установлен флаг stopAll то останавливаем все анимации
-		if (stopAll) this.stopAll();
-		
-		switch (state) {
-			case STOP:
-				this.setVelocityX(0);
-				this.setVelocityY(0);
-			break;
-		}
-
-		// Добавляем задачу на исполнение
-		this.state.put(state, true);
-	}
-	
-	// Текущее состояние персонажа
-	public States curentState() {
-		for (int i = 0; i < States.values().length; i++) {
-			if (state.get(States.values()[i])) {
-				return States.values()[i];
-			}
-		}
-		return States.STOP;
-	}
-	
 	// Возвращает диаметр мяча с учетом параметра Scale
 	public float getDiameter() {
 		return DIAMETER;
@@ -297,6 +191,174 @@ public class Ball extends Actor {
 	
 	public boolean isCatched() {
 		return this.CATCHED;
+	}
+	
+public void kick(float impulse, float dstX, float dstY, boolean upFlag) {
+		
+		float alpha = calcAlpha(dstX, dstY);
+		
+		// Подсчет скорости мяча при ударе
+		float v = impulse / this.MASS;
+		
+//		this.CURENT_SPEED_X = v * (float)Math.sin(alpha * Math.PI / 180.0f);
+//		this.CURENT_SPEED_Y = v * (float)Math.cos(alpha * Math.PI / 180.0f);
+		
+		this.setVelocityX(v * (float)Math.sin(alpha));
+		this.setVelocityY(v * (float)Math.cos(alpha));
+		
+		// Если осуществляя удар зажата кнопка вверх, то мяч должен лететь по параболе
+		if (upFlag) {
+			this.setJumpVelocity((impulse == this.PASS_IMPULSE) ? 0.75f : 7.2f);
+			this.allowGravityFrom(999);
+		}
+		// Иначе мяч летит прямо, и начинает терять высоту только начиная с момента
+		// когда его скорость станет меншье 14
+		else {
+			// Скорость полета мяча при ударе, начиная с которой на него начинает действовать гравитация
+			this.allowGravityFrom(this.ALLOW_GRAVITY_KICK);
+			
+			// Вертикальная скорость мяча при ударе
+			this.setJumpVelocity(0);
+		
+			// Если в момент удара мяч находится на земле то поднимаем его на 30px
+			if (this.getAbsH() <= 0) this.setAbsH(30);
+		}
+		
+		Do(getAnimationByVelocity(v), true);
+	}
+	
+	public void pass(float dstX, float dstY) {
+		// Сила с которой нужно давать пас, чтобы мяч достиг адресата
+		float f = 0;
+		
+		// Расстояние к точке куда давать пас
+		float l = (float)Math.sqrt((dstX - getAbsX()) * (dstX - getAbsX()) + (dstY - getAbsY()) * (dstY - getAbsY()));
+		
+		// Если расстояние больше чем максимальное растояние на которое можно отдать пас
+		if (l > this.MAX_PASS_LENGTH) l = this.MAX_PASS_LENGTH; 
+		
+		// Если расстояние к игроку которому дают пас < 300, то пас дается низом
+		if (l < 350) {
+			kick(this.PASS_IMPULSE, dstX, dstY, true);
+		}
+		// Иначе пас дается навесом
+		else {
+			// Высота паса (чем больше растояние тем выше полет мяча)
+			float h = l / 100.0f;
+			
+			// Ограничиваем минимальное и максимальное значение высоты
+			if (h < 5.5f) h = 5.5f; else if (h > 8.5f) h = 8.5f;
+			
+			// Сила, с которой нужно отправить мяч, чтобы он долетел
+			f = l / (h * 3.50f);
+			
+			// Удар по мячу
+			kick(f, dstX, dstY, true);
+			
+			// Устанавливаем начальную вертикальную скорость полета мяча
+			this.setJumpVelocity(h);
+		}
+	}
+	
+	// Подсчет угла под которым нужно послать мяч, чтобы он достиг цели (dstX, dstY)
+	// с текущего положения мяча
+	private float calcAlpha(float dstX, float dstY) {
+		float alpha = 0;
+		
+		// Опеределение расстояния от мяча до заданой точки по осям XOY
+		float AC = Math.abs(dstX - getAbsX());
+		float BC = Math.abs(dstY - getAbsY());
+		
+		alpha = (float)Math.asin(BC / Math.sqrt(AC * AC + BC * BC));
+		
+		if (getAbsX() < dstX) {
+			if (getAbsY() < dstY) alpha = -alpha;
+			alpha += 0.5f * Math.PI;
+		}
+		else {
+			if (getAbsY() > dstY) alpha = -alpha;
+			alpha += 1.5f * Math.PI;
+		}
+		
+		// Запоминаем значение под которым направлен мяч (значение используется для
+		// абсолютного значения скорости мяча по осям XOY)
+		this.LAST_BALL_ALPHA = alpha;
+		
+//		if (this.getAbsY() < field.worldHeight / 2.0f) {
+//			if (alpha < 0.18f) 
+//				alpha = 0.18f;
+//			else if (alpha > 6.09f) 
+//				alpha = 6.09f;
+//		}
+//		else {
+//			if (alpha > 2.71f && this.getAbsX() > field.worldWidth / 2.0f) 
+//				alpha = 2.71f;
+//			else if (alpha < 3.56f && this.getAbsX() <= field.worldWidth / 2.0f) 
+//				alpha = 3.56f;
+//		}
+
+		
+		return alpha;
+	}
+	
+	// Подбор анимации в зависимости от скорости полета мяча
+	public States getAnimationByVelocity(float v) {
+		if (v >= 10) {
+			return States.FLY_FAST;
+		}
+		else if (v >= 3) {			
+			return States.FLY_MEDIUM;
+		} 
+		else if (v > 0) {
+			return States.FLY_SLOW;
+		}
+		else {
+			return States.STOP;
+		}
+	}
+	
+	public void setJumpVelocity(float v) {
+		this.JUMP_VELOCITY = v;
+	}
+
+	public float getJumpVelocity() {
+		return this.JUMP_VELOCITY;
+	}
+	
+	public boolean Can(States stateToCheck) {
+		boolean isCan = false;
+		
+		switch (stateToCheck) {
+		
+		}
+		
+		return isCan;
+	}
+	
+	// Постановка задания на выполнение действия
+	public void Do(States state, boolean stopAll) {
+		// Если установлен флаг stopAll то останавливаем все анимации
+		if (stopAll) this.stopAll();
+		
+		switch (state) {
+			case STOP:
+				this.setVelocityX(0);
+				this.setVelocityY(0);
+			break;
+		}
+
+		// Добавляем задачу на исполнение
+		this.state.put(state, true);
+	}
+	
+	// Текущее состояние персонажа
+	public States curentState() {
+		for (int i = 0; i < States.values().length; i++) {
+			if (state.get(States.values()[i])) {
+				return States.values()[i];
+			}
+		}
+		return States.STOP;
 	}
 	
 	// Механизм передвижения мяча и камеры относительно него
@@ -452,27 +514,6 @@ public class Ball extends Actor {
 	
 	@Override
 	public void act(float delta) {
-		
-		if (actionsListener.getActionStateFor(Controls.UP, 2).pressed) { 
-			this.CURENT_SPEED_X = 0.0f;
-			this.CURENT_SPEED_Y = 5.4f;
-		}
-		
-		if (actionsListener.getActionStateFor(Controls.DOWN, 2).pressed) { 
-			this.CURENT_SPEED_X = 0.0f;
-			this.CURENT_SPEED_Y = -5.4f;
-		}
-		
-		if (actionsListener.getActionStateFor(Controls.LEFT, 2).pressed) { 
-			this.CURENT_SPEED_X = -5.4f;
-			this.CURENT_SPEED_Y = 0.0f;
-		}
-		
-		if (actionsListener.getActionStateFor(Controls.RIGHT, 2).pressed) { 
-			this.CURENT_SPEED_X = 5.4f;
-			this.CURENT_SPEED_Y = 0.0f;
-		}
-
 		// Замедление полета мяча (трение воздуха)
 		this.CURENT_SPEED_X += this.CURENT_SPEED_X * this.AIR_FRICTION; 
 		this.CURENT_SPEED_Y += this.CURENT_SPEED_Y * this.AIR_FRICTION;
@@ -492,11 +533,49 @@ public class Ball extends Actor {
 		Do(getAnimationByVelocity(this.absVelocity()), true);
 
 		
+		if (!this.inField()) {
+			// Ограничение движение мяча в сетке левых ворот
+			if (this.getAbsX() < field.gates[0].getBottomBar().x - 70 && this.getVelocityX() < 0) {
+				this.setVelocityX(-0.3f * this.getVelocityX());
+			}
+			
+			if (this.getAbsY() < field.gates[0].getBottomBar().y + 15 && this.getVelocityY() < 0) {
+				this.setVelocityY(-0.6f * this.getVelocityY());
+			}
+			
+			if (this.getAbsY() > field.gates[0].getTopBar().y - 15 && this.getVelocityY() > 0) {
+				this.setVelocityY(-0.6f * this.getVelocityY());
+			}
+			
+			if (this.getAbsH() > field.gates[0].height() - 20) {
+				this.setJumpVelocity(-this.getJumpVelocity());
+			}
+			
+			
+			// Ограничение движение мяча в сетке правых ворот
+			if (this.getAbsX() > field.gates[1].getBottomBar().x + 70 && this.getVelocityX() > 0) {
+				this.setVelocityX(-0.3f * this.getVelocityX());
+			}
+			
+			if (this.getAbsY() < field.gates[1].getBottomBar().y + 15 && this.getVelocityY() < 0) {
+				this.setVelocityY(-0.6f * this.getVelocityY());
+			}
+			
+			if (this.getAbsY() > field.gates[1].getTopBar().y - 15 && this.getVelocityY() > 0) {
+				this.setVelocityY(-0.6f * this.getVelocityY());
+			}
+			
+			if (this.getAbsH() > field.gates[1].height() - 20) {
+				this.setJumpVelocity(-this.getJumpVelocity());
+			}
+		}
+		
+		
 		// Реализация гравитации (гравитация начинает действовать только когда сумма абсолютных
 		// скоростей по осям OX и OY < 15)
 		if (this.absVelocity() < this.ALLOW_GRAVITY_FROM && (this.JUMP_HEIGHT > 0 || this.JUMP_VELOCITY > 0)) {
 			// Текущая вертикальная скорость мяча
-			this.JUMP_VELOCITY -= 6.0f * Gdx.graphics.getDeltaTime();
+			this.JUMP_VELOCITY -= 8.0f * Gdx.graphics.getDeltaTime();
 			
 			// Изменение высоты мяча
 			this.JUMP_HEIGHT += this.JUMP_VELOCITY;
@@ -513,20 +592,14 @@ public class Ball extends Actor {
 				this.CURENT_SPEED_X += this.CURENT_SPEED_X * this.GRASS_FRICTION;
 				
 				// Воспроизводим звук удара мяча о газон
-				if (this.JUMP_VELOCITY > 0.075f) field.sounds.play("balllanding02",true);
+				if (this.JUMP_VELOCITY > 0.15f) field.sounds.play("balllanding02",true);
 				
 				this.JUMP_HEIGHT = 0;
-				
-//				System.out.println("Координаты падения "+getAbsX()+","+getAbsY());
-//				double dist = Math.sqrt((1953 - getAbsX()) * (1953 - getAbsX()) + (836 - getAbsY()) * (836 - getAbsY())); 
-//				System.out.println("Мяч пролетел "+ dist);
 			}
 		}
 		
 		// Перемещение мяча
 		moveBallBy(new Vector2(this.CURENT_SPEED_X, this.CURENT_SPEED_Y));
-		
-		System.out.println(isGoalIn());
 	}
 	
 	// Проверка находится ли мяч в воротах (гол забит)
@@ -561,10 +634,16 @@ public class Ball extends Actor {
 	
 	// Суммарная скорость мяча по осям
 	public float absVelocity() {
-		return Math.abs(this.CURENT_SPEED_X);
-		//return Math.abs(this.CURENT_SPEED_X) + Math.abs(this.CURENT_SPEED_Y);
+		// Скорость по оси OX
+		double ox = Math.abs(this.getVelocityX() * Math.sin(LAST_BALL_ALPHA));
+		
+		// Скорость по оси OY
+		double oy = Math.abs(this.getVelocityY() * Math.cos(LAST_BALL_ALPHA));
+		
+		return (float)(ox + oy);
 	}
 	
+	// Нужно ли зеркалировать изобаржение мяча (в зависимоти от движения мяча)
 	private boolean getFlip() {
 		if (this.CURENT_SPEED_X < 0 || this.CURENT_SPEED_Y < 0) {
 			return true;
@@ -574,7 +653,6 @@ public class Ball extends Actor {
 	
 	@Override
 	public void draw(Batch batch, float parentAlpha) {
-//		System.out.println(this.absVelocity());
 		stateTime += Gdx.graphics.getDeltaTime();
 		
 		// Анимирование мяча
@@ -585,7 +663,7 @@ public class Ball extends Actor {
         spriteBatch.draw(
     		currentFrame.getTexture(), 
     		this.getX() - getDiameter() / 2, 
-    		this.getY() + this.JUMP_HEIGHT, 
+    		this.getY() + this.getAbsH(), 
     		0, 
     		0, 
     		this.SPRITE_WIDTH, 
@@ -602,9 +680,9 @@ public class Ball extends Actor {
 		);
         spriteBatch.end();
         
-		// Ресование тени персонажа
+		// Ресование тени мяча
         shadow.setX(getX() - 12);
         shadow.setY(getY() - 2);
-        shadow.setVisibility(this.JUMP_HEIGHT > 0);
+        shadow.setVisibility(this.getAbsH() > 0);
 	}
 }

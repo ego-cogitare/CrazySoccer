@@ -66,6 +66,9 @@ public class Ball extends Actor {
     // Угол Alpha под которым последний раз направлялся мяч
     private float LAST_BALL_ALPHA = 0.0f;
     
+    // Принимает значение true если мяч влетел в ворота
+    private boolean IS_BALL_IN_NET = false;
+    
     // Набор анимаций мяча
     public Map<States, Animation> animations;
     
@@ -533,22 +536,22 @@ public void kick(float impulse, float dstX, float dstY, boolean upFlag) {
 		Do(getAnimationByVelocity(this.absVelocity()), true);
 
 		
-		if (!this.inField()) {
+		if (this.ballInNet() && !this.inField()) {
 			// Ограничение движение мяча в сетке левых ворот
 			if (this.getAbsX() < field.gates[0].getBottomBar().x - 70 && this.getVelocityX() < 0) {
 				this.setVelocityX(-0.3f * this.getVelocityX());
 			}
 			
-			if (this.getAbsY() < field.gates[0].getBottomBar().y + 15 && this.getVelocityY() < 0) {
+			if (this.getAbsY() < field.gates[0].getBottomBar().y + 10 && this.getVelocityY() < 0) {
 				this.setVelocityY(-0.6f * this.getVelocityY());
 			}
 			
-			if (this.getAbsY() > field.gates[0].getTopBar().y - 15 && this.getVelocityY() > 0) {
+			if (this.getAbsY() > field.gates[0].getTopBar().y - 10 && this.getVelocityY() > 0) {
 				this.setVelocityY(-0.6f * this.getVelocityY());
 			}
 			
 			if (this.getAbsH() > field.gates[0].height() - 20) {
-				this.setJumpVelocity(-this.getJumpVelocity());
+				this.setJumpVelocity(-3);
 			}
 			
 			
@@ -557,16 +560,16 @@ public void kick(float impulse, float dstX, float dstY, boolean upFlag) {
 				this.setVelocityX(-0.3f * this.getVelocityX());
 			}
 			
-			if (this.getAbsY() < field.gates[1].getBottomBar().y + 15 && this.getVelocityY() < 0) {
+			if (this.getAbsY() < field.gates[1].getBottomBar().y + 10 && this.getVelocityY() < 0) {
 				this.setVelocityY(-0.6f * this.getVelocityY());
 			}
 			
-			if (this.getAbsY() > field.gates[1].getTopBar().y - 15 && this.getVelocityY() > 0) {
+			if (this.getAbsY() > field.gates[1].getTopBar().y - 10 && this.getVelocityY() > 0) {
 				this.setVelocityY(-0.6f * this.getVelocityY());
 			}
 			
 			if (this.getAbsH() > field.gates[1].height() - 20) {
-				this.setJumpVelocity(-this.getJumpVelocity());
+				this.setJumpVelocity(-3);
 			}
 		}
 		
@@ -602,27 +605,44 @@ public void kick(float impulse, float dstX, float dstY, boolean upFlag) {
 		moveBallBy(new Vector2(this.CURENT_SPEED_X, this.CURENT_SPEED_Y));
 	}
 	
+	private boolean ballInNet() {
+		return this.IS_BALL_IN_NET;
+	}
+	
+	public void ballInNet(boolean b) {
+		this.IS_BALL_IN_NET = b;
+	}
+	
 	// Проверка находится ли мяч в воротах (гол забит)
 	// Метод возвращает:
 	//  0 - мяч не в воротах
 	//  1 - мяч в левых воротах
 	//  2 - мяч в правых воротах
 	public int isGoalIn() {
+		int r = 0;
+		
 		if (!this.inField()) {
 			
 			if ((this.getAbsH() < field.gates[0].getHeight()) && 
 				(this.getAbsX() + 10 < field.fieldOffsetX + field.mGetSideLineProjection(this.getAbsY()) && this.getAbsY() > field.gates[0].getBottomBar().y && this.getAbsY() < field.gates[0].getTopBar().y)) {
 				
-				return 1;
+				r = 1;
 			}
 			else if ((this.getAbsH() < field.gates[1].getHeight()) && 
 					 (this.getAbsX() - 10 > field.fieldOffsetX + field.fieldMaxWidth - field.mGetSideLineProjection(this.getAbsY()) && this.getAbsY() > field.gates[1].getBottomBar().y && this.getAbsY() < field.gates[1].getTopBar().y)) {
 				 
-				return 2;
+				r = 2;
 			}
 			
 		}
-		return 0;
+		
+		// Если было зафиксировано, что мяч находится в воротах то устанавливаем флаг того что мяч в воротах 
+		if (!this.ballInNet() && r != 0) 
+			this.ballInNet(true);
+		else if (this.ballInNet() && r == 0)
+			this.ballInNet(false);
+		
+		return r;
 	}
 	
 	// Устанавливает значение скорости полета мяча начиная с которой на него начинает действовать 

@@ -533,7 +533,7 @@ public void kick(float impulse, float dstX, float dstY, boolean upFlag) {
 			Do(States.STOP, true);
 		}
 		
-		Do(getAnimationByVelocity(this.absVelocity()), true);
+		Do(getAnimationByVelocity(this.absVelocity()), true); 
 
 		
 		if (this.ballInNet() && !this.inField()) {

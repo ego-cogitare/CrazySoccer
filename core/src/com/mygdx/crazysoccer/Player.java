@@ -458,7 +458,7 @@ public class Player extends Actor {
 			case HEAD_KICK: 
 				isCan = !state.get(States.FOOT_KICK) && 
 						!state.get(States.DEAD) &&
-						!state.get(States.SIT) &&
+						!state.get(States.SIT) && 
 						!state.get(States.LAY_BACK) &&
 						!state.get(States.LAY_BELLY) &&
 						!state.get(States.PASS) && 

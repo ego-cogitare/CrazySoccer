@@ -462,7 +462,7 @@ public class Player extends Actor {
 						!state.get(States.LAY_BACK) &&
 						!state.get(States.LAY_BELLY) &&
 						!state.get(States.PASS) && 
-						((ball.getAbsH() - this.getAbsH() > 150 && dArrowPressed()) || (this.getAbsH() == 0 && ball.getAbsH() > 70));
+						(((ball.getAbsH() - this.getAbsH() > 150 && dArrowPressed()) || (this.getAbsH() == 0 && ball.getAbsH() > 70)) && !ball.isCatched() || (ball.isCatched() && dArrowPressed()));
 			break;
 			
 			/* 

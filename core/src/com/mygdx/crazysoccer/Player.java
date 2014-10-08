@@ -199,7 +199,7 @@ public class Player extends Actor {
         
         // Создаем анимацию приема мяча грудью
         animations.put(States.CHEST_CATCH, 
-    		new Animation(0.6f, 
+    		new Animation(0.4f, 
 				animationMap[1][6]
 			)
         );
@@ -414,12 +414,17 @@ public class Player extends Actor {
 			 *  2. не бъет ногой
 			 */
 			case KNEE_CATCH: 
-				isCan = !state.get(States.KNEE_CATCH) && 
-						!state.get(States.DEAD) &&
-						!state.get(States.SIT) &&
-						!state.get(States.LAY_BACK) &&
-						!state.get(States.LAY_BELLY) &&
-						!state.get(States.FOOT_KICK);
+				isCan = this.getAbsH() == 0 &&
+						this.getVelocityX() == 0 &&
+						this.getVelocityY() == 0 &&
+						ball.getAbsH() < 35;
+			break;
+			
+			case CHEST_CATCH: 
+				isCan = this.getAbsH() == 0 &&
+						this.getVelocityX() == 0 &&
+						this.getVelocityY() == 0 &&
+						ball.getAbsH() >= 35;
 			break;
 			
 			/* 
@@ -457,7 +462,7 @@ public class Player extends Actor {
 						!state.get(States.LAY_BACK) &&
 						!state.get(States.LAY_BELLY) &&
 						!state.get(States.PASS) && 
-						((this.getAbsH() > 0 && dArrowPressed()) || (this.getAbsH() == 0 && ball.getAbsH() > 100));
+						((ball.getAbsH() - this.getAbsH() > 150 && dArrowPressed()) || (this.getAbsH() == 0 && ball.getAbsH() > 70));
 			break;
 			
 			/* 
@@ -514,6 +519,9 @@ public class Player extends Actor {
 				// Установка необходимости подбросить игрока
 				if (this.getAbsH() > 0) this.setJumpVelocity(2.5f);
 				
+				// Для того чтобы при ударе головой мяч двигался вверх
+				if (state == States.HEAD_KICK) ball.allowGravityFrom(999);
+				
 				// Если при ударе ногой игрок не находится в воздухе то останавливаем его мгновенно
 				if (this.JUMP_HEIGHT == 0) {
 					this.CURENT_SPEED_X = 0.0f;
@@ -536,7 +544,12 @@ public class Player extends Actor {
 			case JUMP: 
 				actionsListener.disableAction(Controls.ACTION3, this.PLAYER_ID);
 				this.stateTime = 0.0f;
+				
 				this.setJumpVelocity(this.STRENGTH / this.MASS);
+				
+				// Для того чтобы во время прыжка на него не действовала гравитация (он привязан к игроку)
+				if (ball.isCatched()) ball.allowGravityFrom(0);
+				
 				field.sounds.play("jump01",true);
 			break;
 			
@@ -723,6 +736,8 @@ public class Player extends Actor {
 		
 		// Удар головой / ногой
 		if (action1Pressed()) {
+			//System.out.println(Can(States.HEAD_KICK));
+			
 			if (Can(States.HEAD_KICK)) 
 				Do(States.HEAD_KICK, true);
 			else if (Can(States.FOOT_KICK)) 
@@ -769,7 +784,7 @@ public class Player extends Actor {
 				if (this.getAbsH() != 0) ball.setJumpVelocity(5.8f);
 				
 				// Выполнение удара по мячу
-				if (currentFrame() >= 1) this.ballKick();
+				if ((currentFrame() >= 1 && ball.isCatched()) || !ball.isCatched()) this.ballKick();
 			} 
 			else if (curentState() == States.PASS) {
 				// Начало полета мяча при пасе не должно начинаться сразу же после начала анимации паса,
@@ -797,19 +812,11 @@ public class Player extends Actor {
 				// Когда скорость мяча меньше 15, то игрок принимает мяч
 				if (ball.absVelocity() < 14 && Can(States.CATCH_BALL)) {
 					// Если игрок находится в воздухе то его анимация при приеме мяча не меняется
-					if (this.getAbsH() > 0 || ball.absVelocity() < 10) {
-						
+					if (Can(States.CHEST_CATCH)) {
+						Do(States.CHEST_CATCH, true);
 					}
-					// Если игрок находится на земле
-					else {
-						// Если высота полета мяча выше 35 то игрок принимает мяч на грудь 
-						if (ball.getAbsH() > 35) {
-							Do(States.CHEST_CATCH, true);
-						}
-						// Иначе на ногу
-						else {
-							Do(States.KNEE_CATCH, true);
-						}
+					else if (Can(States.KNEE_CATCH)) {
+						Do(States.KNEE_CATCH, true);
 					}
 					
 					// Отмечаем что игрок заполучил мяч
@@ -820,7 +827,7 @@ public class Player extends Actor {
 					ball.setVelocityY(0);
 				}
 				// Если скорость больше 14 то мяч убивает игрока
-				else if (ball.absVelocity() >= 14) {
+				else {
 					if (Can(States.DEAD)) {
 						Do(States.DEAD, true);
 						this.setJumpVelocity(this.STRENGTH / this.MASS / 1.5f);
@@ -960,9 +967,15 @@ public class Player extends Actor {
 					ball.moveBallBy(new Vector2(this.getAbsX()-ball.getAbsX() - 33, this.getAbsY()-ball.getAbsY() - 1));
 				}
 				
-				if (curentState() != States.HEAD_KICK) {
+				if (ball.getJumpVelocity() >= 0 && curentState() != States.HEAD_KICK) {
 					ball.setAbsH(this.getAbsH());
 				}
+				
+				// Если мяч контроллируется игроком то не позволяем опуститься мячу ниже высоты игрока
+				if (ball.getAbsH() < this.getAbsH()) 
+					ball.setAbsH(this.getAbsH());
+				else if (ball.getAbsH() > this.getAbsH() + 60) 
+					ball.setAbsH(this.getAbsH() + 60);
 			}
 		}
 	}

@@ -55,7 +55,7 @@ public class Ball extends Actor {
     private boolean CATCHED = false;
     
     // Скорость мяча при которой на мяч начинает действовать гравитация
-    private float ALLOW_GRAVITY_FROM = 0.0f;
+    private float ALLOW_GRAVITY_FROM = 999.0f;
     
     // Скорость полета мяча при ударе, начиная с которой на него начинает действовать гравитация
     private float ALLOW_GRAVITY_KICK = 14.0f;
@@ -224,7 +224,7 @@ public void kick(float impulse, float dstX, float dstY, boolean upFlag) {
 			this.setJumpVelocity(0);
 		
 			// Если в момент удара мяч находится на земле то поднимаем его на 30px
-			if (this.getAbsH() <= 0) this.setAbsH(30);
+			if (this.getAbsH() <= 30) this.setAbsH(30);
 		}
 		
 		Do(getAnimationByVelocity(v), true);
@@ -577,6 +577,8 @@ public void kick(float impulse, float dstX, float dstY, boolean upFlag) {
 		// Реализация гравитации (гравитация начинает действовать только когда сумма абсолютных
 		// скоростей по осям OX и OY < 15)
 		if (this.absVelocity() < this.ALLOW_GRAVITY_FROM && (this.JUMP_HEIGHT > 0 || this.JUMP_VELOCITY > 0)) {
+			System.out.println(this.JUMP_VELOCITY);
+			
 			// Текущая вертикальная скорость мяча
 			this.JUMP_VELOCITY -= 8.0f * Gdx.graphics.getDeltaTime();
 			

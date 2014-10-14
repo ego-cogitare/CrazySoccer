@@ -255,12 +255,58 @@ public class Field extends Stage {
         		gates[0].setBottomBar(new Vector2(fieldOffsetX + this.mGetSideLineProjection(y1), y1));
         		gates[0].setTopBar(new Vector2(fieldOffsetX + this.mGetSideLineProjection(y2), y2));
         		
+        		// Указание проекции ворот на плоскость поля для подсчета столкновений
+        		gates[0].gateProjection[0][0] = gates[0].getBottomBar().x - 100;
+        		gates[0].gateProjection[0][1] = gates[0].getBottomBar().y - 10;
+        		
+        		gates[0].gateProjection[1][0] = gates[0].getTopBar().x - 100;
+        		gates[0].gateProjection[1][1] = gates[0].getTopBar().y + 5;
+        		
+        		gates[0].gateProjection[2][0] = gates[0].getTopBar().x;
+        		gates[0].gateProjection[2][1] = gates[0].getTopBar().y + 5;
+        		
+        		gates[0].gateProjection[3][0] = gates[0].getTopBar().x;
+        		gates[0].gateProjection[3][1] = gates[0].getTopBar().y - 5;
+        		
+        		gates[0].gateProjection[4][0] = gates[0].getTopBar().x - 90;
+        		gates[0].gateProjection[4][1] = gates[0].getTopBar().y - 5;
+        		
+        		gates[0].gateProjection[5][0] = gates[0].getBottomBar().x - 90;
+        		gates[0].gateProjection[5][1] = gates[0].getBottomBar().y + 5;
+        		
+        		gates[0].gateProjection[6][0] = gates[0].getBottomBar().x;
+        		gates[0].gateProjection[6][1] = gates[0].getBottomBar().y + 5;
+        		
+        		gates[0].gateProjection[7][0] = gates[0].getBottomBar().x;
+        		gates[0].gateProjection[7][1] = gates[0].getBottomBar().y - 10;
+        		
+        		
         		gates[1].setBottomBar(new Vector2(fieldOffsetX + fieldMaxWidth - this.mGetSideLineProjection(y1), y1));
         		gates[1].setTopBar(new Vector2(fieldOffsetX + fieldMaxWidth - this.mGetSideLineProjection(y2), y2));
         		
-//        		for (int h = 0; h < fieldHeight; h++) {
-//        			System.out.println(h+" "+mGetSideLineProjection(h));
-//        		}
+        		gates[1].gateProjection[0][0] = gates[1].getBottomBar().x + 100;
+        		gates[1].gateProjection[0][1] = gates[1].getBottomBar().y - 10;
+        		
+        		gates[1].gateProjection[1][0] = gates[1].getTopBar().x + 100;
+        		gates[1].gateProjection[1][1] = gates[1].getTopBar().y + 5;
+        		
+        		gates[1].gateProjection[2][0] = gates[1].getTopBar().x;
+        		gates[1].gateProjection[2][1] = gates[1].getTopBar().y + 5;
+        		
+        		gates[1].gateProjection[3][0] = gates[1].getTopBar().x;
+        		gates[1].gateProjection[3][1] = gates[1].getTopBar().y - 5;
+        		
+        		gates[1].gateProjection[4][0] = gates[1].getTopBar().x + 90;
+        		gates[1].gateProjection[4][1] = gates[1].getTopBar().y - 5;
+        		
+        		gates[1].gateProjection[5][0] = gates[1].getBottomBar().x + 90;
+        		gates[1].gateProjection[5][1] = gates[1].getBottomBar().y + 5;
+        		
+        		gates[1].gateProjection[6][0] = gates[1].getBottomBar().x;
+        		gates[1].gateProjection[6][1] = gates[1].getBottomBar().y + 5;
+        		
+        		gates[1].gateProjection[7][0] = gates[1].getBottomBar().x;
+        		gates[1].gateProjection[7][1] = gates[1].getBottomBar().y - 10;
         	}
 		}
 	}
@@ -467,10 +513,10 @@ public class Field extends Stage {
 		
 		
 		// Если мяч вышел за пределы игрового поля
-		if (ball.inField()) {
+		if (this.inField(ball.getAbsX(),ball.getAbsY())) {
 			ballOutPlayed = false;
 		}
-		else if (!ball.inField() && !ballOutPlayed) {
+		else if (!this.inField(ball.getAbsX(),ball.getAbsY()) && !ballOutPlayed) {
 			// Если мяч влетел в ворота
 			if (ball.isGoalIn() > 0) {
 				sounds.play("goalin01", true);
@@ -522,11 +568,22 @@ public class Field extends Stage {
 		hideShadows();
 	}
 	
+	// Находится ли объект в пределах поля
+	public boolean inField(float x, float y) {
+		float offs = mGetSideLineProjection(y);
+		
+		return 
+		    y + 8 > fieldOffsetY && 
+		    y - 4 < fieldOffsetY + fieldHeight &&
+		    x + 12 > fieldOffsetX + offs &&
+			x - 12 < fieldOffsetX + fieldMaxWidth - offs;
+	}
+	
 	// Отслеживание столкновений
 	private void detectCollisions() {
 		
 		// Обработка столкновений производится лишь в случае когда мяч находится в поле
-		if (ball.inField()) {
+		if (this.inField(ball.getAbsX(),ball.getAbsY())) {
 			// Если мяч попадает штангу или в перекладину
 			if (
 				(

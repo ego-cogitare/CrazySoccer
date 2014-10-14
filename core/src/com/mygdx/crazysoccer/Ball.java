@@ -507,13 +507,15 @@ public void kick(float impulse, float dstX, float dstY, boolean upFlag) {
 		}
 	}
 	
-	public boolean inField() {
-		return 
-		    this.getAbsY() + 8 > field.fieldOffsetY && 
-		    this.getAbsY() - 4 < field.fieldOffsetY + field.fieldHeight &&
-		    this.getAbsX() + 12 > field.fieldOffsetX + field.mGetSideLineProjection(this.getAbsY()) &&
-			this.getAbsX() - 12 < field.fieldOffsetX + field.fieldMaxWidth - field.mGetSideLineProjection(this.getAbsY());
-	}
+//	public boolean inField() {
+//		float offs = field.mGetSideLineProjection(this.getAbsY());
+//		
+//		return 
+//		    this.getAbsY() + 8 > field.fieldOffsetY && 
+//		    this.getAbsY() - 4 < field.fieldOffsetY + field.fieldHeight &&
+//		    this.getAbsX() + 12 > field.fieldOffsetX + offs &&
+//			this.getAbsX() - 12 < field.fieldOffsetX + field.fieldMaxWidth - offs;
+//	}
 	
 	@Override
 	public void act(float delta) {
@@ -536,7 +538,7 @@ public void kick(float impulse, float dstX, float dstY, boolean upFlag) {
 		Do(getAnimationByVelocity(this.absVelocity()), true); 
 
 		
-		if (this.ballInNet() && !this.inField()) {
+		if (this.ballInNet() && !field.inField(getAbsX(),getAbsY())) {
 			// Ограничение движение мяча в сетке левых ворот
 			if (this.getAbsX() < field.gates[0].getBottomBar().x - 70 && this.getVelocityX() < 0) {
 				this.setVelocityX(-0.3f * this.getVelocityX());
@@ -577,7 +579,7 @@ public void kick(float impulse, float dstX, float dstY, boolean upFlag) {
 		// Реализация гравитации (гравитация начинает действовать только когда сумма абсолютных
 		// скоростей по осям OX и OY < 15)
 		if (this.absVelocity() < this.ALLOW_GRAVITY_FROM && (this.JUMP_HEIGHT > 0 || this.JUMP_VELOCITY > 0)) {
-			System.out.println(this.JUMP_VELOCITY);
+			//System.out.println(this.JUMP_VELOCITY);
 			
 			// Текущая вертикальная скорость мяча
 			this.JUMP_VELOCITY -= 8.0f * Gdx.graphics.getDeltaTime();
@@ -623,7 +625,7 @@ public void kick(float impulse, float dstX, float dstY, boolean upFlag) {
 	public int isGoalIn() {
 		int r = 0;
 		
-		if (!this.inField()) {
+		if (!field.inField(getAbsX(),getAbsY())) {
 			
 			if ((this.getAbsH() < field.gates[0].getHeight()) && 
 				(this.getAbsX() + 10 < field.fieldOffsetX + field.mGetSideLineProjection(this.getAbsY()) && this.getAbsY() > field.gates[0].getBottomBar().y && this.getAbsY() < field.gates[0].getTopBar().y)) {

@@ -766,6 +766,15 @@ public class Player extends Actor {
 			}
 		}
 		
+		// Если при следующем шаге персонаж будет находиться внутри объекта то останавливаем его 
+		if (MathUtils.intersectCount(getAbsX() + getVelocityX(), getAbsY() + getVelocityY(), field.gates[0].gateProjection) == 1 ||
+			MathUtils.intersectCount(getAbsX() + getVelocityX(), getAbsY() + getVelocityY(), field.gates[1].gateProjection) == 1) 
+		{
+			setVelocityX(0);
+			setVelocityY(0);
+			if (getAbsH() == 0) Do(States.WALKING, true);
+		}
+		
 		// Перемещение персонажа
 		movePlayerBy(new Vector2(this.CURENT_SPEED_X, this.CURENT_SPEED_Y));
 		
@@ -923,7 +932,7 @@ public class Player extends Actor {
 				ball.getAbsY() - this.getAbsY() >= -40 && 
 				ball.getAbsY() - this.getAbsY() <= 20 &&
 				ball.getAbsH() + ball.getDiameter() > this.getAbsH() && 
-				ball.getAbsH() < this.getAbsH() + this.getHeight();
+				ball.getAbsH() < this.getAbsH() + this.getHeight() - 10;
 	}
 	
 	private void movePlayerBy(Vector2 movePoint) {
@@ -959,7 +968,7 @@ public class Player extends Actor {
 			
 			
 			// Если игрок владеет мячом то привязываем перемещение мяча к этом игроку
-			if (this.catchBall() && ball.inField()) {
+			if (this.catchBall() && field.inField(ball.getAbsX(),ball.getAbsY())) {
 				if (this.direction == Directions.RIGHT) {
 					ball.moveBallBy(new Vector2(this.getAbsX()-ball.getAbsX() + 33, this.getAbsY()-ball.getAbsY() - 1));
 				}

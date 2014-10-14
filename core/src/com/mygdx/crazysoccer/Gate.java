@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.mygdx.crazysoccer.MathUtils.Box;
 
 public class Gate extends Actor {
 	// 930 732
@@ -19,7 +20,9 @@ public class Gate extends Actor {
 	
 	private TextureRegion gate;
 	private SpriteBatch gateSprite;
-	public Object getBottomBar;
+	
+	// Фундамент ворот (используется для поиска пересечений)
+	public float[][] gateProjection = new float[8][2];
 	
 	public Gate(int id) {
 		super();

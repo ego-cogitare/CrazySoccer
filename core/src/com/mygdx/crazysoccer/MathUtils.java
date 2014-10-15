@@ -16,12 +16,13 @@ class MathUtils {
 		}
 	}
 	
-//	public static Box box(float boxX1, float boxY1, float boxX2, float boxY2) {
-//		
-//		return new Box(boxX1, boxY1, boxX2, boxY2);
-//	}
-	
-	// Попадает ли точка в прямоугольник
+	/**
+	 * Попадает ли точка в прямоугольник
+	 * @param pointX
+	 * @param pointY
+	 * @param box
+	 * @return
+	 */
 	public static boolean isPointInBox(float pointX, float pointY, Box box) {
 		
 		return (pointX > box.boxX1) && (pointX < box.boxX2) && (pointY > box.boxY1) && (pointY < box.boxY2);
@@ -72,5 +73,18 @@ class MathUtils {
 		}
 		
 		return intersect;
+	}
+	
+	/**
+	 * Определение расстояние между двумя точками
+	 * @param ax1
+	 * @param ay1
+	 * @param ax2
+	 * @param ay2
+	 * @return
+	 */
+	public static float distance(float ax1, float ay1, float ax2, float ay2) {
+		
+		return (float)Math.sqrt((ax1 - ax2) * (ax1 - ax2) + (ay1 - ay2) * (ay1 - ay2));
 	}
 }

@@ -14,6 +14,9 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.maps.MapObject;
@@ -31,6 +34,9 @@ import com.mygdx.crazysoccer.Player.States;
 import com.mygdx.crazysoccer.Wind.WindDirections;
 
 public class Field extends Stage {
+	
+	private BitmapFont font;
+	private SpriteBatch batch;
 	
 	// Количество игроков на поле
 	private final int PLAYERS_AMOUNT = 5;
@@ -105,6 +111,9 @@ public class Field extends Stage {
 	public Field(ScreenViewport screenViewport) {
 		super(screenViewport);
 		
+	    font = new BitmapFont();
+	    batch = new SpriteBatch();
+	    
 		//Загрузка музыки и звуковых эффектов  *
 		loadSounds();
 		
@@ -450,6 +459,11 @@ public class Field extends Stage {
 	
 	public void processGame() { 
 		drawField();
+		
+		// Вывод FPS
+		batch.begin();
+		font.draw(batch, "FPS: " + Integer.valueOf(Gdx.graphics.getFramesPerSecond()).toString(), 10, Gdx.graphics.getHeight() - 10);
+		batch.end();
 		
 		// Изменение силы ветра
 		if (Math.random() > 0.995f) {

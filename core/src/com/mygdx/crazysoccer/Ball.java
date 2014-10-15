@@ -196,7 +196,7 @@ public class Ball extends Actor {
 		return this.CATCHED;
 	}
 	
-public void kick(float impulse, float dstX, float dstY, boolean upFlag) {
+	public void kick(float impulse, float dstX, float dstY, boolean upFlag) {
 		
 		float alpha = calcAlpha(dstX, dstY);
 		
@@ -235,7 +235,7 @@ public void kick(float impulse, float dstX, float dstY, boolean upFlag) {
 		float f = 0;
 		
 		// Расстояние к точке куда давать пас
-		float l = (float)Math.sqrt((dstX - getAbsX()) * (dstX - getAbsX()) + (dstY - getAbsY()) * (dstY - getAbsY()));
+		float l = MathUtils.distance(dstX, dstY, getAbsX(), getAbsY());
 		
 		// Если расстояние больше чем максимальное растояние на которое можно отдать пас
 		if (l > this.MAX_PASS_LENGTH) l = this.MAX_PASS_LENGTH; 

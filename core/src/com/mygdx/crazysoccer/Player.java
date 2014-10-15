@@ -1,13 +1,9 @@
 package com.mygdx.crazysoccer;
 
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.Animation.PlayMode;
@@ -49,10 +45,13 @@ public class Player extends Actor {
     private float MASS = 62.0f;
     
     // Сила персонажа
-    private float STRENGTH = 250.0f;
+    private float STRENGTH = 230.0f;
     
     // Сила удара мяча
     private float KICK_STRENGTH = 50.0f;
+    
+    // Коэффициент трения игрока о газон
+    private float GRASS_FRICTION = -0.15f;
     
     // Текущая скорость движения персонажа при прыжке 
     private float JUMP_VELOCITY = 0.0f;
@@ -60,8 +59,8 @@ public class Player extends Actor {
     // Параметры персонажа
     private float CURENT_SPEED_X = 0.0f;
     private float CURENT_SPEED_Y = 0.0f;
-    private float WALKING_SPEED = 5.0f;
-    private float RUN_SPEED = 10.0f;
+    private float WALKING_SPEED = 4.0f;
+    private float RUN_SPEED = 7.0f;
     private float POS_X = 0.0f;
     private float POS_Y = 0.0f;
     
@@ -79,9 +78,11 @@ public class Player extends Actor {
 		CHEST_CATCH,		// Прием мяча грудью
 		FOOT_KICK, 			// Удар ногой
 		HEAD_KICK,			// Удар головой
+		FISH_KICK,			// Удар рыбкой (в полете животом вниз)
 		JUMP,				// Прыжок
 		SIT,				// Присел
 		PASS,				// Пасс
+		HEAD_PASS,			// Пасс головой
 		DEAD,				// Убит
 		CATCH_BALL,			// Прием мяча
 		LAY_BACK,			// Лежание на спине
@@ -163,6 +164,14 @@ public class Player extends Actor {
 			)
 		);
         
+        // Создаем анимацию ползания
+//        animations.put(States.CRAWLING, 
+//    		new Animation(0.25f, 
+//				animationMap[1][2], 
+//				animationMap[1][3]
+//			)
+//		);
+        
         // Создаем анимацию бега
         animations.put(States.RUN, 
     		new Animation(0.13f, 
@@ -187,6 +196,15 @@ public class Player extends Actor {
 				animationMap[0][6],
 				animationMap[0][6],
 				animationMap[0][6]
+			)
+        );
+        
+        // Создаем анимацию паса
+        animations.put(States.HEAD_PASS, 
+    		new Animation(0.25f, 
+				animationMap[1][6],
+				animationMap[1][7],
+				animationMap[1][7]
 			)
         );
         
@@ -217,6 +235,31 @@ public class Player extends Actor {
 	    		animationMap[1][1],
 	    		animationMap[1][1],
 	    		animationMap[1][1]
+			)
+        );
+        
+        animations.put(States.FISH_KICK, 
+    		new Animation(0.35f, 
+	    		animationMap[2][2], 
+	    		animationMap[1][3],
+	    		animationMap[1][3],
+	    		animationMap[1][3],
+	    		animationMap[1][3],
+	    		animationMap[1][3],
+	    		animationMap[1][3],
+	    		animationMap[1][3],
+	    		animationMap[1][3],
+	    		animationMap[1][3],
+	    		animationMap[1][3],
+	    		animationMap[1][3],
+	    		animationMap[1][3],
+	    		animationMap[1][3],
+	    		animationMap[1][3],
+	    		animationMap[1][3],
+	    		animationMap[1][3],
+	    		animationMap[1][3],
+	    		animationMap[1][3],
+	    		animationMap[1][3]
 			)
         );
         
@@ -387,9 +430,11 @@ public class Player extends Actor {
 						!state.get(States.HEAD_KICK) &&
 						!state.get(States.SIT) &&
 						!state.get(States.DEAD) &&
+						!state.get(States.HEAD_PASS) &&
 						!state.get(States.LAY_BACK) &&
 						!state.get(States.LAY_BELLY) &&
 						!state.get(States.JUMP) &&
+						!state.get(States.FISH_KICK) &&
 						this.getAbsH() == 0;
 			break;
 			
@@ -405,6 +450,8 @@ public class Player extends Actor {
 						!state.get(States.DEAD) &&
 						!state.get(States.LAY_BACK) &&
 						!state.get(States.LAY_BELLY) &&
+						!state.get(States.HEAD_PASS) &&
+						!state.get(States.FISH_KICK) &&
 						!state.get(States.JUMP);
 			break;
 			
@@ -437,8 +484,24 @@ public class Player extends Actor {
 						!state.get(States.DEAD) &&
 						!state.get(States.SIT) &&
 						!state.get(States.LAY_BACK) &&
+						!state.get(States.HEAD_PASS) &&
 						!state.get(States.LAY_BELLY) &&
+						!state.get(States.FISH_KICK) &&
 						!state.get(States.PASS);
+			break;
+			
+			case HEAD_PASS: 
+				isCan = !state.get(States.FOOT_KICK) &&
+						!state.get(States.DEAD) &&
+						!state.get(States.SIT) &&
+						!state.get(States.LAY_BACK) &&
+						!state.get(States.HEAD_PASS) &&
+						!state.get(States.LAY_BELLY) &&
+						!state.get(States.FISH_KICK) &&
+						!state.get(States.PASS) &&
+						(
+							(ball.getAbsH() - this.getAbsH() > 140) || (this.getAbsH() == 0 && ball.getAbsH() > 70)
+						);
 			break;
 			
 			/* 
@@ -451,18 +514,42 @@ public class Player extends Actor {
 						!state.get(States.DEAD) &&
 						!state.get(States.SIT) &&
 						!state.get(States.LAY_BACK) &&
+						!state.get(States.HEAD_PASS) &&
 						!state.get(States.LAY_BELLY) &&
+						!state.get(States.FISH_KICK) &&
 						!state.get(States.PASS);
+			break;
+			
+			case FISH_KICK: 
+				// Расстояние от игрока к мячу
+				float l = MathUtils.distance(getAbsX(), getAbsY(), ball.getAbsX(), ball.getAbsY());
+				
+				isCan = !state.get(States.FOOT_KICK) && 
+						!state.get(States.DEAD) &&
+						!state.get(States.SIT) &&
+						!state.get(States.FISH_KICK) &&
+						!state.get(States.LAY_BACK) &&
+						!state.get(States.HEAD_PASS) &&
+						!state.get(States.LAY_BELLY) &&
+						!state.get(States.PASS) &&
+						!this.catchBall() &&
+						this.getAbsH() == 0 &&
+						((l > 70 && l < 230 && Math.abs(getVelocityX()) > 0) || dArrowPressed());
 			break;
 			
 			case HEAD_KICK: 
 				isCan = !state.get(States.FOOT_KICK) && 
+						!state.get(States.FISH_KICK) &&
 						!state.get(States.DEAD) &&
 						!state.get(States.SIT) && 
 						!state.get(States.LAY_BACK) &&
 						!state.get(States.LAY_BELLY) &&
+						!state.get(States.HEAD_PASS) &&
 						!state.get(States.PASS) && 
-						(((ball.getAbsH() - this.getAbsH() > 150 && dArrowPressed()) || (this.getAbsH() == 0 && ball.getAbsH() > 70)) && !ball.isCatched() || (ball.isCatched() && dArrowPressed()));
+						(
+							((ball.getAbsH() - this.getAbsH() > 150 && dArrowPressed()) || (this.getAbsH() == 0 && ball.getAbsH() > 70)) && !ball.isCatched() || 
+							(ball.isCatched() && dArrowPressed() && getAbsH() > 0)
+						);
 			break;
 			
 			/* 
@@ -473,11 +560,14 @@ public class Player extends Actor {
 			 */
 			case JUMP: 
 				isCan = !state.get(States.KNEE_CATCH) && 
+						!state.get(States.FISH_KICK) &&
 						!state.get(States.FOOT_KICK) &&
 						!state.get(States.DEAD) &&
 						!state.get(States.SIT) &&
 						!state.get(States.LAY_BACK) &&
 						!state.get(States.LAY_BELLY) &&
+						!state.get(States.PASS) &&
+						!state.get(States.HEAD_PASS) &&
 						!state.get(States.JUMP);
 			break;
 			
@@ -529,7 +619,13 @@ public class Player extends Actor {
 				}
 			break;
 			
-			case PASS:
+			case FISH_KICK:
+				this.setJumpVelocity(2.5f);
+				this.setVelocityX(this.RUN_SPEED);
+				this.stateTime = 0.0f;
+			break;
+			
+			case PASS: case HEAD_PASS:
 				disableDirections();
 				actionsListener.disableAction(Controls.ACTION2, this.PLAYER_ID);
 				this.stateTime = 0.0f;
@@ -570,8 +666,8 @@ public class Player extends Actor {
 			
 			case SIT: 
 				this.stateTime = 0.0f;
-				this.CURENT_SPEED_X = 0.0f;
-				this.CURENT_SPEED_Y = 0.0f;
+//				this.CURENT_SPEED_X = 0.0f;
+//				this.CURENT_SPEED_Y = 0.0f;
 			break;
 			
 			case DEAD:
@@ -704,7 +800,6 @@ public class Player extends Actor {
 		
 		
 		if (leftPressed()) { 
-			// Персонаж может менять свое направления только находясь на земле
 			if (Can(States.WALKING)) {
 				this.direction = Directions.LEFT;
 				
@@ -720,7 +815,8 @@ public class Player extends Actor {
 		}
 		
 		if (rightPressed()) {
-			// Персонаж может менять свое направления только находясь на земле
+			System.out.println("E");
+			
 			if (Can(States.WALKING)) {
 				this.direction = Directions.RIGHT;
 				
@@ -738,20 +834,40 @@ public class Player extends Actor {
 		if (action1Pressed()) {
 			//System.out.println(Can(States.HEAD_KICK));
 			
-			if (Can(States.HEAD_KICK)) 
+			// Может ли игрок ударить рыбкой
+			if (Can(States.FISH_KICK)) { 
+				//System.out.println("Fish kick...");
+				
+				Do(States.FISH_KICK, true);
+			}
+			// иначе, можети ли ударить головой
+			else if (Can(States.HEAD_KICK)) { 
 				Do(States.HEAD_KICK, true);
-			else if (Can(States.FOOT_KICK)) 
+			}
+			// иначе, может ли ударить ногой
+			else if (Can(States.FOOT_KICK)) { 
 				Do(States.FOOT_KICK, true);
+			}
 		}
 		
 		// Пас
-		if (action2Pressed() && Can(States.PASS)) {
-			Do(States.PASS, true);
+		if (action2Pressed()) {
+			if (Can(States.HEAD_PASS)) {
+				Do(States.HEAD_PASS, true);
+			}
+			else if (Can(States.PASS)) {
+				Do(States.PASS, true);
+			}
 		}
 		
 		// Прыжок
 		if (action3Pressed() && Can(States.JUMP)) {
 			Do(States.JUMP, true);
+		}
+		
+		// Если нажат прыжок, когда игрок скользит лежа по газону, то поднимаем его
+		if (action3Pressed() && curentState() == States.FISH_KICK) {
+			Do(States.SIT, true);
 		}
 		
 		// Меняем вектор направления скорости в зависимости от направления движения персонажа
@@ -775,11 +891,35 @@ public class Player extends Actor {
 			if (getAbsH() == 0) Do(States.WALKING, true);
 		}
 		
+		/********************************************************************
+		 *      Воздействия сили трения с учетом трения игрока о 			*
+		 *      текущий фрагмент поверхности на которой он находится 		*
+		 * ******************************************************************/
+		if ((curentState() != States.WALKING && curentState() != States.RUN) && getAbsH() == 0) {
+			
+			// Замедление движения игрока
+			this.CURENT_SPEED_X += this.CURENT_SPEED_X * this.GRASS_FRICTION;
+			this.CURENT_SPEED_Y += this.CURENT_SPEED_Y * this.GRASS_FRICTION;
+			
+			// Если скорость по осям упала до 0,45 то останавливаем игрока
+			if (Math.abs(getVelocityX()) < 0.45f && Math.abs(getVelocityY()) < 0.45f) {
+				setVelocityX(0);
+				setVelocityY(0);
+				
+				/* Если производился удар "рыбкой", то то после того, как игрок остановился
+				 * он должен присесть (привстать) */
+				if (curentState() == States.FISH_KICK) {
+					Do(States.SIT, true);
+				}
+			}
+		}
+		
+		
 		// Перемещение персонажа
 		movePlayerBy(new Vector2(this.CURENT_SPEED_X, this.CURENT_SPEED_Y));
 		
 		// Если игрок находится в непосредственной близости возле мяча
-		if (this.ballIsNear()) {
+		if (this.ballIsNear(curentState())) {
 			// Если в настоящий момент игроком производится удар по мячу
 			if (curentState() == States.FOOT_KICK) {
 	
@@ -795,6 +935,25 @@ public class Player extends Actor {
 				// Выполнение удара по мячу
 				if ((currentFrame() >= 1 && ball.isCatched()) || !ball.isCatched()) this.ballKick();
 			} 
+			else if (curentState() == States.FISH_KICK) {
+				
+				// Выполнение удара по мячу
+				if (currentFrame() < 2) 
+					this.ballKick();
+			}
+			else if (curentState() == States.HEAD_PASS) {
+				// Отмечаем что игрок теряет мяч
+				this.catchBall(false);
+				
+				// Проигрывание звука паса
+				field.sounds.play("pass01", true);
+				
+				// Определение кому отдать пас
+				if (this.PLAYER_ID == 0)
+					ball.pass(field.players[1].getAbsX(),field.players[1].getAbsY());
+				else 
+					ball.pass(field.players[0].getAbsX(),field.players[0].getAbsY());
+			}
 			else if (curentState() == States.PASS) {
 				// Начало полета мяча при пасе не должно начинаться сразу же после начала анимации паса,
 				// а с некоторой задержкой
@@ -884,8 +1043,13 @@ public class Player extends Actor {
 		
 		// Если игрок приземлился
 		if (this.JUMP_HEIGHT < 0) {
+			/* Когда персонаж бил рыбкой, то он должен прокатиться по газону 
+			 * перед тем как встать, поэтому нельзя чтобы она сразу начал вставать */
+			if (curentState() == States.FISH_KICK) {
+				
+			}
 			// Когда персонаж не мертв то при приземлении он приседает
-			if (curentState() != States.DEAD) { 
+			else if (curentState() != States.DEAD) { 
 				Do(States.SIT, true);
 			}
 			// Если мертв то он ложится на газон на спину или на живот, в зависимости от направления игрока
@@ -927,8 +1091,24 @@ public class Player extends Actor {
 	}
 	
 	// Находится ли мяч рядом
-	public boolean ballIsNear() {
-		return Math.abs(ball.getAbsX() - this.getAbsX()) <= 40 && 
+	public boolean ballIsNear(States state) {
+		/* В зависимости от состояния игрока (удар рукой / ногой / рыбкой в полете) будем вносить поправки на каком
+		   расстоянии от мяча можно сделать то или иное действие:
+		   Например находясь на небольшом расстоянии при выполнении удара ногой нужно разрешать 
+		   это действие */
+		
+		float dX = 0;
+		float dY = 0;
+		
+		switch (state) {
+			// При ударе ногой увеличиваем расстояние к мячу на котором игрок может нанести удар на 20px
+			case FOOT_KICK:
+				dX = 25;
+				dY = 0;
+			break; 
+		}
+		
+		return Math.abs(ball.getAbsX() - this.getAbsX()) <= 40 + dX && 
 				ball.getAbsY() - this.getAbsY() >= -40 && 
 				ball.getAbsY() - this.getAbsY() <= 20 &&
 				ball.getAbsH() + ball.getDiameter() > this.getAbsH() && 
@@ -1006,17 +1186,17 @@ public class Player extends Actor {
 		stateTime += Gdx.graphics.getDeltaTime();
 		
 		// Анимирование персонажа
-		animations.get(this.curentState()).setPlayMode(PlayMode.LOOP);
+		animations.get(this.curentState()).setPlayMode(PlayMode.NORMAL);
 		currentFrame = animations.get(this.curentState()).getKeyFrame(stateTime, true); 
 
 		// Если окончено текущее действие
 		if (animations.get(this.curentState()).isAnimationFinished(stateTime)) {
 			/* Если игрок лежал после получение удара, то перед тем как встать должна 
 			 * проиграться анимация присевшего игрока */
-			if (this.curentState() == States.LAY_BACK || this.curentState() == States.LAY_BELLY) {
+			if (curentState() == States.LAY_BACK || curentState() == States.LAY_BELLY || curentState() == States.FISH_KICK) {
 				Do(States.SIT, true);
 			}
-			else if (this.curentState() != States.RUN && this.curentState() != States.JUMP) {
+			else if (curentState() != States.RUN && curentState() != States.JUMP) {
 				Do(States.STAY, true);
 			}
 		}

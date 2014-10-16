@@ -60,10 +60,10 @@ public class Field extends Stage {
 	public Player[] players = new Player[PLAYERS_AMOUNT];
 	
 	// Листья
-	private Leaf[] leafs = new Leaf[10];
+	private Leaf[] leafs = new Leaf[1];
 	
 	// Капли
-	private Drop[] drops = new Drop[10];
+	private Drop[] drops = new Drop[3];
 	
 	// Размеры поля в клетках
 	private int CELLS_X;

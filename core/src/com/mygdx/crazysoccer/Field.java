@@ -1,5 +1,6 @@
 package com.mygdx.crazysoccer;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -107,6 +108,13 @@ public class Field extends Stage {
     
     // Класс для работы со звуком
 	public Sounds sounds;
+	
+	// Вершины многоугольников описывающих лужи / болота
+	private ArrayList<Vector2> diche;
+	private ArrayList<ArrayList<Vector2>> diches = new ArrayList<ArrayList<Vector2>>();
+	
+	// Локализация ячеек карты (находятся ли они внутри озера / болота)
+	private boolean[][] cellsLocation;
     
 	public Field(ScreenViewport screenViewport) {
 		super(screenViewport);
@@ -179,9 +187,9 @@ public class Field extends Stage {
 		sounds = new Sounds();
 		
 		// Загрузка фоновой музыки
-		sounds.load("bg01", "sound/bg/background01.ogg");
-		sounds.play("bg01");
-		sounds.loop("bg01", true);
+//		sounds.load("bg01", "sound/bg/background01.ogg");
+//		sounds.play("bg01");
+//		sounds.loop("bg01", true);
 		
 		// Звук паса
 		sounds.load("pass01", "sound/sfx/pass01.ogg");
@@ -246,6 +254,9 @@ public class Field extends Stage {
         		
         		this.CELLS_X = this.fieldMap.getProperties().get("width", Integer.class);
         		this.CELLS_Y = this.fieldMap.getProperties().get("height", Integer.class);
+        		
+        		// Установка размеров в зависимости от размеров карты
+        		cellsLocation = new boolean[this.CELLS_Y][this.CELLS_X];
         		
         		// Ширина игрового мира. Подсчет ведется с учетом того, что смещение справа такое же как и слева
         		this.worldWidth = this.CELLS_X * 32;
@@ -318,10 +329,71 @@ public class Field extends Stage {
         		gates[1].gateProjection[7][1] = gates[1].getBottomBar().y - 10;
         	}
 		}
+		
+		// Парсинг карты на наличие препятствий (озера / болота)
+		for (int i = 0; i < fieldMap.getLayers().get("diches").getObjects().getCount(); i++) {
+        	MapObject ma = (MapObject)fieldMap.getLayers().get("diches").getObjects().get(i);
+        	
+        	if ((Object)ma instanceof PolylineMapObject) {
+        		Polyline polyline = ((PolylineMapObject)ma).getPolyline();
+        		
+        		// Получение координаты расположения препятствия
+        		float dichX = Math.round(ma.getProperties().get("x", Float.class));
+    			float dichY = Math.round(ma.getProperties().get("y", Float.class));
+    			
+    			float pointX = 0;
+    			float pointY = 0;
+    			
+    			diche = new ArrayList<Vector2>();
+    			
+    			// Получение верших озера / болота
+        		for (int j = 0; j < polyline.getVertices().length; j++) {
+        			if (j % 2 == 0) {
+        				pointX = dichX + polyline.getVertices()[j];
+        			}
+        			else {
+        				pointY = dichY + polyline.getVertices()[j];
+        				
+        				diche.add(new Vector2(pointX, pointY));
+        			}
+        		}
+        		
+        		diches.add(diche);
+        	}
+		}
+		
+		// Локализация ячеек карты
+		for (int i = 0; i < this.CELLS_Y; i++) {
+			for (int j = 0; j < this.CELLS_X; j++) {
+				for (int k = 0; k < diches.size(); k++) {
+					int c = MathUtils.intersectCount(j * 32 + 16, i * 32 + 16, diches.get(k));
+					
+					// Если пустая ячейка находится внутри многоугольника (островки)
+					if (c % 2 != 0 && cellsLocation[i][j]) {
+						cellsLocation[i][j] = false;
+					}
+					// Если количество пересечений луча нечетное, то персонаж внутри озера / болота
+					else if (c % 2 != 0) {
+						cellsLocation[i][j] = true;
+					}
+				}
+			}
+		}
+	}
+
+	// Проверка находится ли клетка внутри полигона (озера / болота)
+	public boolean isCellInPolygon(float x, float y) {
+		int cellX = (int)(x / 32);
+		int cellY = (int)(y / 32);
+		
+		if (cellX >= this.CELLS_X) cellX = this.CELLS_X - 1;
+		if (cellY >= this.CELLS_Y) cellY = this.CELLS_Y - 1;
+		
+		return cellsLocation[cellY][cellX];
 	}
 	
     // Сортировка коллекции по ключам
-    private static HashMap<Integer, Float> sortByValues(HashMap map) { 
+    private static HashMap<Integer, Float> sortByValues(HashMap map) {
         List list = new LinkedList(map.entrySet());
         // Defined Custom Comparator here
         Collections.sort(list, new Comparator() {
@@ -412,6 +484,15 @@ public class Field extends Stage {
 		 shapeRenderer.begin(ShapeType.Filled);
 		 shapeRenderer.circle(fieldOffsetX + fieldMaxWidth / 2.0f, fieldOffsetY + fieldHeight / 2.0f, 15);
 		 shapeRenderer.end();
+		 
+//		 for (int i = 0; i < diches.size(); i++) {
+//			 for (int j = 0; j < diches.get(i).size() - 1; j++) {
+//				 shapeRenderer.begin(ShapeType.Line);
+//				 Gdx.gl20.glLineWidth(3);
+//				 shapeRenderer.line(diches.get(i).get(j).x, diches.get(i).get(j).y, diches.get(i).get(j+1).x, diches.get(i).get(j+1).y);
+//				 shapeRenderer.end();
+//			 }
+//		 }
 	}
 	
 	// Расположение игроков по полю

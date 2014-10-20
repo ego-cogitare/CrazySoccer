@@ -72,6 +72,7 @@ public class Player extends Actor {
 		STAY,     			// Состояние покоя
 		WALKING,			// Ходьба
 		RUN,	  			// Бег 
+		DECELERATION,	    // Торможение
 		FATIGUE,  			// Усталость
 		CELEBRATE,			// Празднование победы
 		KNEE_CATCH,			// Прием мяча ногой
@@ -177,6 +178,13 @@ public class Player extends Actor {
     		new Animation(0.13f, 
 				animationMap[1][4], 
 				animationMap[0][0]
+			)
+        );
+        
+        // Создаем анимацию торможения
+        animations.put(States.DECELERATION, 
+    		new Animation(1.0f, 
+				animationMap[2][3]
 			)
         );
         
@@ -815,8 +823,6 @@ public class Player extends Actor {
 		}
 		
 		if (rightPressed()) {
-			System.out.println("E");
-			
 			if (Can(States.WALKING)) {
 				this.direction = Directions.RIGHT;
 				
@@ -882,13 +888,20 @@ public class Player extends Actor {
 			}
 		}
 		
-		// Если при следующем шаге персонаж будет находиться внутри объекта то останавливаем его 
+		// Если при следующем шаге персонаж будет находиться внутри толщи ворот то останавливаем его 
 		if (MathUtils.intersectCount(getAbsX() + getVelocityX(), getAbsY() + getVelocityY(), field.gates[0].gateProjection) == 1 ||
 			MathUtils.intersectCount(getAbsX() + getVelocityX(), getAbsY() + getVelocityY(), field.gates[1].gateProjection) == 1) 
 		{
 			setVelocityX(0);
 			setVelocityY(0);
 			if (getAbsH() == 0) Do(States.WALKING, true);
+		}
+		
+		
+		if (this.PLAYER_ID == 0) {
+			System.out.println(
+				field.isCellInPolygon(getAbsX(),getAbsY())
+			);
 		}
 		
 		/********************************************************************
@@ -1066,6 +1079,24 @@ public class Player extends Actor {
 			
 			// Проигрывание звука приземления
 			field.sounds.play("landing01", true);
+		}
+	}
+	
+	private float getFrontX() {
+		if (direction == Directions.RIGHT) {
+			return this.getAbsX() + 10;
+		}
+		else {
+			return this.getAbsX() - 10; 
+		}
+	}
+	
+	private float getBackX() {
+		if (direction == Directions.RIGHT) {
+			return this.getAbsX() - 10;
+		}
+		else {
+			return this.getAbsX() + 10; 
 		}
 	}
 	

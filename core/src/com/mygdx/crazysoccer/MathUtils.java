@@ -1,5 +1,8 @@
 package com.mygdx.crazysoccer;
 
+import java.util.ArrayList;
+import com.badlogic.gdx.math.Vector2;
+
 class MathUtils {
 	
 	public static class Box {
@@ -69,6 +72,25 @@ class MathUtils {
 		}
 		
 		if (Intersection(0, pointY, pointX, pointY, verticles[0][0], verticles[0][1], verticles[verticles.length - 1][0], verticles[verticles.length - 1][1])) {
+			intersect++;
+		}
+		
+		return intersect;
+	}
+	
+	
+	public static int intersectCount(float pointX, float pointY, ArrayList<Vector2> verticles) {
+		
+		// Количество пересечений луча с гранями многоугольника
+		int intersect = 0;
+		
+		for (int i = 0; i < verticles.size() - 1; i++) {
+			if (Intersection(-1, pointY, pointX, pointY, verticles.get(i).x, verticles.get(i).y, verticles.get(i+1).x, verticles.get(i+1).y)) {
+				intersect++;
+			}
+		}
+		
+		if (Intersection(-1, pointY, pointX, pointY, verticles.get(0).x, verticles.get(0).y, verticles.get(verticles.size()-1).x, verticles.get(verticles.size()-1).y)) {
 			intersect++;
 		}
 		

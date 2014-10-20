@@ -50,8 +50,14 @@ public class Player extends Actor {
     // Сила удара мяча
     private float KICK_STRENGTH = 50.0f;
     
+    // Текущий показатель коэффициента трения игрока
+    private float FRICTION = -0.50f;
+    
     // Коэффициент трения игрока о газон
-    private float GRASS_FRICTION = -0.15f;
+    private float GRASS_FRICTION = -0.25f;
+    
+    // Коэффициент трения игрока в луже
+    private float WATER_FRICTION = -0.03f;
     
     // Текущая скорость движения персонажа при прыжке 
     private float JUMP_VELOCITY = 0.0f;
@@ -60,7 +66,7 @@ public class Player extends Actor {
     private float CURENT_SPEED_X = 0.0f;
     private float CURENT_SPEED_Y = 0.0f;
     private float WALKING_SPEED = 4.0f;
-    private float RUN_SPEED = 7.0f;
+    private float RUN_SPEED = 8.0f;
     private float POS_X = 0.0f;
     private float POS_Y = 0.0f;
     
@@ -421,6 +427,10 @@ public class Player extends Actor {
 		return this.CURENT_SPEED_Y;
 	}
 	
+	public float maxVelocity() {
+		return Math.max(Math.abs(this.CURENT_SPEED_X), Math.abs(this.CURENT_SPEED_Y));
+	}
+	
 	// Проверка может ли персонаж выполнить действие
 	public boolean Can(States stateToCheck) {
 		boolean isCan = false;
@@ -432,7 +442,7 @@ public class Player extends Actor {
 			 * 	1. не бъет ногой
 			 *  2. не бъет рукой
 			 */
-			case WALKING : 
+			case WALKING: 
 				isCan = !state.get(States.KNEE_CATCH)  && 
 						!state.get(States.FOOT_KICK) &&
 						!state.get(States.HEAD_KICK) &&
@@ -443,6 +453,15 @@ public class Player extends Actor {
 						!state.get(States.LAY_BELLY) &&
 						!state.get(States.JUMP) &&
 						!state.get(States.FISH_KICK) &&
+						!state.get(States.DECELERATION) &&
+						this.getAbsH() == 0;
+			break;
+			
+			case DECELERATION: 
+				isCan = (
+							(((rightPressed() && (direction == Directions.LEFT)) || (leftPressed() && (direction == Directions.RIGHT)) || (downPressed() && (getVelocityY() > 0)) || (upPressed() && (getVelocityY() < 0))) && (((maxVelocity() > WALKING_SPEED) && (FRICTION == GRASS_FRICTION)) || (((maxVelocity() > 0) && (FRICTION != GRASS_FRICTION))))) ||
+							(false) 
+						) &&
 						this.getAbsH() == 0;
 			break;
 			
@@ -666,10 +685,10 @@ public class Player extends Actor {
 			
 			case STAY: 
 				// Если игрок не находится в воздухе то устанавливаем его скорости по осям равными 0
-				if (this.getAbsH() == 0) {
-					this.CURENT_SPEED_X = 0.0f;
-					this.CURENT_SPEED_Y = 0.0f;
-				}
+//				if (this.getAbsH() == 0) {
+//					this.CURENT_SPEED_X = 0.0f;
+//					this.CURENT_SPEED_Y = 0.0f;
+//				}
 			break;
 			
 			case SIT: 
@@ -787,7 +806,10 @@ public class Player extends Actor {
 	public void act(float delta) {
 		
 		if (upPressed()) { 
-			if (Can(States.WALKING)) {
+			if (Can(States.DECELERATION)) {
+				Do(States.DECELERATION, true);
+			}
+			else if (Can(States.WALKING)) {
 				// Если персонаж не бежит, и нажата клавиша вверх
 				if (curentState() != States.RUN) {
 					Do(States.WALKING, true);
@@ -797,7 +819,10 @@ public class Player extends Actor {
 		}
 		
 		if (downPressed()) { 
-			if (Can(States.WALKING)) {
+			if (Can(States.DECELERATION)) {
+				Do(States.DECELERATION, true);
+			}
+			else if (Can(States.WALKING)) {
 				// Если персонаж не бежит, и нажата клавиша вверх
 				if (curentState() != States.RUN) {
 					Do(States.WALKING, true);
@@ -807,8 +832,11 @@ public class Player extends Actor {
 		}
 		
 		
-		if (leftPressed()) { 
-			if (Can(States.WALKING)) {
+		if (leftPressed()) {
+			if (Can(States.DECELERATION)) {
+				Do(States.DECELERATION, true);
+			}
+			else if (Can(States.WALKING)) {
 				this.direction = Directions.LEFT;
 				
 				// Если было двойное нажатие кнопки, то делаем персонаж бегущим
@@ -823,7 +851,10 @@ public class Player extends Actor {
 		}
 		
 		if (rightPressed()) {
-			if (Can(States.WALKING)) {
+			if (Can(States.DECELERATION)) {
+				Do(States.DECELERATION, true);
+			}
+			else if (Can(States.WALKING)) {
 				this.direction = Directions.RIGHT;
 				
 				if (rightDblPressed() && Can(States.RUN)) {
@@ -897,11 +928,15 @@ public class Player extends Actor {
 			if (getAbsH() == 0) Do(States.WALKING, true);
 		}
 		
-		
 		if (this.PLAYER_ID == 0) {
-			System.out.println(
-				field.isCellInPolygon(getAbsX(),getAbsY())
-			);
+			
+			// Определение коэффициента трения
+			if (field.isCellInPolygon(getAbsX(),getAbsY())) {
+				FRICTION = WATER_FRICTION;
+			}
+			else {
+				FRICTION = GRASS_FRICTION;
+			}
 		}
 		
 		/********************************************************************
@@ -910,12 +945,33 @@ public class Player extends Actor {
 		 * ******************************************************************/
 		if ((curentState() != States.WALKING && curentState() != States.RUN) && getAbsH() == 0) {
 			
-			// Замедление движения игрока
-			this.CURENT_SPEED_X += this.CURENT_SPEED_X * this.GRASS_FRICTION;
-			this.CURENT_SPEED_Y += this.CURENT_SPEED_Y * this.GRASS_FRICTION;
+			float dX = this.CURENT_SPEED_X * this.FRICTION;
+			float dY = this.CURENT_SPEED_Y * this.FRICTION;
 			
-			// Если скорость по осям упала до 0,45 то останавливаем игрока
-			if (Math.abs(getVelocityX()) < 0.45f && Math.abs(getVelocityY()) < 0.45f) {
+			if (dX > 0) {
+				if (dX > 0.5f) dX = 0.5f;
+				if (dX < 0.15f) dX = 0.15f;
+			}
+			else {
+				if (dX < -0.5f) dX = -0.5f;
+				if (dX > -0.15f) dX = -0.15f;
+			}
+			
+			if (dY > 0) {
+				if (dY > 0.5f) dY = 0.5f;
+				if (dY < 0.15f) dY = 0.15f;
+			}
+			else {
+				if (dY < -0.5f) dY = -0.5f;
+				if (dY > -0.15f) dY = -0.15f;
+			}
+			
+			// Замедление движения игрока
+			this.CURENT_SPEED_X += dX;
+			this.CURENT_SPEED_Y += dY;
+			
+			// Если скорость по осям упала до 0,35 то останавливаем игрока
+			if (Math.abs(getVelocityX()) + Math.abs(getVelocityY()) < 0.35f) {
 				setVelocityX(0);
 				setVelocityY(0);
 				
@@ -924,9 +980,20 @@ public class Player extends Actor {
 				if (curentState() == States.FISH_KICK) {
 					Do(States.SIT, true);
 				}
+				else if (curentState() == States.DECELERATION) {
+					disableDirections();
+					Do(States.STAY, true);
+				}
 			}
 		}
 		
+		// Торможения игрока
+		if (Can(States.DECELERATION)) {
+			Do(States.DECELERATION, true);
+		}
+		
+		
+		if (PLAYER_ID == 0) System.out.println(curentState());
 		
 		// Перемещение персонажа
 		movePlayerBy(new Vector2(this.CURENT_SPEED_X, this.CURENT_SPEED_Y));
@@ -1021,18 +1088,11 @@ public class Player extends Actor {
 		}
 		
 		// Если ниодна из кнопок направления движения не нажата
-		if (!actionsListener.getActionStateFor(Controls.UP, this.PLAYER_ID).pressed && 
-			!actionsListener.getActionStateFor(Controls.DOWN, this.PLAYER_ID).pressed &&
-			!actionsListener.getActionStateFor(Controls.LEFT, this.PLAYER_ID).pressed &&
-			!actionsListener.getActionStateFor(Controls.RIGHT, this.PLAYER_ID).pressed &&
-			!actionsListener.getActionStateFor(Controls.ACTION1, this.PLAYER_ID).pressed &&
-			!actionsListener.getActionStateFor(Controls.ACTION2, this.PLAYER_ID).pressed &&
-			!actionsListener.getActionStateFor(Controls.ACTION3, this.PLAYER_ID).pressed) {
-			
-			// Если анимация была WALKING то отключаем ее
-			if (state.get(States.WALKING)) {
-				Do(States.STAY, true);
-			}
+		if (!upPressed() && !downPressed() && curentState() == States.WALKING) {
+			CURENT_SPEED_Y = 0;
+		}
+		if (!leftPressed() && !rightPressed() && curentState() == States.WALKING) {
+			CURENT_SPEED_X = 0;
 		}
 		
 		// Если персонаж бежит и не нажата кнопка вверх или вниз
@@ -1227,7 +1287,7 @@ public class Player extends Actor {
 			if (curentState() == States.LAY_BACK || curentState() == States.LAY_BELLY || curentState() == States.FISH_KICK) {
 				Do(States.SIT, true);
 			}
-			else if (curentState() != States.RUN && curentState() != States.JUMP) {
+			else if (curentState() != States.RUN && curentState() != States.JUMP  && curentState() != States.DECELERATION) {
 				Do(States.STAY, true);
 			}
 		}

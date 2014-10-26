@@ -12,7 +12,7 @@ public class DesktopLauncher {
 		config.width = Vars.WINDOW_WIDTH;
 		config.height = Vars.WINDOW_HEIGHT;
 		config.title = "Goal III rebirth";
-//		config.fullscreen = true;
+		config.fullscreen = Vars.FULL_SCREEN;
 		new LwjglApplication(new CrazySoccer(), config);
 	}
 }

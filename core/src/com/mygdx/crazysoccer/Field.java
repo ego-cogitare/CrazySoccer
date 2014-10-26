@@ -64,7 +64,7 @@ public class Field extends Stage {
 	private Leaf[] leafs = new Leaf[1];
 	
 	// Капли
-	private Drop[] drops = new Drop[3];
+	private Drop[] drops = new Drop[1];
 	
 	// Размеры поля в клетках
 	private int CELLS_X;

@@ -311,8 +311,7 @@ public class Ball extends Actor {
 		//float l = Math.abs(dstX - getAbsX());
 		float l = MathUtils.distance(dstX, dstY, getAbsX(), getAbsY());
 		
-		System.out.println(l);
-		
+		// Если расстояние до ворот меньше 90 то удар будет выполняться не навесом, а низом
 		if (l < 900) {
 			kick(impulse, dstX, dstY, false);
 		}
@@ -323,33 +322,33 @@ public class Ball extends Actor {
 			k = 4.5f;
 			
 			if (l > 1000) {
-				h = l / 170.0f;
+				h = l / 180.0f;
 				k = 3.9f;
 			}
 			
 			if (l > 1200) {
-				h = l / 160.0f;
+				h = l / 170.0f;
 				k = 3.5f;
 			}
 			
 			if (l > 1500) {
-				h = l / 150.0f;
+				h = l / 160.0f;
 				k = 3.3f;
 			}
 			
 			if (l > 1750) {
-				h = l / 160.0f;
+				h = l / 170.0f;
 				k = 3.15f;
 			}
 			
 			if (l > 1900) {
-				h = l / 150.0f;
-				k = 3.1f;
+				h = l / 190.0f;
+				k = 3.4f;
 			}
 			
 			if (l > 2100) {
-				h = l / 160.0f;
-				k = 3.0f;
+				h = l / 200.0f;
+				k = 3.2f;
 			}
 			
 			// Ограничиваем минимальное и максимальное значение высоты

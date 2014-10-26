@@ -18,6 +18,10 @@ public class Gate extends Actor {
 	private Vector2 BOTTOM_BAR;
 	private Vector2 TOP_BAR;
 	
+	// Идентификатор ворот
+	public static int LEFT_GATES = 0;
+	public static int RIGHT_GATES = 1;
+	
 	private TextureRegion gate;
 	private SpriteBatch gateSprite;
 	

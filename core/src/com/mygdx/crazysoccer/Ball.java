@@ -25,8 +25,8 @@ public class Ball extends Actor {
     // Спрайт для отрисовки персонажа
     public SpriteBatch spriteBatch;
 
-    public int SPRITE_WIDTH = 14;
-    public int SPRITE_HEIGHT = 14;
+    public int SPRITE_WIDTH = 16;
+    public int SPRITE_HEIGHT = 16;
     public float SPRITE_SCALE = 3.0f;
     
     // Параметры скорости и расположения мяча
@@ -53,6 +53,9 @@ public class Ball extends Actor {
     
     // Контролируется ли мяч каким-то из игроков
     private boolean CATCHED = false;
+    
+    // ID игрока, которым контроллируется мяч
+    private int MANAGED_PLAYER_ID = 0;
     
     // Скорость мяча при которой на мяч начинает действовать гравитация
     private float ALLOW_GRAVITY_FROM = 999.0f;
@@ -83,6 +86,9 @@ public class Ball extends Actor {
 		FLY_FAST,     		// Состояние полета
 		FLY_MEDIUM,     	// Состояние полета
 		FLY_SLOW,     		// Состояние полета
+		
+		FOOT_SUPER_KICK,      // Суперудар ногой
+		HEAD_BACK_SUPER_KICK, // Суперудар голой / через себя
 	}
 	
     // Текущий кадр анимации
@@ -120,7 +126,7 @@ public class Ball extends Actor {
         // Спрайт для отрисовки персонажа
         spriteBatch = new SpriteBatch(); 
         
-        // Создаем анимацию покоя
+        // Анимация движущегося мяча
         flyFrames = new TextureRegion[8];
         flyFrames[0] = animationMap[0][0];
         flyFrames[1] = animationMap[0][1];
@@ -135,6 +141,31 @@ public class Ball extends Actor {
         animations.put(States.FLY_FAST, new Animation(0.06f, flyFrames));
         animations.put(States.FLY_MEDIUM, new Animation(0.1f, flyFrames));
         animations.put(States.FLY_SLOW, new Animation(0.25f, flyFrames));
+        
+        // Анимация суперудара ногой
+        animations.put(States.FOOT_SUPER_KICK, 
+    		new Animation(0.08f,
+	    		animationMap[1][1],
+	    		animationMap[1][2],
+	    		animationMap[1][0]
+			)
+        );
+        
+        // Анимация суперудара головой / через себя
+        animations.put(States.HEAD_BACK_SUPER_KICK, 
+    		new Animation(0.08f,
+				animationMap[1][4],
+				animationMap[1][4],
+				animationMap[0][1],
+				animationMap[0][2],
+				animationMap[0][3],
+				animationMap[1][3],
+				animationMap[1][3],
+				animationMap[0][5],
+				animationMap[0][6],
+				animationMap[0][7]
+			)
+		);
         
         shadow = new Shadow();
 	}
@@ -196,6 +227,16 @@ public class Ball extends Actor {
 		return this.CATCHED;
 	}
 	
+	// Установка ID игрока, которым контроллируется мяч
+	public void managerByBlayer(int playerId) {
+		this.MANAGED_PLAYER_ID = playerId;
+	}
+	
+	// Получение ID игрока которым контроллируется мяч
+	public int managerByBlayer() {
+		return this.MANAGED_PLAYER_ID;
+	}
+	
 	public void kick(float impulse, float dstX, float dstY, boolean upFlag) {
 		
 		float alpha = calcAlpha(dstX, dstY);
@@ -226,8 +267,6 @@ public class Ball extends Actor {
 			// Если в момент удара мяч находится на земле то поднимаем его на 30px
 			if (this.getAbsH() <= 30) this.setAbsH(30);
 		}
-		
-		Do(getAnimationByVelocity(v), true);
 	}
 	
 	public void pass(float dstX, float dstY) {
@@ -254,6 +293,70 @@ public class Ball extends Actor {
 			
 			// Сила, с которой нужно отправить мяч, чтобы он долетел
 			f = l / (h * 3.50f);
+			
+			// Удар по мячу
+			kick(f, dstX, dstY, true);
+			
+			// Устанавливаем начальную вертикальную скорость полета мяча
+			this.setJumpVelocity(h);
+		}
+	}
+	
+	// Выполнение суперудара по мячу головой / через себя
+	public void headBackSuperKick(float impulse, float dstX, float dstY) {
+		// Сила с которой нужно ударить мяч, чтобы он долетел до ворот
+		float f = 0, h = 0, k = 0;
+		
+		// Расстояние к точке куда делать удар
+		//float l = Math.abs(dstX - getAbsX());
+		float l = MathUtils.distance(dstX, dstY, getAbsX(), getAbsY());
+		
+		System.out.println(l);
+		
+		if (l < 900) {
+			kick(impulse, dstX, dstY, false);
+		}
+		// Иначе удар делается навесом
+		else {
+			// Высота полета мяча (чем больше растояние тем выше полет мяча)
+			h = l / 180.0f;
+			k = 4.5f;
+			
+			if (l > 1000) {
+				h = l / 170.0f;
+				k = 3.9f;
+			}
+			
+			if (l > 1200) {
+				h = l / 160.0f;
+				k = 3.5f;
+			}
+			
+			if (l > 1500) {
+				h = l / 150.0f;
+				k = 3.3f;
+			}
+			
+			if (l > 1750) {
+				h = l / 160.0f;
+				k = 3.15f;
+			}
+			
+			if (l > 1900) {
+				h = l / 150.0f;
+				k = 3.1f;
+			}
+			
+			if (l > 2100) {
+				h = l / 160.0f;
+				k = 3.0f;
+			}
+			
+			// Ограничиваем минимальное и максимальное значение высоты
+			if (h < 4.0f) h = 4.0f; else if (h > 15.0f) h = 15.0f;
+			
+			// Сила, с которой нужно отправить мяч, чтобы он долетел
+			f = l / (h * k);
 			
 			// Удар по мячу
 			kick(f, dstX, dstY, true);
@@ -519,12 +622,15 @@ public class Ball extends Actor {
 	
 	@Override
 	public void act(float delta) {
+//		System.out.println(getJumpVelocity());
+//		System.out.println(ALLOW_GRAVITY_FROM);
+		
 		// Замедление полета мяча (трение воздуха)
 		this.CURENT_SPEED_X += this.CURENT_SPEED_X * this.AIR_FRICTION; 
 		this.CURENT_SPEED_Y += this.CURENT_SPEED_Y * this.AIR_FRICTION;
 		
 		// Останавливаем мяч, если его суммарная скорость по осям
-		if (this.absVelocity() < 0.25f && curentState() != States.STOP) {
+		if (this.absVelocity() < 0.25f && curentState() != States.STOP && curentState() != States.HEAD_BACK_SUPER_KICK) {
 			this.CURENT_SPEED_X = 0.0f;
 			this.CURENT_SPEED_Y = 0.0f;
 			this.JUMP_VELOCITY = 0.0f;
@@ -535,8 +641,41 @@ public class Ball extends Actor {
 			Do(States.STOP, true);
 		}
 		
-		Do(getAnimationByVelocity(this.absVelocity()), true); 
-
+		// Если выполняется суперудар то отключаем трение о воздух
+		if (curentState() == States.FOOT_SUPER_KICK && field.inField(getAbsX(), getAbsY())) {
+			
+			// Отключаем воздействие трения воздуха
+			this.AIR_FRICTION = 0.0f; 
+			
+			// Отключаем воздействие гравитации
+			this.ALLOW_GRAVITY_FROM = 0;
+		}
+		else if (curentState() == States.HEAD_BACK_SUPER_KICK && field.inField(getAbsX(), getAbsY())) {
+			
+			// Отключаем воздействие трения воздуха
+			this.AIR_FRICTION = 0.0f;
+			
+			// Отключаем воздействие гравитации
+			this.ALLOW_GRAVITY_FROM = 999;
+		}
+		else {
+			// Включаем воздействие трения воздуха
+			this.AIR_FRICTION = -0.005f;
+			
+			// Определение анимации мяча в зависимости от его скорости
+			Do(getAnimationByVelocity(this.absVelocity()), true);
+		}
+		
+		
+		// Если мяч вышел за пределы поля
+		if (!field.inField(getAbsX(),getAbsY())) {
+			// Отмечам что мяч никем не контроллируется
+			this.isCatched(false);
+			this.MANAGED_PLAYER_ID = -1;
+			
+			// Включаем воздействие гравитации
+			this.ALLOW_GRAVITY_FROM = 999.0f;
+		}
 		
 		if (this.ballInNet() && !field.inField(getAbsX(),getAbsY())) {
 			// Ограничение движение мяча в сетке левых ворот
@@ -579,10 +718,15 @@ public class Ball extends Actor {
 		// Реализация гравитации (гравитация начинает действовать только когда сумма абсолютных
 		// скоростей по осям OX и OY < 15)
 		if (this.absVelocity() < this.ALLOW_GRAVITY_FROM && (this.JUMP_HEIGHT > 0 || this.JUMP_VELOCITY > 0)) {
-			//System.out.println(this.JUMP_VELOCITY);
+//			System.out.println(this.JUMP_VELOCITY);
 			
 			// Текущая вертикальная скорость мяча
-			this.JUMP_VELOCITY -= 8.0f * Gdx.graphics.getDeltaTime();
+			if (curentState() == States.HEAD_BACK_SUPER_KICK) {
+				this.JUMP_VELOCITY -= 15.0f * Gdx.graphics.getDeltaTime();
+			}
+			else {
+				this.JUMP_VELOCITY -= 8.0f * Gdx.graphics.getDeltaTime();
+			}
 			
 			// Изменение высоты мяча
 			this.JUMP_HEIGHT += this.JUMP_VELOCITY;
@@ -656,8 +800,21 @@ public class Ball extends Actor {
 		this.ALLOW_GRAVITY_FROM = v;
 	}
 	
+	// Скорость игрока, который контроллирует в настоящий момент мяч
+	private float getManagerPlayerVelocity() {
+		return this.managerByBlayer() > -1 ? field.players[this.managerByBlayer()].getModVelocity() / 2.0f : 0;
+	}
+	
 	// Суммарная скорость мяча по осям
 	public float absVelocity() {
+		//System.out.println("Ball velocity:"+this.absVelocity());
+		//System.out.println("Ball catched:"+isCatched());
+		
+		// Если мяч контроллируется игроком то скорость перемещения мяча равне скорости перемещения игрока
+		if (this.managerByBlayer() > -1 && this.getAbsH() == 0) {
+			return Math.abs(this.getManagerPlayerVelocity());
+		}
+		
 		// Скорость по оси OX
 		double ox = Math.abs(this.getVelocityX() * Math.sin(LAST_BALL_ALPHA));
 		
@@ -669,7 +826,7 @@ public class Ball extends Actor {
 	
 	// Нужно ли зеркалировать изобаржение мяча (в зависимоти от движения мяча)
 	private boolean getFlip() {
-		if (this.CURENT_SPEED_X < 0 || this.CURENT_SPEED_Y < 0) {
+		if (this.CURENT_SPEED_X < 0 || this.CURENT_SPEED_Y < 0 || this.getManagerPlayerVelocity() < 0) {
 			return true;
 		}
 		return false;

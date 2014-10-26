@@ -148,8 +148,18 @@ public class Field extends Stage {
 		for (int i = 0; i < players.length; i++) {
 			// Создание игрока
 			players[i] = new Player(i);
+			
 			// Привязка слушателя ввода для игрока
 			players[i].setActionsListener(actions);
+
+			// Установка идентификатора ворот по которым игрок будет наносить удар
+			if (i != 1) {
+				players[i].setDestinationGateId(Gate.RIGHT_GATES);
+			}
+			else {
+				players[i].setDestinationGateId(Gate.LEFT_GATES);
+			}
+			
 			// Добавление игрока (актера) на сцену (поле)
 			this.addActor(players[i]);
 			this.addActor(players[i].shadow);
@@ -187,9 +197,9 @@ public class Field extends Stage {
 		sounds = new Sounds();
 		
 		// Загрузка фоновой музыки
-//		sounds.load("bg01", "sound/bg/background01.ogg");
-//		sounds.play("bg01");
-//		sounds.loop("bg01", true);
+		sounds.load("bg01", "sound/bg/background04.ogg");
+		sounds.play("bg01");
+		sounds.loop("bg01", true);
 		
 		// Звук паса
 		sounds.load("pass01", "sound/sfx/pass01.ogg");

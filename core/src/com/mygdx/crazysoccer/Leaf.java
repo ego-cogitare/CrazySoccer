@@ -1,7 +1,6 @@
 package com.mygdx.crazysoccer;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -107,6 +106,9 @@ public class Leaf extends Actor {
 //				//this.velocityY = getRandomVelocity();
 //				this.velocityY = this.velocityX * randomDeviation();
 //			break;
+			
+			default:
+			break;
 		}
 	}
 	

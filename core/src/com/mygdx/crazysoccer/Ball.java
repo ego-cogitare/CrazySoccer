@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.Batch;
@@ -13,7 +12,6 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g2d.Animation.PlayMode;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
-import com.mygdx.crazysoccer.Actions.Controls;
 
 public class Ball extends Actor {
 	
@@ -101,14 +99,7 @@ public class Ball extends Actor {
  	public TextureRegion[][] animationMap;
  	
     public float stateTime = 0.0f; 
-    
-    
-    // Слушатель ввода
- 	private Actions actionsListener;
-	public void setActionsListener(Actions al) {
-		this.actionsListener = al;
-	}
-	
+ 
 	public Ball() {
 		super();
 		
@@ -323,17 +314,17 @@ public class Ball extends Actor {
 			
 			if (l > 1000) {
 				h = l / 180.0f;
-				k = 3.9f;
+				k = 4.1f;
 			}
 			
 			if (l > 1200) {
-				h = l / 170.0f;
-				k = 3.5f;
+				h = l / 190.0f;
+				k = 3.7f;
 			}
 			
 			if (l > 1500) {
-				h = l / 160.0f;
-				k = 3.3f;
+				h = l / 180.0f;
+				k = 3.5f;
 			}
 			
 			if (l > 1750) {
@@ -429,17 +420,7 @@ public class Ball extends Actor {
 	public float getJumpVelocity() {
 		return this.JUMP_VELOCITY;
 	}
-	
-	public boolean Can(States stateToCheck) {
-		boolean isCan = false;
-		
-		switch (stateToCheck) {
-		
-		}
-		
-		return isCan;
-	}
-	
+
 	// Постановка задания на выполнение действия
 	public void Do(States state, boolean stopAll) {
 		// Если установлен флаг stopAll то останавливаем все анимации
@@ -449,6 +430,9 @@ public class Ball extends Actor {
 			case STOP:
 				this.setVelocityX(0);
 				this.setVelocityY(0);
+			break;
+			
+			default:
 			break;
 		}
 
@@ -471,8 +455,8 @@ public class Ball extends Actor {
 		
 		float w = Gdx.graphics.getWidth();
 		float h = Gdx.graphics.getHeight();
-		float camX = field.camera.position.x;
-		float camY = field.camera.position.y;
+		float camX = Field.camera.position.x;
+		float camY = Field.camera.position.y;
 		
 		boolean doStop = false;
 		
@@ -504,18 +488,18 @@ public class Ball extends Actor {
 			if (this.POS_X < field.fieldMaxWidth / 2.0f) {
 				if (this.POS_X >= w / 2) {
 					if (this.POS_X + movePoint.x < w / 2.0f) {
-						field.camera.position.set(w / 2.0f, camY, 0);
+						Field.camera.position.set(w / 2.0f, camY, 0);
 						setX(movePoint.x + this.POS_X);
 					}
 					else {
-						field.camera.position.set(camX + movePoint.x, camY, 0);
+						Field.camera.position.set(camX + movePoint.x, camY, 0);
 					}
 					this.POS_X += movePoint.x;
 				} 
 				else {
 					if (this.POS_X + movePoint.x > w / 2.0f) {
 						setX(w / 2.0f);
-						field.camera.position.set(camX + this.POS_X + movePoint.x - w / 2.0f, camY, 0);
+						Field.camera.position.set(camX + this.POS_X + movePoint.x - w / 2.0f, camY, 0);
 					}
 					else {
 						setX(getX() + movePoint.x);
@@ -526,21 +510,21 @@ public class Ball extends Actor {
 			else {
 				if (getX() <= w / 2.0f) {
 					if (this.POS_X + movePoint.x <= field.camMaxX) {
-						field.camera.position.set(camX + movePoint.x, camY, 0);
+						Field.camera.position.set(camX + movePoint.x, camY, 0);
 					}
 					else {
-						field.camera.position.set(field.camMaxX, camY, 0);
+						Field.camera.position.set(field.camMaxX, camY, 0);
 						setX(w / 2.0f + this.POS_X + movePoint.x - field.camMaxX);
 					}
 					this.POS_X += movePoint.x;
 				} 
 				else {
 					if (this.POS_X + movePoint.x > field.camMaxX) {
-						field.camera.position.set(field.camMaxX, camY, 0);
+						Field.camera.position.set(field.camMaxX, camY, 0);
 						setX(w / 2.0f + this.POS_X + movePoint.x - field.camMaxX);
 					}
 					else {
-						field.camera.position.set(this.POS_X + movePoint.x, camY, 0);
+						Field.camera.position.set(this.POS_X + movePoint.x, camY, 0);
 						setX(w / 2.0f);
 					}
 					this.POS_X += movePoint.x;
@@ -548,24 +532,24 @@ public class Ball extends Actor {
 			}
 			
 			// Перемещение по оси Y
-			camX = field.camera.position.x;
-			camY = field.camera.position.y;
+			camX = Field.camera.position.x;
+			camY = Field.camera.position.y;
 			
 			if (this.POS_Y < field.fieldHeight / 2.0f) {
 				if (this.POS_Y >= h / 2) {
 					if (this.POS_Y + movePoint.y < h / 2.0f) {
-						field.camera.position.set(camX, h / 2.0f, 0);
+						Field.camera.position.set(camX, h / 2.0f, 0);
 						setY(movePoint.y + this.POS_Y);
 					}
 					else {
-						field.camera.position.set(camX, camY + movePoint.y, 0);
+						Field.camera.position.set(camX, camY + movePoint.y, 0);
 					}
 					this.POS_Y += movePoint.y;
 				} 
 				else {
 					if (this.POS_Y + movePoint.y > h / 2.0f) {
 						setY(h / 2.0f);
-						field.camera.position.set(camX, camY + this.POS_Y + movePoint.y - h / 2.0f, 0);
+						Field.camera.position.set(camX, camY + this.POS_Y + movePoint.y - h / 2.0f, 0);
 					}
 					else {
 						setY(getY() + movePoint.y);
@@ -576,21 +560,21 @@ public class Ball extends Actor {
 			else {
 				if (getY() <= h / 2.0f) {
 					if (this.POS_Y + movePoint.y <= field.camMaxY) {
-						field.camera.position.set(camX, camY + movePoint.y, 0);
+						Field.camera.position.set(camX, camY + movePoint.y, 0);
 					}
 					else {
-						field.camera.position.set(camX, field.camMaxY, 0);
+						Field.camera.position.set(camX, field.camMaxY, 0);
 						setY(h / 2.0f + this.POS_Y + movePoint.y - field.camMaxY);
 					}
 					this.POS_Y += movePoint.y;
 				}
 				else {
 					if (this.POS_Y + movePoint.y > field.camMaxY) {
-						field.camera.position.set(camX, field.camMaxY, 0);
+						Field.camera.position.set(camX, field.camMaxY, 0);
 						setY(h / 2.0f + this.POS_Y + movePoint.y - field.camMaxY);
 					}
 					else {
-						field.camera.position.set(camX, this.POS_Y + movePoint.y, 0);
+						Field.camera.position.set(camX, this.POS_Y + movePoint.y, 0);
 						setY(h / 2.0f);
 					}
 					this.POS_Y += movePoint.y;
@@ -609,20 +593,8 @@ public class Ball extends Actor {
 		}
 	}
 	
-//	public boolean inField() {
-//		float offs = field.mGetSideLineProjection(this.getAbsY());
-//		
-//		return 
-//		    this.getAbsY() + 8 > field.fieldOffsetY && 
-//		    this.getAbsY() - 4 < field.fieldOffsetY + field.fieldHeight &&
-//		    this.getAbsX() + 12 > field.fieldOffsetX + offs &&
-//			this.getAbsX() - 12 < field.fieldOffsetX + field.fieldMaxWidth - offs;
-//	}
-	
 	@Override
 	public void act(float delta) {
-//		System.out.println(getJumpVelocity());
-//		System.out.println(ALLOW_GRAVITY_FROM);
 		
 		// Замедление полета мяча (трение воздуха)
 		this.CURENT_SPEED_X += this.CURENT_SPEED_X * this.AIR_FRICTION; 

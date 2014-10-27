@@ -15,7 +15,6 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -130,7 +129,6 @@ public class Field extends Stage {
 		
 		// Создание мяча
 		ball = new Ball();
-		ball.setActionsListener(actions);
 		this.addActor(ball);
 		this.addActor(ball.shadow);
 		ball.attachField(this);

@@ -22,8 +22,8 @@ public class CrazySoccer extends ApplicationAdapter {
 		Gdx.gl.glClearColor(0, 0, 0, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		
-		field.camera.update();
-		field.fieldMapRenderer.setView(field.camera);
+		Field.camera.update();
+		field.fieldMapRenderer.setView(Field.camera);
 		field.fieldMapRenderer.render();
 		
 		// Обработка входящей информации от игрока и изменение поведения героев

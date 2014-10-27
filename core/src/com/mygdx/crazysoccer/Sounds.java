@@ -10,8 +10,8 @@ public class Sounds {
 	
 	private class Sample {
 		public long ID = -1L;
-		private String name;
-		private String fileName;
+		//private String name;
+		//private String fileName;
 		private boolean loop = false;
 		private Sound sound;
 		

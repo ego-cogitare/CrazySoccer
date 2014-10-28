@@ -32,8 +32,8 @@ public class Player extends Actor {
     public SpriteBatch spriteBatch;
     
     // Параметры спрайта
-    private int SPRITE_WIDTH = 40;
-    private int SPRITE_HEIGHT = 40;
+    private int SPRITE_WIDTH = 32;
+    private int SPRITE_HEIGHT = 32;
     private float SPRITE_SCALE = 3.0f;
     
     // Размеры игрока с учетом масштабирования
@@ -380,6 +380,46 @@ public class Player extends Actor {
 	
 	public float width() {
 		return this.SPRITE_SCALE * this.SPRITE_WIDTH;
+	}
+	
+	private int frameOffsetX() {
+		int offset = 0;
+		
+		// Текущий кадр анимации
+		int cf = currentFrame(); 
+		
+		switch (curentState()) {
+		
+			case WHIRLIGIG_KICK:
+				offset = (cf == 3 || cf == 4 || cf == 8 || cf == 9 || cf == 13 || cf == 14) ? -20 : 0;
+			break;
+			
+			default:
+				offset = 0;
+			break;
+		}
+		
+		return offset;
+	}
+	
+	private int frameOffsetY() {
+		int offset = 0;
+		
+		// Текущий кадр анимации
+		int cf = currentFrame(); 
+		
+		switch (curentState()) {
+			
+			case WALKING:
+				offset = (cf == 1 || cf == 3) ? 2 : 0;
+			break;
+		
+			default:
+				offset = 0;
+			break;
+		}
+		
+		return offset;
 	}
 	
 	// Проверка необходимости зеркалирования по горизонтали спрайта персонажа
@@ -1597,8 +1637,11 @@ public class Player extends Actor {
 	public void draw(Batch batch, float parentAlpha) {
 		stateTime += Gdx.graphics.getDeltaTime();
 		
+		int offsetX = this.frameOffsetX();
+		int offsetY = this.frameOffsetY();
+		
 		// Анимирование персонажа
-		animations.get(this.curentState()).setPlayMode(PlayMode.NORMAL);
+		animations.get(this.curentState()).setPlayMode(PlayMode.LOOP);
 		currentFrame = animations.get(this.curentState()).getKeyFrame(stateTime, true); 
 
 		// Если окончено текущее действие
@@ -1616,8 +1659,8 @@ public class Player extends Actor {
         spriteBatch.begin();
         spriteBatch.draw(
     		currentFrame.getTexture(), 
-    		this.getX() - this.width() / 2.0f, 
-    		this.getY() + this.JUMP_HEIGHT, 
+    		this.getX() - this.width() / 2.0f + offsetX, 
+    		this.getY() + this.JUMP_HEIGHT + offsetY, 
     		0, 
     		0, 
     		this.SPRITE_WIDTH, 

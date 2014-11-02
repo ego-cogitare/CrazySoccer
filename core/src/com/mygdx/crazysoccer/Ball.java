@@ -833,8 +833,8 @@ public class Ball extends Actor {
         spriteBatch.end();
         
 		// Ресование тени мяча
-        shadow.setX(getX() - 12);
-        shadow.setY(getY() - 2);
+        shadow.setX(getX() - 16);
+        shadow.setY(getY() - 8);
         shadow.setVisibility(this.getAbsH() > 0);
 	}
 }

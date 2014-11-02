@@ -20,7 +20,7 @@ public class Leaf extends Actor {
 	
 	public Leaf(WindDirections wd) {
 		leaf = new TextureRegion(Field.sprites);
-		leaf.setRegion(45,5,8,8);
+		leaf.setRegion(13*32,0,32,32);
 		leafSprite = new SpriteBatch();
 		windDirection = wd;
 		setWindDirection(windDirection);
@@ -170,7 +170,7 @@ public class Leaf extends Actor {
 	public void draw(Batch batch, float parentAlpha) {
 		if (Math.abs(velocityX) > 0 || Math.abs(velocityY) > 0) {
 			leafSprite.begin();
-			leafSprite.draw(leaf, getX(), getY(), 8, 8, 8, 8, 2.0f, 2.0f, rotation);
+			leafSprite.draw(leaf, getX(), getY(), 32, 32, 32, 32, 1.0f, 1.0f, rotation);
 			leafSprite.end();
 		}
 	}

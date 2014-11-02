@@ -30,9 +30,11 @@ public class Gate extends Actor {
 	public Gate(int id) {
 		super();
 		
+		System.out.println(Field.SPRITES_WIDTH);
+		
 		this.ID = id;
 		gate = new TextureRegion(Field.sprites);
-		gate.setRegion(0,0,45,125);
+		gate.setRegion(192,0,135,376);
 		gateSprite = new SpriteBatch();
 	}
 	
@@ -89,7 +91,6 @@ public class Gate extends Actor {
 		
 	}
 	
-	
 	@Override
 	public void draw(Batch batch, float parentAlpha) {		
 		gateSprite.begin();
@@ -99,15 +100,15 @@ public class Gate extends Actor {
     		this.getY(), 
     		0, 
     		0, 
-    		45, 
-    		125, 
-    		3.0f, 
-    		3.0f, 
+    		gate.getRegionWidth(), 
+    		gate.getRegionHeight(),
+    		1.0f, 
+    		1.0f, 
     		0,
     		gate.getRegionX(), 
     		gate.getRegionY(), 
-    		45, 
-    		125, 
+    		gate.getRegionWidth(), 
+    		gate.getRegionHeight(), 
     		ID == 0, 
     		false
 		);

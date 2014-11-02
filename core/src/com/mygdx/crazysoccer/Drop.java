@@ -35,10 +35,10 @@ public class Drop extends Actor {
 	public Drop() {
 		super();
 		
-		dropTexture = new TextureRegion(Field.sprites,61,0,1,6);
+		dropTexture = new TextureRegion(Field.sprites,14*32,32,32,32);
 		dropSprite = new SpriteBatch();
 		
-		dropBreakTexture = new TextureRegion(Field.sprites, 45, 0, 8, 5);
+		dropBreakTexture = new TextureRegion(Field.sprites, 13*32, 32, 32, 32);
 		dropBreakSprite = new SpriteBatch();
 		
 		setRandomPos();
@@ -109,12 +109,12 @@ public class Drop extends Actor {
 	@Override
 	public void draw(Batch batch, float parentAlpha) {
 		dropSprite.begin();
-		dropSprite.draw(dropTexture, getX() + this.getWindVelocity(), getY(), 1, 6, 1, 6, 3.0f, 3.0f, 0);
+		dropSprite.draw(dropTexture, getX() + this.getWindVelocity(), getY(), 32, 32, 32, 32, 0.7f, 0.7f, 0);
 		dropSprite.end();
 		
 		if (System.nanoTime() - DROP_BREAK_TIME < 100000000) {
 			dropBreakSprite.begin();
-			dropBreakSprite.draw(dropBreakTexture, DROP_BREAK_X, DROP_BREAK_Y, 8, 5, 8, 5, 3.0f, 3.0f, 0);
+			dropBreakSprite.draw(dropBreakTexture, DROP_BREAK_X, DROP_BREAK_Y, 32, 32, 32, 32, 1.0f, 1.0f, 0);
 			dropBreakSprite.end();
 		}
 	}

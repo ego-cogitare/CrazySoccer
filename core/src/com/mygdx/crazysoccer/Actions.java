@@ -20,11 +20,13 @@ public class Actions {
 	public static class ActionDescription {
 		public boolean pressed;
 		public boolean doublePressed;
+		public boolean triplePressed;
 	}
 	
 	private Map<Action, Long> actionTime = new HashMap<Action, Long>();
 	public Map<Action, Boolean> actions = new HashMap<Action, Boolean>();
 	public Map<Action, Boolean> doublePressed = new HashMap<Action, Boolean>();
+	public Map<Action, Boolean> triplePressed = new HashMap<Action, Boolean>();
 	public ActionDescription ad;
 	
 	public Actions() {
@@ -38,6 +40,13 @@ public class Actions {
 		
 		// Время с момента последнего вызова этого действия
 		long deltaTime = Math.round((timeAction - actionTime.get(action)) / 1000000);
+
+		if (doublePressed.get(action) && deltaTime <= 200) {
+			triplePressed.put(action, true);
+		}		
+		else {
+			triplePressed.put(action, false);
+		}
 		
 		if (deltaTime <= 300 && actionTime.get(action) > 0) {
 			doublePressed.put(action, true);
@@ -53,6 +62,7 @@ public class Actions {
 	public ActionDescription get(Action action) {
 		ad.pressed = actions.get(action);
 		ad.doublePressed = doublePressed.get(action);
+		ad.triplePressed = triplePressed.get(action);
 		return ad;
 	}
 	
@@ -263,7 +273,7 @@ public class Actions {
 			break;
 			
 			default:
-				result.pressed = result.doublePressed = false;
+				result.pressed = result.doublePressed = result.triplePressed = false;
 			break;
 		}
 		
@@ -275,13 +285,14 @@ public class Actions {
 			actions.put(Action.values()[i], false);
 			actionTime.put(Action.values()[i], 0L);
 			doublePressed.put(Action.values()[i], false);
+			triplePressed.put(Action.values()[i], false);
 		}
 	}
 	
 	public void debug() {
 		for (int i = 0; i < Action.values().length; i++) {
 			if (actions.get(Action.values()[i])) {
-				System.out.println("Action: " + Action.values()[i] + "\nState: " + actions.get(Action.values()[i]) + "\nDouble pressed: " + doublePressed.get(Action.values()[i])+"\n");
+				System.out.println("Action: " + Action.values()[i] + "\nState: " + actions.get(Action.values()[i]) + "\nDouble pressed: " + doublePressed.get(Action.values()[i]) + "\nTriple pressed: "+triplePressed.get(Action.values()[i])+"\n");
 			}
 		}
 	}

@@ -17,7 +17,7 @@ public class Shadow extends Actor {
 		
 		// Загрузка текстуры тени
 		shadow = new TextureRegion(Field.sprites);
-		shadow.setRegion(53,0,8,4);
+		shadow.setRegion(13*32,64,32,32);
 		
 		shadowSprite = new SpriteBatch(); 
 	}
@@ -40,15 +40,15 @@ public class Shadow extends Actor {
 	    		this.getY(), 
 	    		0, 
 	    		0, 
-	    		8, 
-	    		4, 
-	    		3.0f, 
-	    		3.0f, 
+	    		32, 
+	    		32, 
+	    		1.0f, 
+	    		1.0f, 
 	    		0,
 	    		shadow.getRegionX(), 
 	    		shadow.getRegionY(), 
-	    		8, 
-	    		4, 
+	    		32, 
+	    		32, 
 	    		false, 
 	    		false
 			);

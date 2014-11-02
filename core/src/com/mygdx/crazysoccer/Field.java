@@ -49,6 +49,8 @@ public class Field extends Stage {
 	
 	// Текстура для хранения спрайтов
 	public static Texture sprites;
+	public static int SPRITES_WIDTH;
+	public static int SPRITES_HEIGHT;
 	
 	// Екземпляр мяча
 	private Ball ball;
@@ -60,10 +62,10 @@ public class Field extends Stage {
 	public Player[] players = new Player[PLAYERS_AMOUNT];
 	
 	// Листья
-	private Leaf[] leafs = new Leaf[1];
+	private Leaf[] leafs = new Leaf[5];
 	
 	// Капли
-	private Drop[] drops = new Drop[1];
+	private Drop[] drops = new Drop[30];
 	
 	// Размеры поля в клетках
 	private int CELLS_X;
@@ -125,7 +127,9 @@ public class Field extends Stage {
 		loadSounds();
 		
 		// Загрузка спрайтов
-		sprites = new Texture(Gdx.files.internal("sprites.png"));
+		sprites = new Texture(Gdx.files.internal("atlas.png")); 
+		SPRITES_WIDTH = sprites.getWidth() / 32;
+		SPRITES_HEIGHT = sprites.getHeight() / 32;
 		
 		// Создание мяча
 		ball = new Ball();
@@ -195,9 +199,10 @@ public class Field extends Stage {
 		sounds = new Sounds();
 		
 		// Загрузка фоновой музыки
-		sounds.load("bg01", "sound/bg/background04.ogg");
+		sounds.load("bg01", "sound/bg/background02.ogg");
 		sounds.play("bg01");
 		sounds.loop("bg01", true);
+		sounds.volume("bg01",0.3f);
 		
 		// Звук паса
 		sounds.load("pass01", "sound/sfx/pass01.ogg");

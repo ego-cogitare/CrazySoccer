@@ -71,7 +71,8 @@ public class Player extends Actor {
     private float CURENT_SPEED_X = 0.0f;
     private float CURENT_SPEED_Y = 0.0f;
     private float WALKING_SPEED = 3.5f;
-    private float RUN_SPEED = 6.5f;
+    private float RUN_SPEED = 6.0f;
+    private float TOP_RUN_SPEED = 9.0f;
     private float POS_X = 0.0f;
     private float POS_Y = 0.0f;
     
@@ -83,6 +84,7 @@ public class Player extends Actor {
 		STAY,     			// Состояние покоя
 		WALKING,			// Ходьба
 		RUN,	  			// Бег 
+		TOP_RUN,	  		// Супер бег 
 		DECELERATION,	    // Торможение
 		KNEE_CATCH,			// Прием мяча ногой
 		CHEST_CATCH,		// Прием мяча грудью
@@ -191,6 +193,19 @@ public class Player extends Actor {
 				animationMap[0][0]
 			)
         );
+        
+        // Создаем анимацию супер пробежки
+        animations.put(States.TOP_RUN, 
+    		new Animation(0.07f, 
+				animationMap[3][1], 
+				animationMap[3][2], 
+				animationMap[3][1], 
+				animationMap[3][2], 
+				animationMap[3][1], 
+				animationMap[3][2], 
+				animationMap[3][2]
+			)
+		);
         
         // Создаем анимацию торможения
         animations.put(States.DECELERATION, 
@@ -438,7 +453,7 @@ public class Player extends Actor {
 			break;
 			
 			case BACK_KICK:
-				flip = (cf == 0 || cf == 1 || cf == 2 || cf == 6 || cf == 7 || cf == 8);
+				flip = (this.DESTINATION_GATE_ID == Gate.RIGHT_GATES) ? (cf == 0 || cf == 1 || cf == 2 || cf == 6 || cf == 7 || cf == 8) : (cf == 3 || cf == 4 || cf == 5);
 			break;
 			
 			default:
@@ -575,6 +590,20 @@ public class Player extends Actor {
 		return Math.max(Math.abs(this.CURENT_SPEED_X), Math.abs(this.CURENT_SPEED_Y));
 	}
 	
+	// Сброс скорости до указанной
+	private void resetVelocityTo(float velocityX, float velocityY) {
+		
+		if (this.getVelocityX() > velocityX) 
+			this.setVelocityX(velocityX);
+		else if (this.getVelocityX() < -velocityX) 
+			this.setVelocityX(-velocityX);
+		
+		if (this.getVelocityY() > velocityY) 
+			this.setVelocityY(velocityY);
+		else if (this.getVelocityY() < -velocityY) 
+			this.setVelocityY(-velocityY);
+	}
+	
 	// Проверка может ли персонаж выполнить действие
 	public boolean Can(States stateToCheck) {
 		boolean isCan = false;
@@ -597,6 +626,7 @@ public class Player extends Actor {
 						!state.get(States.LAY_BELLY) &&
 						!state.get(States.JUMP) &&
 						!state.get(States.FISH_KICK) &&
+						(!state.get(States.TOP_RUN) || upPressed() || downPressed()) &&
 						!state.get(States.DECELERATION) &&
 						this.getAbsH() == 0;
 			break;
@@ -614,7 +644,7 @@ public class Player extends Actor {
 			 * 	1. не бъет ногой
 			 *  2. не бъет рукой
 			 */
-			case RUN: 
+			case RUN: case TOP_RUN: 
 				isCan = !state.get(States.KNEE_CATCH)  && 
 						!state.get(States.FOOT_KICK) &&
 						!state.get(States.SIT) &&
@@ -623,6 +653,7 @@ public class Player extends Actor {
 						!state.get(States.LAY_BELLY) &&
 						!state.get(States.HEAD_PASS) &&
 						!state.get(States.FISH_KICK) &&
+						!state.get(States.TOP_RUN) &&
 						!state.get(States.JUMP);
 			break;
 			
@@ -816,18 +847,21 @@ public class Player extends Actor {
 				this.ACTION_DONE = true;
 				
 				// Установка необходимости подбросить игрока
-				if (this.getAbsH() > 0) this.setJumpVelocity(2.5f);
+				if (this.getAbsH() > 0) this.setJumpVelocity(3.5f);
 				
 				// Для того чтобы при ударе головой мяч двигался вверх
 				if (state == States.HEAD_KICK) ball.allowGravityFrom(999);
 				
 				// Поворачиваем игрока в нужную сторону перед нанесением удара
-				if (DESTINATION_GATE_ID == 0 && direction == Directions.RIGHT) {
+				if (DESTINATION_GATE_ID == Gate.LEFT_GATES && direction == Directions.RIGHT) {
 					direction = Directions.LEFT;
 				} 
-				else if (DESTINATION_GATE_ID == 1 && direction == Directions.LEFT) {
+				else if (DESTINATION_GATE_ID == Gate.RIGHT_GATES && direction == Directions.LEFT) {
 					direction = Directions.RIGHT;
 				}
+				
+				// Сброс скорости персонажа при нанесении удара
+				this.resetVelocityTo(Math.abs(getVelocityX() / 1.8f), 1.5f);
 			break;
 			
 			case BACK_KICK:
@@ -836,6 +870,9 @@ public class Player extends Actor {
 				this.ACTION_DONE = true;
 				this.setJumpVelocity(3.5f);
 				ball.allowGravityFrom(999);
+				
+				// Сброс скорости персонажа при нанесении удара
+				this.resetVelocityTo(Math.abs(getVelocityX() / 1.8f), 1.5f);
 			break;
 			
 			case FISH_KICK:
@@ -874,8 +911,19 @@ public class Player extends Actor {
 			break;
 			
 			case RUN: 
-				this.setVelocityX(direction == Directions.RIGHT ? this.RUN_SPEED : -this.RUN_SPEED);
-				
+				this.setVelocityX(direction == Directions.RIGHT ? this.RUN_SPEED : -this.RUN_SPEED); 
+				this.stateTime = 0.0f;
+				actionsListener.disableAction(Controls.LEFT, this.PLAYER_ID);
+				actionsListener.disableAction(Controls.RIGHT, this.PLAYER_ID);
+				field.sounds.play("run01");
+				field.sounds.loop("run01", true);
+			break;
+			
+			case TOP_RUN: 
+				this.setVelocityX(direction == Directions.RIGHT ? this.TOP_RUN_SPEED : -this.TOP_RUN_SPEED); 
+				this.stateTime = 0.0f;
+				actionsListener.disableAction(Controls.LEFT, this.PLAYER_ID);
+				actionsListener.disableAction(Controls.RIGHT, this.PLAYER_ID);
 				field.sounds.play("run01");
 				field.sounds.loop("run01", true);
 			break;
@@ -967,12 +1015,20 @@ public class Player extends Actor {
 		return actionsListener.getActionStateFor(Controls.LEFT, this.PLAYER_ID).doublePressed;
 	}
 	
+	private boolean leftTriplePressed() {
+		return actionsListener.getActionStateFor(Controls.LEFT, this.PLAYER_ID).triplePressed;
+	}
+	
 	private boolean rightPressed() {
 		return actionsListener.getActionStateFor(Controls.RIGHT, this.PLAYER_ID).pressed;
 	}
 	
 	private boolean rightDblPressed() {
 		return actionsListener.getActionStateFor(Controls.RIGHT, this.PLAYER_ID).doublePressed;
+	}
+	
+	private boolean rightTriplePressed() {
+		return actionsListener.getActionStateFor(Controls.RIGHT, this.PLAYER_ID).triplePressed;
 	}
 	
 	/*
@@ -1095,7 +1151,7 @@ public class Player extends Actor {
 			}
 			else if (Can(States.WALKING)) {
 				// Если персонаж не бежит, и нажата клавиша вверх
-				if (curentState() != States.RUN) {
+				if (curentState() != States.RUN && curentState() != States.TOP_RUN) {
 					Do(States.WALKING, true);
 				}
 				this.CURENT_SPEED_Y = this.WALKING_SPEED;
@@ -1108,7 +1164,7 @@ public class Player extends Actor {
 			}
 			else if (Can(States.WALKING)) {
 				// Если персонаж не бежит, и нажата клавиша вверх
-				if (curentState() != States.RUN) {
+				if (curentState() != States.RUN && curentState() != States.TOP_RUN) {
 					Do(States.WALKING, true);
 				}
 				this.CURENT_SPEED_Y = -this.WALKING_SPEED;
@@ -1123,8 +1179,12 @@ public class Player extends Actor {
 			else if (Can(States.WALKING)) {
 				this.direction = Directions.LEFT;
 				
+				// Если было тройное нажатие кнопки, то делаем персонаж бегущим
+				if (leftTriplePressed() && Can(States.TOP_RUN)) {
+					Do(States.TOP_RUN, true);
+				} 
 				// Если было двойное нажатие кнопки, то делаем персонаж бегущим
-				if (leftDblPressed() && Can(States.RUN)) {
+				else if (leftDblPressed() && Can(States.RUN)) {
 					Do(States.RUN, true);
 				} 
 				else if (Can(States.WALKING)) {
@@ -1141,7 +1201,12 @@ public class Player extends Actor {
 			else if (Can(States.WALKING)) {
 				this.direction = Directions.RIGHT;
 				
-				if (rightDblPressed() && Can(States.RUN)) {
+				// Если было тройное нажатие кнопки, то делаем персонаж бегущим
+				if (rightTriplePressed() && Can(States.TOP_RUN)) {
+					Do(States.TOP_RUN, true);
+				} 
+				// Если было двойное нажатие кнопки, то делаем персонаж бегущим
+				else if (rightDblPressed() && Can(States.RUN)) {
 					Do(States.RUN, true);
 				} 
 				else if (Can(States.WALKING)) {
@@ -1231,7 +1296,7 @@ public class Player extends Actor {
 		 *      Воздействия сили трения с учетом трения игрока о 			*
 		 *      текущий фрагмент поверхности на которой он находится 		*
 		 * ******************************************************************/
-		if ((curentState() != States.WALKING && curentState() != States.RUN) && getAbsH() == 0) {
+		if ((curentState() != States.WALKING && curentState() != States.RUN && curentState() != States.TOP_RUN) && getAbsH() == 0) {
 			
 			float dX = this.CURENT_SPEED_X * this.FRICTION;
 			float dY = this.CURENT_SPEED_Y * this.FRICTION;
@@ -1434,14 +1499,15 @@ public class Player extends Actor {
 		
 		// Если ниодна из кнопок направления движения не нажата
 		if (!upPressed() && !downPressed() && curentState() == States.WALKING) {
-			CURENT_SPEED_Y = 0;
+			this.CURENT_SPEED_Y = 0;
 		}
+		
 		if (!leftPressed() && !rightPressed() && curentState() == States.WALKING) {
-			CURENT_SPEED_X = 0;
+			this.CURENT_SPEED_X = 0;
 		}
 		
 		// Если персонаж бежит и не нажата кнопка вверх или вниз
-		if (!this.upPressed() && !this.downPressed() && state.get(States.RUN)) {
+		if (!this.upPressed() && !this.downPressed() && (state.get(States.RUN) || state.get(States.TOP_RUN))) {
 			this.CURENT_SPEED_Y = 0.0f;
 		}
 		
@@ -1651,6 +1717,10 @@ public class Player extends Actor {
 			if (curentState() == States.LAY_BACK || curentState() == States.LAY_BELLY || curentState() == States.FISH_KICK) {
 				Do(States.SIT, true);
 			}
+			else if (curentState() == States.TOP_RUN) {
+				Do(States.RUN, true);
+				resetVelocityTo(this.RUN_SPEED, Math.abs(getVelocityY()));
+			}
 			else if (curentState() != States.RUN && curentState() != States.JUMP  && curentState() != States.DECELERATION) {
 				Do(States.STAY, true);
 			}
@@ -1678,8 +1748,8 @@ public class Player extends Actor {
         spriteBatch.end();
         
         // Ресование тени персонажа
-        shadow.setX(getX() - 10);
-        shadow.setY(getY());
+        shadow.setX(getX() - 15);
+        shadow.setY(getY() - 13);
         shadow.setVisibility(this.JUMP_HEIGHT > 0);
 	}
 }

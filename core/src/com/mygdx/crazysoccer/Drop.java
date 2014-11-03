@@ -44,7 +44,7 @@ public class Drop extends Actor {
 		setRandomPos();
 	}
 	
-	public void setWindVelocity(float v) {
+	public void setWindVelocity(float v) { 
 		this.SIDE_VELOCITY = this.SIDE_VELOCITY < 0 ? -v : v;
 		if (windDirection == WindDirections.TOP_DOWN || windDirection == WindDirections.NONE) this.SIDE_VELOCITY = 0;
 	}

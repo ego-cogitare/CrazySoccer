@@ -96,7 +96,7 @@ public class Field extends Stage {
 	
 	// Смещение игрового поля относительно карты (левого нижнего угла)
 	public int fieldOffsetX;
-	public int fieldOffsetY;
+	public int fieldOffsetY;  
 	
 	public TiledMap fieldMap;
     public TiledMapRenderer fieldMapRenderer;
@@ -221,6 +221,9 @@ public class Field extends Stage {
 		
 		// Звук начала прыжка
 		sounds.load("jump01", "sound/sfx/jump01.ogg");
+		
+		// Звук "юлы"
+		sounds.load("whirligid01", "sound/sfx/whirligid01.ogg");
 		
 		// Звук несильного ветра
 		sounds.load("wind01", "sound/sfx/wind01.ogg");

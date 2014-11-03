@@ -32,7 +32,7 @@ public class Gate extends Actor {
 		
 		System.out.println(Field.SPRITES_WIDTH);
 		
-		this.ID = id;
+		this.ID = id; 
 		gate = new TextureRegion(Field.sprites);
 		gate.setRegion(192,0,135,376);
 		gateSprite = new SpriteBatch();

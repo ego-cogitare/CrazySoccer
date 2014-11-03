@@ -12,7 +12,7 @@ public class CrazySoccer extends ApplicationAdapter {
 	@Override
 	public void create () {
 		field = new Field(new ScreenViewport());
-		field.LoadMap("level01.tmx");
+		field.LoadMap("level01.tmx"); 
 		
 		Gdx.input.setInputProcessor(field);
 	}

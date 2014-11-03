@@ -93,6 +93,8 @@ public class Player extends Actor {
 		BACK_KICK,			// Удар через себя
 		FISH_KICK,			// Удар рыбкой (в полете животом вниз)
 		WHIRLIGIG_KICK,		// Удар вертушкой (юла)
+		DRIBBLING_UP,		// Дрибблинг (вверх-вверх)
+		DRIBBLING_DOWN,		// Дрибблинг (вниз-вниз)
 		JUMP,				// Прыжок
 		SIT,				// Присел
 		PASS,				// Пасс
@@ -201,9 +203,9 @@ public class Player extends Actor {
 				animationMap[3][2], 
 				animationMap[3][1], 
 				animationMap[3][2], 
-				animationMap[3][1], 
+				animationMap[3][1]/*, 
 				animationMap[3][2], 
-				animationMap[3][2]
+				animationMap[3][2]*/
 			)
 		);
         
@@ -314,6 +316,32 @@ public class Player extends Actor {
 				animationMap[1][0],
 				animationMap[1][1],
 				animationMap[1][0]
+			)
+		);
+        
+        animations.put(States.DRIBBLING_UP, 
+    		new Animation(0.07f, 
+				animationMap[3][3], 
+				animationMap[2][2],
+				animationMap[2][2],
+				animationMap[2][2],
+				animationMap[3][2],
+				animationStatesMap[0][7],
+				animationStatesMap[0][7],
+				animationStatesMap[0][7]
+			)
+		);
+        
+        animations.put(States.DRIBBLING_DOWN, 
+    		new Animation(0.07f, 
+				animationMap[3][3],
+				animationStatesMap[0][7],
+				animationStatesMap[0][7],
+				animationStatesMap[0][7],
+				animationMap[3][2],
+				animationMap[2][2],
+				animationMap[2][2],
+				animationMap[2][2]
 			)
 		);
         
@@ -626,6 +654,8 @@ public class Player extends Actor {
 						!state.get(States.LAY_BELLY) &&
 						!state.get(States.JUMP) &&
 						!state.get(States.FISH_KICK) &&
+						!state.get(States.DRIBBLING_UP) &&
+						!state.get(States.DRIBBLING_DOWN) &&
 						(!state.get(States.TOP_RUN) || upPressed() || downPressed()) &&
 						!state.get(States.DECELERATION) &&
 						this.getAbsH() == 0;
@@ -633,8 +663,7 @@ public class Player extends Actor {
 			
 			case DECELERATION: 
 				isCan = (
-							(((rightPressed() && (direction == Directions.LEFT)) || (leftPressed() && (direction == Directions.RIGHT)) || (downPressed() && (getVelocityY() > 0)) || (upPressed() && (getVelocityY() < 0))) && (((maxVelocity() > WALKING_SPEED) && (FRICTION == GRASS_FRICTION)) || (((maxVelocity() > 0) && (FRICTION != GRASS_FRICTION))))) ||
-							(false) 
+							(((rightPressed() && (direction == Directions.LEFT)) || (leftPressed() && (direction == Directions.RIGHT))) && (((maxVelocity() > WALKING_SPEED) && (FRICTION == GRASS_FRICTION)) || (((maxVelocity() > 0) && (FRICTION != GRASS_FRICTION)))))
 						) &&
 						this.getAbsH() == 0;
 			break;
@@ -654,6 +683,8 @@ public class Player extends Actor {
 						!state.get(States.HEAD_PASS) &&
 						!state.get(States.FISH_KICK) &&
 						!state.get(States.TOP_RUN) &&
+						!state.get(States.DRIBBLING_UP) &&
+						!state.get(States.DRIBBLING_DOWN) &&
 						!state.get(States.JUMP);
 			break;
 			
@@ -738,6 +769,8 @@ public class Player extends Actor {
 						!state.get(States.LAY_BELLY) &&
 						!state.get(States.PASS) &&
 						!state.get(States.WHIRLIGIG_KICK) &&
+						!state.get(States.DRIBBLING_UP) &&
+						!state.get(States.DRIBBLING_DOWN) &&
 						!this.catchBall() &&
 						this.getAbsH() == 0 &&
 						((l > 70 && l < 230 && Math.abs(getVelocityX()) > 0) || velArrowPressed());
@@ -787,6 +820,23 @@ public class Player extends Actor {
 						!state.get(States.FISH_KICK);
 			break;
 			
+			case DRIBBLING_UP: case DRIBBLING_DOWN:
+				isCan = this.getAbsH() == 0 &&
+						this.catchBall() &&
+						!state.get(States.WHIRLIGIG_KICK) &&
+						!state.get(States.KNEE_CATCH) && 
+						!state.get(States.FISH_KICK) &&
+						!state.get(States.FOOT_KICK) &&
+						!state.get(States.SIT) &&
+						!state.get(States.DEAD) &&
+						!state.get(States.LAY_BACK) &&
+						!state.get(States.DRIBBLING_UP) &&
+						!state.get(States.DRIBBLING_DOWN) &&
+						!state.get(States.LAY_BELLY) &&
+						!state.get(States.JUMP) &&
+						!state.get(States.FISH_KICK);
+				break;
+			
 			/* 
 			 * Персонаж может прыгнуть если он:
 			 * 	1. не бъет ногой
@@ -797,13 +847,16 @@ public class Player extends Actor {
 				isCan = !state.get(States.KNEE_CATCH) && 
 						!state.get(States.FISH_KICK) &&
 						!state.get(States.FOOT_KICK) &&
-						!state.get(States.DEAD) &&
+						!state.get(States.DEAD) && 
 						!state.get(States.SIT) &&
 						!state.get(States.LAY_BACK) &&
 						!state.get(States.LAY_BELLY) &&
 						!state.get(States.PASS) &&
 						!state.get(States.HEAD_PASS) &&
-						!state.get(States.JUMP);
+						!state.get(States.DRIBBLING_UP) &&
+						!state.get(States.DRIBBLING_DOWN) &&
+						!state.get(States.JUMP) &&
+						this.getAbsH() == 0;
 			break;
 			
 			/*
@@ -885,6 +938,12 @@ public class Player extends Actor {
 				this.stateTime = 0.0f;
 				this.ACTION_DONE = true;
 				this.setJumpVelocity(0);
+				field.sounds.play("whirligid01",true);
+			break;
+			
+			case DRIBBLING_UP: case DRIBBLING_DOWN:
+				this.stateTime = 0.0f;
+				//field.sounds.play("whirligid01",true);
 			break;
 			
 			case PASS: case HEAD_PASS:
@@ -913,6 +972,14 @@ public class Player extends Actor {
 			case RUN: 
 				this.setVelocityX(direction == Directions.RIGHT ? this.RUN_SPEED : -this.RUN_SPEED); 
 				this.stateTime = 0.0f;
+				
+				if (upDblPressed()) {
+					actionsListener.disableAction(Controls.UP, this.PLAYER_ID);
+				}
+				//else 
+				if (downDblPressed()) { 
+					actionsListener.disableAction(Controls.DOWN, this.PLAYER_ID);
+				}
 				actionsListener.disableAction(Controls.LEFT, this.PLAYER_ID);
 				actionsListener.disableAction(Controls.RIGHT, this.PLAYER_ID);
 				field.sounds.play("run01");
@@ -1003,8 +1070,16 @@ public class Player extends Actor {
 		return actionsListener.getActionStateFor(Controls.UP, this.PLAYER_ID).pressed;
 	}
 	
+	private boolean upDblPressed() {
+		return actionsListener.getActionStateFor(Controls.UP, this.PLAYER_ID).doublePressed;
+	}
+	
 	private boolean downPressed() {
 		return actionsListener.getActionStateFor(Controls.DOWN, this.PLAYER_ID).pressed;
+	}
+	
+	private boolean downDblPressed() {
+		return actionsListener.getActionStateFor(Controls.DOWN, this.PLAYER_ID).doublePressed;
 	}
 	
 	private boolean leftPressed() {
@@ -1152,7 +1227,17 @@ public class Player extends Actor {
 			else if (Can(States.WALKING)) {
 				// Если персонаж не бежит, и нажата клавиша вверх
 				if (curentState() != States.RUN && curentState() != States.TOP_RUN) {
-					Do(States.WALKING, true);
+					
+					// Если было двойное нажатие кнопки то игрок начинает бежать
+					if (upDblPressed() && Can(States.RUN)) {
+						Do(States.RUN, true);
+					}
+					else {
+						Do(States.WALKING, true);
+					}
+				}
+				else if (curentState() == States.RUN && upDblPressed() && Can(States.DRIBBLING_UP)) {
+					Do(States.DRIBBLING_UP, true);
 				}
 				this.CURENT_SPEED_Y = this.WALKING_SPEED;
 			}
@@ -1165,7 +1250,17 @@ public class Player extends Actor {
 			else if (Can(States.WALKING)) {
 				// Если персонаж не бежит, и нажата клавиша вверх
 				if (curentState() != States.RUN && curentState() != States.TOP_RUN) {
-					Do(States.WALKING, true);
+					
+					// Если было двойное нажатие кнопки то игрок начинает бежать
+					if (downDblPressed() && Can(States.RUN)) {
+						Do(States.RUN, true);
+					}
+					else {
+						Do(States.WALKING, true);
+					}
+				}
+				else if (curentState() == States.RUN && downDblPressed() && Can(States.DRIBBLING_DOWN)) {
+					Do(States.DRIBBLING_DOWN, true);
 				}
 				this.CURENT_SPEED_Y = -this.WALKING_SPEED;
 			}
@@ -1296,7 +1391,16 @@ public class Player extends Actor {
 		 *      Воздействия сили трения с учетом трения игрока о 			*
 		 *      текущий фрагмент поверхности на которой он находится 		*
 		 * ******************************************************************/
-		if ((curentState() != States.WALKING && curentState() != States.RUN && curentState() != States.TOP_RUN) && getAbsH() == 0) {
+		if (
+				(
+					curentState() != States.WALKING && 
+					curentState() != States.RUN && 
+					curentState() != States.TOP_RUN && 
+					curentState() != States.DRIBBLING_UP && 
+					curentState() != States.DRIBBLING_DOWN
+				) && 
+				getAbsH() == 0
+		) {
 			
 			float dX = this.CURENT_SPEED_X * this.FRICTION;
 			float dY = this.CURENT_SPEED_Y * this.FRICTION;
@@ -1340,9 +1444,9 @@ public class Player extends Actor {
 		}
 		
 		// Торможения игрока
-		if (Can(States.DECELERATION)) {
-			Do(States.DECELERATION, true);
-		}
+//		if (Can(States.DECELERATION)) {
+//			Do(States.DECELERATION, true);
+//		}
 		
 		// Перемещение персонажа
 		movePlayerBy(new Vector2(this.CURENT_SPEED_X, this.CURENT_SPEED_Y));
@@ -1450,6 +1554,28 @@ public class Player extends Actor {
 							ball.pass(field.players[1].getAbsX(),field.players[1].getAbsY());
 						else 
 							ball.pass(field.players[0].getAbsX(),field.players[0].getAbsY());
+					}
+				break;
+				
+				case DRIBBLING_UP:
+					if (currentFrame() >= 5 && currentFrame() <= 6) {
+						setVelocityX(getVelocityX() > 0 ? RUN_SPEED : -RUN_SPEED);
+						setVelocityY(RUN_SPEED * 1.45f);
+					}
+					else if (currentFrame() >= 0 && currentFrame() <= 0) {
+						setVelocityX(getVelocityX() > 0 ? WALKING_SPEED : -WALKING_SPEED);
+						setVelocityY(-1.6f);
+					}
+				break;
+				
+				case DRIBBLING_DOWN:
+					if (currentFrame() >= 5 && currentFrame() <= 6) {
+						setVelocityX(getVelocityX() > 0 ? RUN_SPEED : -RUN_SPEED);
+						setVelocityY(-RUN_SPEED * 1.45f);
+					}
+					else if (currentFrame() >= 0 && currentFrame() <= 0) {
+						setVelocityX(getVelocityX() > 0 ? WALKING_SPEED : -WALKING_SPEED);
+						setVelocityY(1.6f);
 					}
 				break;
 				
@@ -1717,11 +1843,12 @@ public class Player extends Actor {
 			if (curentState() == States.LAY_BACK || curentState() == States.LAY_BELLY || curentState() == States.FISH_KICK) {
 				Do(States.SIT, true);
 			}
-			else if (curentState() == States.TOP_RUN) {
+			/* Если закончилась супрпроежка, то переводим игрока в состояние обычного бега */
+			else if (curentState() == States.TOP_RUN || curentState() == States.DRIBBLING_UP || curentState() == States.DRIBBLING_DOWN) {
 				Do(States.RUN, true);
 				resetVelocityTo(this.RUN_SPEED, Math.abs(getVelocityY()));
 			}
-			else if (curentState() != States.RUN && curentState() != States.JUMP  && curentState() != States.DECELERATION) {
+			else if (curentState() != States.RUN /*&& curentState() != States.JUMP*/  && curentState() != States.DECELERATION) {
 				Do(States.STAY, true);
 			}
 		}

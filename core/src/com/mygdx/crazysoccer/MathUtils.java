@@ -18,7 +18,7 @@ class MathUtils {
 			this.boxY2 = boxY2;
 		}
 	}
-	
+	 
 	/**
 	 * Попадает ли точка в прямоугольник
 	 * @param pointX

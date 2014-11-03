@@ -801,7 +801,7 @@ public class Ball extends Actor {
 			return true;
 		}
 		return false;
-	}
+	} 
 	
 	@Override
 	public void draw(Batch batch, float parentAlpha) {

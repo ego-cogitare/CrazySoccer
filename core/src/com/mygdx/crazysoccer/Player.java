@@ -76,6 +76,9 @@ public class Player extends Actor {
     private float POS_X = 0.0f;
     private float POS_Y = 0.0f;
     
+    // Ускорение мяча при контакет с землей при выполнении суперудара головой / через себя
+    private float HEAD_BACK_SUPER_KICK_ACC = 25.0f;
+    
     // Флаг принимает значение true если игрок контролирует мяч
     private boolean CATCH_BALL = false;
     
@@ -397,6 +400,10 @@ public class Player extends Actor {
         );
         
         shadow = new Shadow();
+	}
+	
+	public float getAccSuperKick() {
+		return this.HEAD_BACK_SUPER_KICK_ACC;
 	}
 	
 	public void attachField(Field f) {
@@ -788,7 +795,7 @@ public class Player extends Actor {
 						!state.get(States.PASS) && 
 						!this.ACTION_DONE &&
 						(
-							((dArrowPressed()) || (this.getAbsH() == 0 && ball.getAbsH() > 70)) && !ball.isCatched() || 
+							((dArrowPressed()) || (this.getAbsH() == 0 && ball.getAbsH() > 60)) && !ball.isCatched() || 
 							(ball.isCatched() && dArrowPressed() && getAbsH() > 0)
 						);
 			break;
@@ -805,7 +812,7 @@ public class Player extends Actor {
 						!state.get(States.PASS) && 
 						!this.ACTION_DONE &&
 						(
-							((conterdArrowPressed()) || (this.getAbsH() == 0 && ball.getAbsH() > 70)) && !ball.isCatched() || 
+							((conterdArrowPressed()) || (this.getAbsH() == 0 && ball.getAbsH() > 60)) && !ball.isCatched() || 
 							(ball.isCatched() && conterdArrowPressed() && getAbsH() > 0)
 						);
 				break;
@@ -1175,7 +1182,7 @@ public class Player extends Actor {
 		// Если производится удар головой или через себя, то увеличиваем минимальную 
 		// высоту на которой должен быть мяч чтобы выполнить суперудар
 		if (this.curentState() == States.HEAD_KICK || this.curentState() == States.BACK_KICK) {
-			minHeight += 70;
+			minHeight += 50;
 		}
 		
 		return minHeight;
@@ -1475,7 +1482,7 @@ public class Player extends Actor {
 				
 				case HEAD_KICK:
 					// Перемещение мяча вверх при ударе
-					if (this.getAbsH() != 0) ball.setJumpVelocity(5.8f);
+					if (this.getAbsH() != 0) ball.setJumpVelocity(7.5f);
 					
 					// Выполнение удара по мячу
 					if ((currentFrame() >= 1 && curentState() == States.HEAD_KICK && ball.isCatched()) || !ball.isCatched()) {
@@ -1495,7 +1502,7 @@ public class Player extends Actor {
 				
 				case BACK_KICK:
 					// Перемещение мяча вверх при ударе
-					if (this.getAbsH() != 0) ball.setJumpVelocity(3.5f);
+					if (this.getAbsH() != 0) ball.setJumpVelocity(4.0f);
 					
 					// Выполнение удара по мячу
 					if ((currentFrame() >= 4 && curentState() == States.BACK_KICK && ball.isCatched()) || !ball.isCatched()) {

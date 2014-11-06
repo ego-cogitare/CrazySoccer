@@ -55,6 +55,9 @@ public class Ball extends Actor {
     // ID игрока, которым контроллируется мяч
     private int MANAGED_PLAYER_ID = 0;
     
+    // ID игрока, который последним управлял мячом
+    private int LAST_MANAGED_PLAYER_ID = 0;
+    
     // Скорость мяча при которой на мяч начинает действовать гравитация
     private float ALLOW_GRAVITY_FROM = 999.0f;
     
@@ -220,6 +223,9 @@ public class Ball extends Actor {
 	
 	// Установка ID игрока, которым контроллируется мяч
 	public void managerByBlayer(int playerId) {
+		// Сохранение ID игрока, который последним контроллировал мяч
+		if (playerId >= 0) this.LAST_MANAGED_PLAYER_ID = playerId;
+		
 		this.MANAGED_PLAYER_ID = playerId;
 	}
 	
@@ -652,6 +658,10 @@ public class Ball extends Actor {
 			// Ограничение движение мяча в сетке левых ворот
 			if (this.getAbsX() < field.gates[0].getBottomBar().x - 70 && this.getVelocityX() < 0) {
 				this.setVelocityX(-0.3f * this.getVelocityX());
+				
+				if (Math.abs(this.getVelocityX()) > field.gates[1].minFlatusVelocity()) {
+					field.gates[1].drawFlatus();
+				}
 			}
 			
 			if (this.getAbsY() < field.gates[0].getBottomBar().y + 10 && this.getVelocityY() < 0) {
@@ -670,6 +680,10 @@ public class Ball extends Actor {
 			// Ограничение движение мяча в сетке правых ворот
 			if (this.getAbsX() > field.gates[1].getBottomBar().x + 70 && this.getVelocityX() > 0) {
 				this.setVelocityX(-0.3f * this.getVelocityX());
+				
+				if (Math.abs(this.getVelocityX()) >= field.gates[1].minFlatusVelocity()) {
+					field.gates[1].drawFlatus();
+				}
 			}
 			
 			if (this.getAbsY() < field.gates[1].getBottomBar().y + 10 && this.getVelocityY() < 0) {
@@ -689,7 +703,6 @@ public class Ball extends Actor {
 		// Реализация гравитации (гравитация начинает действовать только когда сумма абсолютных
 		// скоростей по осям OX и OY < 15)
 		if (this.absVelocity() < this.ALLOW_GRAVITY_FROM && (this.JUMP_HEIGHT > 0 || this.JUMP_VELOCITY > 0)) {
-//			System.out.println(this.JUMP_VELOCITY);
 			
 			// Текущая вертикальная скорость мяча
 			if (curentState() == States.HEAD_BACK_SUPER_KICK) {
@@ -706,6 +719,14 @@ public class Ball extends Actor {
 			//  1. изменение направление движения мяча по оси OY - вверх
 			//  2. уменьшение скорости на коеффициент трения мяча о газон
 			if (this.JUMP_HEIGHT <= 0.0f) {
+				
+				if (curentState() == States.HEAD_BACK_SUPER_KICK) {
+					float k = field.players[this.LAST_MANAGED_PLAYER_ID].getAccSuperKick() / Math.max(Math.abs(this.getVelocityX()), Math.abs(this.getVelocityY()));
+					
+					this.CURENT_SPEED_X *= k;
+					this.CURENT_SPEED_Y *= k;
+				}
+				
 				// Отскок мяча от поверхности газона и придание ему вертикального ускорения
 				this.JUMP_VELOCITY =  this.RESTITUTION * Math.abs(this.JUMP_VELOCITY);
 				

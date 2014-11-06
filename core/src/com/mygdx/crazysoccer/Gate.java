@@ -17,6 +17,12 @@ public class Gate extends Actor {
 	private Vector2 BOTTOM_BAR;
 	private Vector2 TOP_BAR;
 	
+	// Для отрисовки вздувшихся ворот
+	private long DRAW_FLATUS_TIME_START = 0L;
+	
+	// Минимальная скорость удара мяча о сетку, для того чтобы отрисовывать вздувшуюся сетку
+	private float MIN_FLATUS_VELOCITY = 4.2f;
+	
 	// Идентификатор ворот
 	public static int LEFT_GATES = 0;
 	public static int RIGHT_GATES = 1;
@@ -30,11 +36,11 @@ public class Gate extends Actor {
 	public Gate(int id) {
 		super();
 		
-		System.out.println(Field.SPRITES_WIDTH);
-		
 		this.ID = id; 
+		
 		gate = new TextureRegion(Field.sprites);
 		gate.setRegion(192,0,135,376);
+		
 		gateSprite = new SpriteBatch();
 	}
 	
@@ -44,6 +50,14 @@ public class Gate extends Actor {
 	
 	public float getWidth() {
 		return this.WIDTH;
+	}
+	
+	public void drawFlatus() {
+		this.DRAW_FLATUS_TIME_START = System.nanoTime();
+	}
+	
+	public float minFlatusVelocity() {
+		return this.MIN_FLATUS_VELOCITY;
 	}
 	
 	public Vector2 getBottomBar() {
@@ -94,6 +108,24 @@ public class Gate extends Actor {
 	@Override
 	public void draw(Batch batch, float parentAlpha) {		
 		gateSprite.begin();
+		
+		// Рисовать ли вздутие ворот
+		if (System.nanoTime() - this.DRAW_FLATUS_TIME_START < 200000000L) {
+			gateSprite.draw(
+				Field.sprites, 
+				this.getX() + ((ID == 0) ? -18 : 91), 
+				this.getY() + 30, 
+				64, 
+				320, 
+				352, 
+				0, 
+				64, 
+				320, 
+				ID == 0, 
+				false
+			);
+		}
+		
 		gateSprite.draw(
 			gate.getTexture(), 
     		this.getX(), 

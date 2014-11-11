@@ -1075,7 +1075,7 @@ public class Player extends Actor {
 	// Установка текущего состояния персонажа (для подмены анимации)
 	public void curentState(States s) {
 		this.stopAll();
-		state.put(States.JUMP, true); 
+		state.put(s, true); 
 	}
 	
 	// Полностью остановить игрока
@@ -1657,10 +1657,6 @@ public class Player extends Actor {
 				this.CURENT_SPEED_Y = 0.0f;
 			}
 			
-			// Если игрок находится в воздухе и его анимация "STAY" то подменяем ее на "JUMP"
-			if (this.curentState() == States.STAY && this.getAbsH() > 0) {
-				this.curentState(States.JUMP);
-			}
 			
 			
 			/**********************************************************************
@@ -1914,6 +1910,11 @@ public class Player extends Actor {
 		// Если игра находится в активном состоянии
 		if (field.gameState == Field.GameStates.RUN) {
 			stateTime += Gdx.graphics.getDeltaTime();
+		}
+		
+		// Если игрок находится в воздухе и его анимация "STAY" то подменяем ее на "JUMP"
+		if (this.curentState() == States.STAY && this.getAbsH() > 0) {
+			this.curentState(States.JUMP);
 		}
 		
 		int offsetX = this.frameOffsetX();

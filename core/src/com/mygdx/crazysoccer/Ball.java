@@ -238,6 +238,11 @@ public class Ball extends Actor {
 		return this.MANAGED_PLAYER_ID;
 	}
 	
+	// Получение ID игрока которым контроллируется мяч
+	public int lastManagerByBlayer() {
+		return this.LAST_MANAGED_PLAYER_ID;
+	}
+	
 	public void kick(float impulse, float dstX, float dstY, boolean upFlag) {
 		
 //		System.out.println(impulse);
@@ -833,7 +838,9 @@ public class Ball extends Actor {
 	
 	@Override
 	public void draw(Batch batch, float parentAlpha) {
-		stateTime += Gdx.graphics.getDeltaTime();
+		if (field.gameState == Field.GameStates.RUN) {
+			stateTime += Gdx.graphics.getDeltaTime();
+		}
 		
 		// Анимирование мяча
 		animations.get(this.curentState()).setPlayMode(PlayMode.LOOP);

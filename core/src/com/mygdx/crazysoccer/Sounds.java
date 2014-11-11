@@ -2,6 +2,8 @@ package com.mygdx.crazysoccer;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.audio.Sound;
@@ -54,8 +56,32 @@ public class Sounds {
 		sound.get(name).sound.pause();
 	}
 	
+	public void resume(String name) {
+		sound.get(name).sound.resume();
+	}
+	
 	public void loop(String name, boolean looping) {
 		sound.get(name).sound.setLooping(sound.get(name).ID, looping);
 		sound.get(name).loop = looping;
+	}
+	
+	public void stopAll(ArrayList<String> exceptList) {
+		List<String> keyList = new ArrayList<String>(sound.keySet());
+		
+		for (int i = 0; i < keyList.size(); i++) {
+			if (exceptList.indexOf(keyList.get(i)) == -1) {
+				this.stop(keyList.get(i));
+			}
+		}
+	}
+	
+	public void stopAll(String exceptOne) {
+		List<String> keyList = new ArrayList<String>(sound.keySet());
+		
+		for (int i = 0; i < keyList.size(); i++) {
+			if (exceptOne != keyList.get(i)) {
+				this.stop(keyList.get(i));
+			}
+		}
 	}
 }

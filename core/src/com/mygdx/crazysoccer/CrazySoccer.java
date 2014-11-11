@@ -28,7 +28,7 @@ public class CrazySoccer extends ApplicationAdapter {
 		
 		// Обработка входящей информации от игрока и изменение поведения героев
 		field.act();
-		
+			
 		field.processGame();
 		
 		// Отрисовка сцены и всех добавленных в нее актеров

@@ -1237,332 +1237,314 @@ public class Player extends Actor {
 	@Override
 	public void act(float delta) {
 		
-		// Если игрок находится на земле, то сбрасываем флаг того, что 
-		// игрок исчерпал лимит ударов в полете
-		if (this.ACTION_DONE && this.getAbsH() == 0) {
-			this.ACTION_DONE = false;
-		}
+		// Если игра активна
+//		if (field.gameState == Field.GameStates.RUN) {
 		
-		if (upPressed()) { 
-			if (Can(States.DECELERATION)) {
-				Do(States.DECELERATION, true);
+			// Если игрок находится на земле, то сбрасываем флаг того, что 
+			// игрок исчерпал лимит ударов в полете
+			if (this.ACTION_DONE && this.getAbsH() == 0) {
+				this.ACTION_DONE = false;
 			}
-			else if (Can(States.WALKING)) {
-				// Если персонаж не бежит, и нажата клавиша вверх
-				if (curentState() != States.RUN && curentState() != States.TOP_RUN) {
-					
-					// Если было двойное нажатие кнопки то игрок начинает бежать
-					if (upDblPressed() && Can(States.RUN)) {
-						Do(States.RUN, true);
+			
+			if (upPressed()) { 
+				if (Can(States.DECELERATION)) {
+					Do(States.DECELERATION, true);
+				}
+				else if (Can(States.WALKING)) {
+					// Если персонаж не бежит, и нажата клавиша вверх
+					if (curentState() != States.RUN && curentState() != States.TOP_RUN) {
+						
+						// Если было двойное нажатие кнопки то игрок начинает бежать
+						if (upDblPressed() && Can(States.RUN)) {
+							Do(States.RUN, true);
+						}
+						else {
+							Do(States.WALKING, true);
+						}
 					}
-					else {
+					else if (curentState() == States.RUN && upDblPressed() && Can(States.DRIBBLING_UP)) {
+						Do(States.DRIBBLING_UP, true);
+					}
+					this.CURENT_SPEED_Y = this.WALKING_SPEED;
+				}
+			}
+			
+			if (downPressed()) { 
+				if (Can(States.DECELERATION)) {
+					Do(States.DECELERATION, true);
+				}
+				else if (Can(States.WALKING)) {
+					// Если персонаж не бежит, и нажата клавиша вверх
+					if (curentState() != States.RUN && curentState() != States.TOP_RUN) {
+						
+						// Если было двойное нажатие кнопки то игрок начинает бежать
+						if (downDblPressed() && Can(States.RUN)) {
+							Do(States.RUN, true);
+						}
+						else {
+							Do(States.WALKING, true);
+						}
+					}
+					else if (curentState() == States.RUN && downDblPressed() && Can(States.DRIBBLING_DOWN)) {
+						Do(States.DRIBBLING_DOWN, true);
+					}
+					this.CURENT_SPEED_Y = -this.WALKING_SPEED;
+				}
+			}
+			
+			
+			if (leftPressed()) {
+				if (Can(States.DECELERATION)) {
+					Do(States.DECELERATION, true);
+				}
+				else if (Can(States.WALKING)) {
+					this.direction = Directions.LEFT;
+					
+					// Если было тройное нажатие кнопки, то делаем персонаж бегущим
+					if (leftTriplePressed() && Can(States.TOP_RUN)) {
+						Do(States.TOP_RUN, true);
+					} 
+					// Если было двойное нажатие кнопки, то делаем персонаж бегущим
+					else if (leftDblPressed() && Can(States.RUN)) {
+						Do(States.RUN, true);
+					} 
+					else if (Can(States.WALKING)) {
+						setVelocityX(-this.WALKING_SPEED);
 						Do(States.WALKING, true);
 					}
 				}
-				else if (curentState() == States.RUN && upDblPressed() && Can(States.DRIBBLING_UP)) {
-					Do(States.DRIBBLING_UP, true);
+			}
+			
+			if (rightPressed()) {
+				if (Can(States.DECELERATION)) {
+					Do(States.DECELERATION, true);
 				}
-				this.CURENT_SPEED_Y = this.WALKING_SPEED;
-			}
-		}
-		
-		if (downPressed()) { 
-			if (Can(States.DECELERATION)) {
-				Do(States.DECELERATION, true);
-			}
-			else if (Can(States.WALKING)) {
-				// Если персонаж не бежит, и нажата клавиша вверх
-				if (curentState() != States.RUN && curentState() != States.TOP_RUN) {
+				else if (Can(States.WALKING)) {
+					this.direction = Directions.RIGHT;
 					
-					// Если было двойное нажатие кнопки то игрок начинает бежать
-					if (downDblPressed() && Can(States.RUN)) {
+					// Если было тройное нажатие кнопки, то делаем персонаж бегущим
+					if (rightTriplePressed() && Can(States.TOP_RUN)) {
+						Do(States.TOP_RUN, true);
+					} 
+					// Если было двойное нажатие кнопки, то делаем персонаж бегущим
+					else if (rightDblPressed() && Can(States.RUN)) {
 						Do(States.RUN, true);
-					}
-					else {
+					} 
+					else if (Can(States.WALKING)) {
+						setVelocityX(this.WALKING_SPEED);
 						Do(States.WALKING, true);
 					}
 				}
-				else if (curentState() == States.RUN && downDblPressed() && Can(States.DRIBBLING_DOWN)) {
-					Do(States.DRIBBLING_DOWN, true);
-				}
-				this.CURENT_SPEED_Y = -this.WALKING_SPEED;
-			}
-		}
-		
-		
-		if (leftPressed()) {
-			if (Can(States.DECELERATION)) {
-				Do(States.DECELERATION, true);
-			}
-			else if (Can(States.WALKING)) {
-				this.direction = Directions.LEFT;
-				
-				// Если было тройное нажатие кнопки, то делаем персонаж бегущим
-				if (leftTriplePressed() && Can(States.TOP_RUN)) {
-					Do(States.TOP_RUN, true);
-				} 
-				// Если было двойное нажатие кнопки, то делаем персонаж бегущим
-				else if (leftDblPressed() && Can(States.RUN)) {
-					Do(States.RUN, true);
-				} 
-				else if (Can(States.WALKING)) {
-					setVelocityX(-this.WALKING_SPEED);
-					Do(States.WALKING, true);
-				}
-			}
-		}
-		
-		if (rightPressed()) {
-			if (Can(States.DECELERATION)) {
-				Do(States.DECELERATION, true);
-			}
-			else if (Can(States.WALKING)) {
-				this.direction = Directions.RIGHT;
-				
-				// Если было тройное нажатие кнопки, то делаем персонаж бегущим
-				if (rightTriplePressed() && Can(States.TOP_RUN)) {
-					Do(States.TOP_RUN, true);
-				} 
-				// Если было двойное нажатие кнопки, то делаем персонаж бегущим
-				else if (rightDblPressed() && Can(States.RUN)) {
-					Do(States.RUN, true);
-				} 
-				else if (Can(States.WALKING)) {
-					setVelocityX(this.WALKING_SPEED);
-					Do(States.WALKING, true);
-				}
-			}
-		}
-		
-		// Удар головой / ногой
-		if (action1Pressed()) {
-			// Если сейчас игрок делает вернушку, то отключаем ее
-			if (curentState() == States.WHIRLIGIG_KICK) {
-				Do(States.STAY, true);
 			}
 			
-			// Можно ли выполнить удар юлой
-			if (Can(States.WHIRLIGIG_KICK)) {
-				Do(States.WHIRLIGIG_KICK, true);
-			}
-			// Может ли игрок ударить рыбкой
-			else if (Can(States.FISH_KICK)) { 
-				Do(States.FISH_KICK, true);
-			}
-			// иначе, можети ли ударить головой
-			else if (Can(States.HEAD_KICK)) { 
-				Do(States.HEAD_KICK, true);
-			}
-			// иначе, можети ли ударить через себя
-			else if (Can(States.BACK_KICK)) { 
-				Do(States.BACK_KICK, true);
-			}
-			// иначе, может ли ударить ногой
-			else if (Can(States.FOOT_KICK)) { 
-				Do(States.FOOT_KICK, true);
-			}
-			
-			// Отключаем кнопку, чтобы не сбрасывалось действие (например удар юлой)
-			actionsListener.disableAction(Controls.ACTION1, this.PLAYER_ID);
-		}
-		
-		// Пас
-		if (action2Pressed()) {
-			if (Can(States.HEAD_PASS)) {
-				Do(States.HEAD_PASS, true);
-			}
-			else if (Can(States.PASS)) {
-				Do(States.PASS, true);
-			}
-			
-			actionsListener.disableAction(Controls.ACTION2, this.PLAYER_ID);
-		}
-		
-		// Прыжок
-		if (action3Pressed() && Can(States.JUMP)) {
-			Do(States.JUMP, true);
-			
-			actionsListener.disableAction(Controls.ACTION3, this.PLAYER_ID);
-		}
-		
-//		// Если нажат прыжок, когда игрок скользит лежа по газону, то поднимаем его
-//		if (action3Pressed() && curentState() == States.FISH_KICK) {
-//			Do(States.SIT, true);
-//		}
-		
-		// Если при следующем шаге персонаж будет находиться внутри толщи ворот то останавливаем его 
-		if (MathUtils.intersectCount(getAbsX() + getVelocityX(), getAbsY() + getVelocityY(), field.gates[Gate.LEFT_GATES].gateProjection) == 1 ||
-			MathUtils.intersectCount(getAbsX() + getVelocityX(), getAbsY() + getVelocityY(), field.gates[Gate.RIGHT_GATES].gateProjection) == 1) 
-		{
-			setVelocityX(0);
-			setVelocityY(0);
-			if (getAbsH() == 0) Do(States.WALKING, true);
-		}
-		
-		if (this.PLAYER_ID == 0) {
-			
-			// Определение коэффициента трения
-			if (field.isCellInPolygon(getAbsX(),getAbsY())) {
-				FRICTION = WATER_FRICTION;
-			}
-			else {
-				FRICTION = GRASS_FRICTION;
-			}
-		}
-		
-		/********************************************************************
-		 *      Воздействия сили трения с учетом трения игрока о 			*
-		 *      текущий фрагмент поверхности на которой он находится 		*
-		 * ******************************************************************/
-		if (
-				(
-					curentState() != States.WALKING && 
-					curentState() != States.RUN && 
-					curentState() != States.TOP_RUN && 
-					curentState() != States.DRIBBLING_UP && 
-					curentState() != States.DRIBBLING_DOWN
-				) && 
-				getAbsH() == 0
-		) {
-			
-			float dX = this.CURENT_SPEED_X * this.FRICTION;
-			float dY = this.CURENT_SPEED_Y * this.FRICTION;
-			
-			if (dX > 0) {
-				if (dX > 0.5f) dX = 0.5f;
-				if (dX < 0.15f) dX = 0.15f;
-			}
-			else {
-				if (dX < -0.5f) dX = -0.5f;
-				if (dX > -0.15f) dX = -0.15f;
-			}
-			
-			if (dY > 0) {
-				if (dY > 0.5f) dY = 0.5f;
-				if (dY < 0.15f) dY = 0.15f;
-			}
-			else {
-				if (dY < -0.5f) dY = -0.5f;
-				if (dY > -0.15f) dY = -0.15f;
-			}
-			
-			// Замедление движения игрока
-			this.CURENT_SPEED_X += dX;
-			this.CURENT_SPEED_Y += dY;
-			
-			// Если скорость по осям упала до 0,35 то останавливаем игрока
-			if (Math.abs(getVelocityX()) + Math.abs(getVelocityY()) < 0.35f) {
-				setVelocityX(0);
-				setVelocityY(0);
-				
-				/* Если производился удар "рыбкой", то то после того, как игрок остановился
-				 * он должен присесть (привстать) */
-				if (curentState() == States.FISH_KICK) {
-					Do(States.SIT, true);
-				}
-				else if (curentState() == States.DECELERATION) {
+			// Удар головой / ногой
+			if (action1Pressed()) {
+				// Если сейчас игрок делает вернушку, то отключаем ее
+				if (curentState() == States.WHIRLIGIG_KICK) {
 					Do(States.STAY, true);
 				}
+				
+				// Можно ли выполнить удар юлой
+				if (Can(States.WHIRLIGIG_KICK)) {
+					Do(States.WHIRLIGIG_KICK, true);
+				}
+				// Может ли игрок ударить рыбкой
+				else if (Can(States.FISH_KICK)) { 
+					Do(States.FISH_KICK, true);
+				}
+				// иначе, можети ли ударить головой
+				else if (Can(States.HEAD_KICK)) { 
+					Do(States.HEAD_KICK, true);
+				}
+				// иначе, можети ли ударить через себя
+				else if (Can(States.BACK_KICK)) { 
+					Do(States.BACK_KICK, true);
+				}
+				// иначе, может ли ударить ногой
+				else if (Can(States.FOOT_KICK)) { 
+					Do(States.FOOT_KICK, true);
+				}
+				
+				// Отключаем кнопку, чтобы не сбрасывалось действие (например удар юлой)
+				actionsListener.disableAction(Controls.ACTION1, this.PLAYER_ID);
 			}
-		}
-		
-		// Торможения игрока
-//		if (Can(States.DECELERATION)) {
-//			Do(States.DECELERATION, true);
-//		}
-		
-		// Перемещение персонажа
-		movePlayerBy(new Vector2(this.CURENT_SPEED_X, this.CURENT_SPEED_Y));
-		
-		// Если игрок находится в непосредственной близости возле мяча
-		if (this.ballIsNear()) {
 			
-			switch (this.curentState()) {
+			// Пас
+			if (action2Pressed()) {
+				if (Can(States.HEAD_PASS)) {
+					Do(States.HEAD_PASS, true);
+				}
+				else if (Can(States.PASS)) {
+					Do(States.PASS, true);
+				}
+				
+				actionsListener.disableAction(Controls.ACTION2, this.PLAYER_ID);
+			}
 			
-				case WHIRLIGIG_KICK:
-					this.ballKick();
-				break;
+			// Прыжок
+			if (action3Pressed() && Can(States.JUMP)) {
+				Do(States.JUMP, true);
 				
-				case FOOT_KICK:
-					// Если высота мяча больше чем минимальная высота которая необходима для того 
-					// чтобы игрок выполняющий удар смог произвести суперудар, и расстояние до ворот
-					// меньше чем максимальное расстояние на которое игрок может выполнить суперудар
-					// то игрок производит суперудар
-					if (this.superKickAviable()) {
-						ball.Do(Ball.States.FOOT_SUPER_KICK, true);
-					}
-					
-					// Выполнение удара по мячу
-					if (currentFrame() >= 4 && currentFrame() <= 7) this.ballKick();
-				break;
+				actionsListener.disableAction(Controls.ACTION3, this.PLAYER_ID);
+			}
+			
+	//		// Если нажат прыжок, когда игрок скользит лежа по газону, то поднимаем его
+	//		if (action3Pressed() && curentState() == States.FISH_KICK) {
+	//			Do(States.SIT, true);
+	//		}
+			
+			// Если при следующем шаге персонаж будет находиться внутри толщи ворот то останавливаем его 
+			if (MathUtils.intersectCount(getAbsX() + getVelocityX(), getAbsY() + getVelocityY(), field.gates[Gate.LEFT_GATES].gateProjection) == 1 ||
+				MathUtils.intersectCount(getAbsX() + getVelocityX(), getAbsY() + getVelocityY(), field.gates[Gate.RIGHT_GATES].gateProjection) == 1) 
+			{
+				setVelocityX(0);
+				setVelocityY(0);
+				if (getAbsH() == 0) Do(States.WALKING, true);
+			}
+			
+			if (this.PLAYER_ID == 0) {
 				
-				case HEAD_KICK:
-					// Перемещение мяча вверх при ударе
-					if (this.getAbsH() != 0) ball.setJumpVelocity(7.5f);
-					
-					// Выполнение удара по мячу
-					if ((currentFrame() >= 1 && curentState() == States.HEAD_KICK && ball.isCatched()) || !ball.isCatched()) {
-						
-						// Если доступен суперудар головой
-						if (this.superKickAviable()) {
-							ball.Do(Ball.States.HEAD_BACK_SUPER_KICK, true);
-							
-							this.ballHeadBackSuperKick();
-						}
-						// Выполнение обычного удара головой
-						else {
-							this.ballKick();
-						}
-					}
-				break;
+				// Определение коэффициента трения
+				if (field.isCellInPolygon(getAbsX(),getAbsY())) {
+					FRICTION = WATER_FRICTION;
+				}
+				else {
+					FRICTION = GRASS_FRICTION;
+				}
+			}
+			
+			/********************************************************************
+			 *      Воздействия сили трения с учетом трения игрока о 			*
+			 *      текущий фрагмент поверхности на которой он находится 		*
+			 * ******************************************************************/
+			if (
+					(
+						curentState() != States.WALKING && 
+						curentState() != States.RUN && 
+						curentState() != States.TOP_RUN && 
+						curentState() != States.DRIBBLING_UP && 
+						curentState() != States.DRIBBLING_DOWN
+					) && 
+					getAbsH() == 0
+			) {
 				
-				case BACK_KICK:
-					// Перемещение мяча вверх при ударе
-					if (this.getAbsH() != 0) ball.setJumpVelocity(4.0f);
+				float dX = this.CURENT_SPEED_X * this.FRICTION;
+				float dY = this.CURENT_SPEED_Y * this.FRICTION;
+				
+				if (dX > 0) {
+					if (dX > 0.5f) dX = 0.5f;
+					if (dX < 0.15f) dX = 0.15f;
+				}
+				else {
+					if (dX < -0.5f) dX = -0.5f;
+					if (dX > -0.15f) dX = -0.15f;
+				}
+				
+				if (dY > 0) {
+					if (dY > 0.5f) dY = 0.5f;
+					if (dY < 0.15f) dY = 0.15f;
+				}
+				else {
+					if (dY < -0.5f) dY = -0.5f;
+					if (dY > -0.15f) dY = -0.15f;
+				}
+				
+				// Замедление движения игрока
+				this.CURENT_SPEED_X += dX;
+				this.CURENT_SPEED_Y += dY;
+				
+				// Если скорость по осям упала до 0,35 то останавливаем игрока
+				if (Math.abs(getVelocityX()) + Math.abs(getVelocityY()) < 0.35f) {
+					setVelocityX(0);
+					setVelocityY(0);
 					
-					// Выполнение удара по мячу
-					if ((currentFrame() >= 4 && curentState() == States.BACK_KICK && ball.isCatched()) || !ball.isCatched()) {
-						
-						// Если доступен суперудар головой
-						if (this.superKickAviable()) {
-							ball.Do(Ball.States.HEAD_BACK_SUPER_KICK, true);
-							
-							this.ballHeadBackSuperKick();
-						}
-						// Выполнение обычного удара головой
-						else {
-							this.ballKick();
-						}
+					/* Если производился удар "рыбкой", то то после того, как игрок остановился
+					 * он должен присесть (привстать) */
+					if (curentState() == States.FISH_KICK) {
+						Do(States.SIT, true);
 					}
+					else if (curentState() == States.DECELERATION) {
+						Do(States.STAY, true);
+					}
+				}
+			}
+			
+			// Торможения игрока
+	//		if (Can(States.DECELERATION)) {
+	//			Do(States.DECELERATION, true);
+	//		}
+			
+			// Перемещение персонажа
+			movePlayerBy(new Vector2(this.CURENT_SPEED_X, this.CURENT_SPEED_Y));
+			
+			// Если игрок находится в непосредственной близости возле мяча
+			if (this.ballIsNear()) {
+				
+				switch (this.curentState()) {
+				
+					case WHIRLIGIG_KICK:
+						this.ballKick();
 					break;
-				
-				case FISH_KICK:
-					// Выполнение удара по мячу
-					if (currentFrame() < 2) this.ballKick();
-				break;
-				
-				case HEAD_PASS:
-					// Отмечаем что игрок теряет мяч
-					this.catchBall(false);
 					
-					// Мяч не контроллируется никем
-					ball.managerByBlayer(-1);
-					
-					// Проигрывание звука паса
-					field.sounds.play("pass01", true);
-					
-					// Определение кому отдать пас
-					if (this.PLAYER_ID == 0)
-						ball.pass(field.players[1].getAbsX(),field.players[1].getAbsY());
-					else 
-						ball.pass(field.players[0].getAbsX(),field.players[0].getAbsY());
-				break;
-				
-				case PASS:
-					// Начало полета мяча при пасе не должно начинаться сразу же после начала анимации паса,
-					// а с некоторой задержкой
-					if (currentFrame() >= 2) {
+					case FOOT_KICK:
+						// Если высота мяча больше чем минимальная высота которая необходима для того 
+						// чтобы игрок выполняющий удар смог произвести суперудар, и расстояние до ворот
+						// меньше чем максимальное расстояние на которое игрок может выполнить суперудар
+						// то игрок производит суперудар
+						if (this.superKickAviable()) {
+							ball.Do(Ball.States.FOOT_SUPER_KICK, true);
+						}
 						
+						// Выполнение удара по мячу
+						if (currentFrame() >= 4 && currentFrame() <= 7) this.ballKick();
+					break;
+					
+					case HEAD_KICK:
+						// Перемещение мяча вверх при ударе
+						if (this.getAbsH() != 0) ball.setJumpVelocity(7.5f);
+						
+						// Выполнение удара по мячу
+						if ((currentFrame() >= 1 && curentState() == States.HEAD_KICK && ball.isCatched()) || !ball.isCatched()) {
+							
+							// Если доступен суперудар головой
+							if (this.superKickAviable()) {
+								ball.Do(Ball.States.HEAD_BACK_SUPER_KICK, true);
+								
+								this.ballHeadBackSuperKick();
+							}
+							// Выполнение обычного удара головой
+							else {
+								this.ballKick();
+							}
+						}
+					break;
+					
+					case BACK_KICK:
+						// Перемещение мяча вверх при ударе
+						if (this.getAbsH() != 0) ball.setJumpVelocity(4.0f);
+						
+						// Выполнение удара по мячу
+						if ((currentFrame() >= 4 && curentState() == States.BACK_KICK && ball.isCatched()) || !ball.isCatched()) {
+							
+							// Если доступен суперудар головой
+							if (this.superKickAviable()) {
+								ball.Do(Ball.States.HEAD_BACK_SUPER_KICK, true);
+								
+								this.ballHeadBackSuperKick();
+							}
+							// Выполнение обычного удара головой
+							else {
+								this.ballKick();
+							}
+						}
+						break;
+					
+					case FISH_KICK:
+						// Выполнение удара по мячу
+						if (currentFrame() < 2) this.ballKick();
+					break;
+					
+					case HEAD_PASS:
 						// Отмечаем что игрок теряет мяч
 						this.catchBall(false);
 						
@@ -1577,123 +1559,160 @@ public class Player extends Actor {
 							ball.pass(field.players[1].getAbsX(),field.players[1].getAbsY());
 						else 
 							ball.pass(field.players[0].getAbsX(),field.players[0].getAbsY());
-					}
-				break;
-				
-				case DRIBBLING_UP:
-					if (currentFrame() >= 5 && currentFrame() <= 6) {
-						setVelocityX(getVelocityX() > 0 ? RUN_SPEED : -RUN_SPEED);
-						setVelocityY(RUN_SPEED * 1.45f);
-					}
-					else if (currentFrame() >= 0 && currentFrame() <= 0) {
-						setVelocityX(getVelocityX() > 0 ? WALKING_SPEED : -WALKING_SPEED);
-						setVelocityY(-1.6f);
-					}
-				break;
-				
-				case DRIBBLING_DOWN:
-					if (currentFrame() >= 5 && currentFrame() <= 6) {
-						setVelocityX(getVelocityX() > 0 ? RUN_SPEED : -RUN_SPEED);
-						setVelocityY(-RUN_SPEED * 1.45f);
-					}
-					else if (currentFrame() >= 0 && currentFrame() <= 0) {
-						setVelocityX(getVelocityX() > 0 ? WALKING_SPEED : -WALKING_SPEED);
-						setVelocityY(1.6f);
-					}
-				break;
-				
-				// Если персонаж ничего не делает и мяч никем не контролируется
-				default:
-					if (!ball.isCatched()) {
-						/* 
-						 * В зависимости от силы мяча игрок либо принимает его либо мяч его убивает
-						 */
-						
-						float ballImpulse = ball.absVelocity() * ball.getMass();
-						
-						// Проверка, убивает ли мяч с силой ballImpulse игрока
-						if (this.isEnoughToKill(ballImpulse)) 
-						{
-							this.hitByBall(ballImpulse / 2.0f);
+					break;
+					
+					case PASS:
+						// Начало полета мяча при пасе не должно начинаться сразу же после начала анимации паса,
+						// а с некоторой задержкой
+						if (currentFrame() >= 2) {
+							
+							// Отмечаем что игрок теряет мяч
+							this.catchBall(false);
+							
+							// Мяч не контроллируется никем
+							ball.managerByBlayer(-1);
+							
+							// Проигрывание звука паса
+							field.sounds.play("pass01", true);
+							
+							// Определение кому отдать пас
+							if (this.PLAYER_ID == 0)
+								ball.pass(field.players[1].getAbsX(),field.players[1].getAbsY());
+							else 
+								ball.pass(field.players[0].getAbsX(),field.players[0].getAbsY());
 						}
-						// Иначе - игрок принимает мяч
-						else if (Can(States.CATCH_BALL))
-						{
-							if (Can(States.CHEST_CATCH)) {
-								Do(States.CHEST_CATCH, true);
-							}
-							else if (Can(States.KNEE_CATCH)) {
-								Do(States.KNEE_CATCH, true);
-							}
-							
-							// Отмечаем что игрок заполучил мяч
-							this.catchBall(true);
-							
-							// Устанавливаем ID игрока, так как мяч конторллируется им
-							ball.managerByBlayer(this.PLAYER_ID);
-							
-							// Останавливаем движение мяча, так как он привязан к игроку
-							ball.setVelocityX(0);
-							ball.setVelocityY(0);
+					break;
+					
+					case DRIBBLING_UP:
+						if (currentFrame() >= 5 && currentFrame() <= 6) {
+							setVelocityX(getVelocityX() > 0 ? RUN_SPEED : -RUN_SPEED);
+							setVelocityY(RUN_SPEED * 1.45f);
 						}
-					}
-				break;
-			}
-		}
-		
-		// Если ниодна из кнопок направления движения не нажата
-		if (!upPressed() && !downPressed() && curentState() == States.WALKING) {
-			this.CURENT_SPEED_Y = 0;
-		}
-		
-		if (!leftPressed() && !rightPressed() && curentState() == States.WALKING) {
-			this.CURENT_SPEED_X = 0;
-		}
-		
-		// Если персонаж бежит и не нажата кнопка вверх или вниз
-		if (!this.upPressed() && !this.downPressed() && (state.get(States.RUN) || state.get(States.TOP_RUN))) {
-			this.CURENT_SPEED_Y = 0.0f;
-		}
-		
-		// Если игрок находится в воздухе и его анимация "STAY" то подменяем ее на "JUMP"
-		if (this.curentState() == States.STAY && this.getAbsH() > 0) {
-			this.curentState(States.JUMP);
-		}
-		
-		
-		/**********************************************************************
-		 *                       Реализация гравитации                        *
-		 **********************************************************************/
-		
-		// Пока персонаж находится в воздухе его скорость взлета / падения меняется
-		this.JUMP_VELOCITY += (this.JUMP_HEIGHT > 0 && curentState() != States.WHIRLIGIG_KICK) ? -8.0f * Gdx.graphics.getDeltaTime() : 0;
-		this.JUMP_HEIGHT += this.JUMP_VELOCITY;
-		
-		// Если игрок приземлился
-		if (this.JUMP_HEIGHT < 0) {
-			/* Когда персонаж бил рыбкой, то он должен прокатиться по газону 
-			 * перед тем как встать, поэтому нельзя чтобы она сразу начал вставать */
-			if (curentState() == States.FISH_KICK) {
-				
-			}
-			// Когда персонаж не мертв то при приземлении он приседает
-			else if (curentState() != States.DEAD) { 
-				Do(States.SIT, true);
-			}
-			// Если мертв то он ложится на газон на спину или на живот, в зависимости от направления игрока
-			else {
-				if (direction == Directions.LEFT) {
-					Do(States.LAY_BELLY, true);
-				}
-				else {
-					Do(States.LAY_BACK, true);
+						else if (currentFrame() >= 0 && currentFrame() <= 0) {
+							setVelocityX(getVelocityX() > 0 ? WALKING_SPEED : -WALKING_SPEED);
+							setVelocityY(-1.6f);
+						}
+					break;
+					
+					case DRIBBLING_DOWN:
+						if (currentFrame() >= 5 && currentFrame() <= 6) {
+							setVelocityX(getVelocityX() > 0 ? RUN_SPEED : -RUN_SPEED);
+							setVelocityY(-RUN_SPEED * 1.45f);
+						}
+						else if (currentFrame() >= 0 && currentFrame() <= 0) {
+							setVelocityX(getVelocityX() > 0 ? WALKING_SPEED : -WALKING_SPEED);
+							setVelocityY(1.6f);
+						}
+					break;
+					
+					// Если персонаж ничего не делает и мяч никем не контролируется
+					default:
+						if (!ball.isCatched()) {
+							float ballImpulse = ball.absVelocity() * ball.getMass();
+							
+							// Проверка, убивает ли мяч с силой ballImpulse игрока
+							if (this.isEnoughToKill(ballImpulse)) 
+							{
+								this.hitByBall(ballImpulse / 2.0f);
+							}
+							// Иначе - игрок принимает мяч
+							else if (Can(States.CATCH_BALL))
+							{
+								// Поворот игрока в сторону мяча
+								turnToBall();
+								
+								if (Can(States.CHEST_CATCH)) {
+									Do(States.CHEST_CATCH, true);
+								}
+								else if (Can(States.KNEE_CATCH)) {
+									Do(States.KNEE_CATCH, true);
+								}
+								
+								// Отмечаем что игрок заполучил мяч
+								this.catchBall(true);
+								
+								// Устанавливаем ID игрока, так как мяч конторллируется им
+								ball.managerByBlayer(this.PLAYER_ID);
+								
+								// Останавливаем движение мяча, так как он привязан к игроку
+								ball.setVelocityX(0);
+								ball.setVelocityY(0);
+							}
+						}
+					break;
 				}
 			}
-			this.JUMP_HEIGHT = 0.0f;
-			this.JUMP_VELOCITY = 0.0f;
 			
-			// Проигрывание звука приземления
-			field.sounds.play("landing01", true);
+			// Если ниодна из кнопок направления движения не нажата
+			if (!upPressed() && !downPressed() && curentState() == States.WALKING) {
+				this.CURENT_SPEED_Y = 0;
+			}
+			
+			if (!leftPressed() && !rightPressed() && curentState() == States.WALKING) {
+				this.CURENT_SPEED_X = 0;
+			}
+			
+			// Если персонаж бежит и не нажата кнопка вверх или вниз
+			if (!this.upPressed() && !this.downPressed() && (state.get(States.RUN) || state.get(States.TOP_RUN))) {
+				this.CURENT_SPEED_Y = 0.0f;
+			}
+			
+			// Если игрок находится в воздухе и его анимация "STAY" то подменяем ее на "JUMP"
+			if (this.curentState() == States.STAY && this.getAbsH() > 0) {
+				this.curentState(States.JUMP);
+			}
+			
+			
+			/**********************************************************************
+			 *                       Реализация гравитации                        *
+			 **********************************************************************/
+			
+			// Пока персонаж находится в воздухе его скорость взлета / падения меняется
+			this.JUMP_VELOCITY += (this.JUMP_HEIGHT > 0 && curentState() != States.WHIRLIGIG_KICK) ? -8.0f * Gdx.graphics.getDeltaTime() : 0;
+			this.JUMP_HEIGHT += this.JUMP_VELOCITY;
+			
+			// Если игрок приземлился
+			if (this.JUMP_HEIGHT < 0) {
+				/* Когда персонаж бил рыбкой, то он должен прокатиться по газону 
+				 * перед тем как встать, поэтому нельзя чтобы она сразу начал вставать */
+				if (curentState() == States.FISH_KICK) {
+					
+				}
+				// Когда персонаж не мертв то при приземлении он приседает
+				else if (curentState() != States.DEAD) { 
+					Do(States.SIT, true);
+				}
+				// Если мертв то он ложится на газон на спину или на живот, в зависимости от направления игрока
+				else {
+					if (direction == Directions.LEFT) {
+						Do(States.LAY_BELLY, true);
+					}
+					else {
+						Do(States.LAY_BACK, true);
+					}
+				}
+				this.JUMP_HEIGHT = 0.0f;
+				this.JUMP_VELOCITY = 0.0f;
+				
+				// Проигрывание звука приземления
+				field.sounds.play("landing01", true);
+			}
+//		}
+//		else
+//		{
+//			
+//		}
+	}
+	
+	// Поворот игрока к мячу, когда он принимает его
+	public void turnToBall() {
+		if (getAbsH() == 0) {
+			if (ball.getVelocityX() > 0 && direction == Directions.RIGHT) {
+				direction = Directions.LEFT; 
+			}
+			else if (ball.getVelocityX() < 0 && direction == Directions.LEFT) {
+				direction = Directions.RIGHT; 
+			}
 		}
 	}
 	
@@ -1891,7 +1910,11 @@ public class Player extends Actor {
 	
 	@Override
 	public void draw(Batch batch, float parentAlpha) {
-		stateTime += Gdx.graphics.getDeltaTime();
+		
+		// Если игра находится в активном состоянии
+		if (field.gameState == Field.GameStates.RUN) {
+			stateTime += Gdx.graphics.getDeltaTime();
+		}
 		
 		int offsetX = this.frameOffsetX();
 		int offsetY = this.frameOffsetY();

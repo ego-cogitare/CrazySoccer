@@ -38,6 +38,17 @@ public class Field extends Stage {
 	private BitmapFont font;
 	private SpriteBatch batch;
 	
+	public static enum GameStates {
+		RUN,
+		PAUSE
+	}
+	
+	// Текущее состояние игры
+	public GameStates gameState;
+	
+	// Файл музыки фона
+	private String BG_TRACK = "bg01";
+	
 	// Количество игроков на поле
 	private final int PLAYERS_AMOUNT = 5;
 	
@@ -120,6 +131,9 @@ public class Field extends Stage {
 	public Field(ScreenViewport screenViewport) {
 		super(screenViewport);
 		
+		// Установка состояния игры - активна
+		gameState = GameStates.RUN;
+		
 	    font = new BitmapFont();
 	    batch = new SpriteBatch();
 	    
@@ -199,10 +213,10 @@ public class Field extends Stage {
 		sounds = new Sounds();
 		
 		// Загрузка фоновой музыки
-		sounds.load("bg01", "sound/bg/background01.ogg");
-		sounds.play("bg01");
-		sounds.loop("bg01", true);
-		sounds.volume("bg01",0.4f);
+		sounds.load(BG_TRACK, "sound/bg/background01.ogg");
+		sounds.play(BG_TRACK);
+		sounds.loop(BG_TRACK, true);
+		sounds.volume(BG_TRACK, 0.5f);
 		
 		// Звук паса
 		sounds.load("pass01", "sound/sfx/pass01.ogg");
@@ -558,6 +572,7 @@ public class Field extends Stage {
 	}
 	
 	public void processGame() { 
+		
 		drawField();
 		
 		// Вывод FPS
@@ -565,43 +580,67 @@ public class Field extends Stage {
 		font.draw(batch, "FPS: " + Integer.valueOf(Gdx.graphics.getFramesPerSecond()).toString(), 10, Gdx.graphics.getHeight() - 10);
 		batch.end();
 		
-		// Изменение силы ветра
-		if (Math.random() > 0.995f) {
-			float windVelocity = (float)Math.random() * 25 + 5;
-			
-			for (int i = 0; i < leafs.length; i++) {
-				leafs[i].setWindVelocity(windVelocity);
-				drops[i].setWindVelocity(windVelocity / 3);
+		if (gameState == GameStates.RUN) {
+			// Изменение силы ветра
+			if (Math.random() > 0.995f) {
+				float windVelocity = (float)Math.random() * 25 + 5;
+				
+				for (int i = 0; i < leafs.length; i++) {
+					leafs[i].setWindVelocity(windVelocity);
+					drops[i].setWindVelocity(windVelocity / 3);
+				}
+				
+				// Если сила ветра больше 20 то воспроизводим звук вьюги
+				if (leafs[0].windDirection != WindDirections.NONE && windVelocity > 20) 
+					sounds.play("wind02", true);
+				// При изменении ветра воспроизводим звук ветра
+				else if (leafs[0].windDirection != WindDirections.NONE && windVelocity > 10) 
+					sounds.play("wind01", true);
 			}
 			
-			// Если сила ветра больше 20 то воспроизводим звук вьюги
-			if (leafs[0].windDirection != WindDirections.NONE && windVelocity > 20) 
-				sounds.play("wind02", true);
-			// При изменении ветра воспроизводим звук ветра
-			else if (leafs[0].windDirection != WindDirections.NONE && windVelocity > 10) 
-				sounds.play("wind01", true);
-		}
-		
-		
-		// Произвольное изменение направления ветра
-		if (Math.random() > 0.993f) {
-			int j = (int)Math.round(Math.random() * WindDirections.values().length);
-			if (j >= WindDirections.values().length) j = WindDirections.values().length - 1;
 			
-			for (int i = 0; i < leafs.length; i++) {
-				leafs[i].setWindDirection(WindDirections.values()[j]);
-				drops[i].setWindDirection(WindDirections.values()[j]);
+			// Произвольное изменение направления ветра
+			if (Math.random() > 0.993f) {
+				int j = (int)Math.round(Math.random() * WindDirections.values().length);
+				if (j >= WindDirections.values().length) j = WindDirections.values().length - 1;
+				
+				for (int i = 0; i < leafs.length; i++) {
+					leafs[i].setWindDirection(WindDirections.values()[j]);
+					drops[i].setWindDirection(WindDirections.values()[j]);
+				}
 			}
+			
+			// Сортировака спрайтов по глубине
+			zIndexSorting();
+			
+			// Автоматическая озучка определенных действий
+			loopSfxCheck();
+			
+			// Отслеживание столкновений
+			detectCollisions();
+		}
+	}
+	
+	@Override
+	public void act(float delta) {
+		
+		if (gameState == GameStates.RUN) {
+			for (int i = 0; i < players.length; i++) {
+				players[i].act(Gdx.graphics.getDeltaTime());
+			}
+			
+			ball.act(Gdx.graphics.getDeltaTime());
+			
+			gates[0].act(Gdx.graphics.getDeltaTime());
+			gates[1].act(Gdx.graphics.getDeltaTime());
 		}
 		
-		// Сортировака спрайтов по глубине
-		zIndexSorting();
-		
-		// Автоматическая озучка определенных действий
-		loopSfxCheck();
-		
-		// Отслеживание столкновений
-		detectCollisions();
+		for (int i = 0; i < leafs.length; i++) {
+			leafs[i].act(Gdx.graphics.getDeltaTime());
+		}
+		for (int i = 0; i < drops.length; i++) {
+			drops[i].act(Gdx.graphics.getDeltaTime());
+		}
 	}
 	
 	public void loopSfxCheck() {
@@ -735,6 +774,24 @@ public class Field extends Stage {
 		for (int i = 0; i < players.length; i++) {
 			players[i].shadow.setZIndex(0);
 		}
+	}
+	
+	// Ставит игру на паузу
+	public void setPause() {
+		gameState = GameStates.PAUSE;
+		
+		// Останавливаем все звуки, кроме того, что передано в except
+		sounds.stopAll(BG_TRACK);
+		sounds.pause(BG_TRACK);
+		
+		sounds.play("ballout01");
+	}
+	
+	// Возобновляет игру
+	public void setResume() {
+		gameState = GameStates.RUN;
+		sounds.play("ballout01");
+		sounds.resume(BG_TRACK);
 	}
 
 	public void dispose() {
@@ -871,6 +928,15 @@ public class Field extends Stage {
 			
 			case Keys.E:
 				actions.add(Actions.Action.ACTION3_1);
+			break;
+			
+			case Keys.ENTER:
+				if (gameState == GameStates.RUN) {
+					setPause();
+				}
+				else if (gameState == GameStates.PAUSE) {
+					setResume();
+				}
 			break;
 			
 			

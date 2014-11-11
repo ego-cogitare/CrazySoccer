@@ -49,6 +49,12 @@ public class Player extends Actor {
     // Сила персонажа
     private float STRENGTH = 210.0f;
     
+    // Здоровье игрока (убывает по мере нанесение ему ударов)
+    private float HEALTH = 200;
+    
+    // Минимальный показатель здоровья игрока
+    private float MIN_FORCE_TO_KILL = 38.0f;
+    
     // Сила удара мяча
     private float KICK_STRENGTH = 50.0f;
     
@@ -535,6 +541,15 @@ public class Player extends Actor {
 		this.JUMP_VELOCITY = v;
 	}
 	
+	public float getHealth() {
+		return this.HEALTH;
+	}
+	
+	public void setHealth(float health) {
+		this.HEALTH = health;
+		if (this.HEALTH < 0) this.HEALTH = 0.0f;
+	}
+	
 	public float getMass() {
 		return this.MASS;
 	}
@@ -824,6 +839,7 @@ public class Player extends Actor {
 						!this.ACTION_DONE &&
 						!this.catchBall() &&
 						!state.get(States.WHIRLIGIG_KICK) &&
+						!state.get(States.DEAD) &&
 						!state.get(States.FISH_KICK);
 			break;
 			
@@ -950,7 +966,7 @@ public class Player extends Actor {
 			
 			case DRIBBLING_UP: case DRIBBLING_DOWN:
 				this.stateTime = 0.0f;
-				//field.sounds.play("whirligid01",true);
+				field.sounds.play("dribbling01",true);
 			break;
 			
 			case PASS: case HEAD_PASS:
@@ -1590,11 +1606,19 @@ public class Player extends Actor {
 				default:
 					if (!ball.isCatched()) {
 						/* 
-						 * В зависимости от сили мяча игрок либо принимает его либо мяч его убивает
+						 * В зависимости от силы мяча игрок либо принимает его либо мяч его убивает
 						 */
-						// Когда скорость мяча меньше 15, то игрок принимает мяч
-						if (ball.absVelocity() < 14 && Can(States.CATCH_BALL)) {
-							// Если игрок находится в воздухе то его анимация при приеме мяча не меняется
+						
+						float ballImpulse = ball.absVelocity() * ball.getMass();
+						
+						// Проверка, убивает ли мяч с силой ballImpulse игрока
+						if (this.isEnoughToKill(ballImpulse)) 
+						{
+							this.hitByBall(ballImpulse / 2.0f);
+						}
+						// Иначе - игрок принимает мяч
+						else if (Can(States.CATCH_BALL))
+						{
 							if (Can(States.CHEST_CATCH)) {
 								Do(States.CHEST_CATCH, true);
 							}
@@ -1611,19 +1635,6 @@ public class Player extends Actor {
 							// Останавливаем движение мяча, так как он привязан к игроку
 							ball.setVelocityX(0);
 							ball.setVelocityY(0);
-						}
-						// Если скорость больше 14 то мяч убивает игрока
-						else if (ball.absVelocity() >= 14) {
-							if (Can(States.DEAD)) {
-								Do(States.DEAD, true);
-								this.setJumpVelocity(this.STRENGTH / this.MASS / 1.5f);
-							}
-							
-							// Отмечаем что игрок потерял мяч
-							this.catchBall(false);
-							
-							// Мяч не контроллируется никем
-							ball.managerByBlayer(-1);
 						}
 					}
 				break;
@@ -1684,6 +1695,52 @@ public class Player extends Actor {
 			// Проигрывание звука приземления
 			field.sounds.play("landing01", true);
 		}
+	}
+	
+	// Убъет ли мяч пущеный с силой force игрока
+	public boolean isEnoughToKill(float force) {
+		// Добавляем 1% от текущего показателя жизненной енергии (но не больше 7 единиц)
+		float extraStrength = this.HEALTH * 0.01f;
+		if (extraStrength > 7.0f) extraStrength = 7.0f;
+		
+		return force > this.MIN_FORCE_TO_KILL + extraStrength;
+	}
+	
+	// Нанесение удара мячом по игроку 
+	public void hitByBall(float strength) {
+		// Переводим игрока в состояние "убит" 
+		Do(States.DEAD, true);
+		
+		// Подкидываем игрока
+		this.setJumpVelocity(ball.absVelocity() / this.getMass() * strength);
+		
+		// Предаем импульс мяча игроку 
+		this.setVelocityX(ball.getVelocityX() / this.getMass() / 2.0f * strength);
+		this.setVelocityY(ball.getVelocityY() / this.getMass() / 2.0f * strength);
+		
+		// Отмечаем что игрок потерял мяч
+		this.catchBall(false);
+		
+		// Мяч не контроллируется никем
+		ball.managerByBlayer(-1);
+		
+		// Проверяем не пролетает ли мяч сквозь игрока (когда здоровья у игрока осталось больше чем импульс удара)
+		if (this.getHealth() > strength) 
+		{
+			// Мяч менят направление движения на противоположное, с учетом упругости мяча
+			ball.setVelocityX(-this.getVelocityX() * ball.getRestitution());
+			
+			// Слегка подкидываем мяч при соприкосновении с игроком
+			ball.setJumpVelocity(ball.absVelocity() * 1.5f);
+			
+			// Переводим мяч в режим обычного полета (на случай если он летел после суперудара, когда гравитация на мяч отключена)
+			ball.Do(Ball.States.FLY_MEDIUM, true);
+			ball.allowGravityFrom(999.0f);
+		}
+		
+		this.setHealth(this.getHealth() - strength);
+		//System.out.println("Health: "+this.getHealth());
+		//System.out.println("Impulse: "+strength);
 	}
 	
 	// Выполнение удара по мячу
@@ -1763,7 +1820,7 @@ public class Player extends Actor {
 				ball.getAbsY() - this.getAbsY() >= -40 && 
 				ball.getAbsY() - this.getAbsY() <= 20 + dY &&
 				ball.getAbsH() + ball.getDiameter() > this.getAbsH() && 
-				ball.getAbsH() < this.getAbsH() + this.getHeight() - 35;
+				ball.getAbsH() < this.getAbsH() + this.getHeight();
 	}
 	
 	private void movePlayerBy(Vector2 movePoint) {
@@ -1848,14 +1905,15 @@ public class Player extends Actor {
 			/* Если игрок лежал после получение удара, то перед тем как встать должна 
 			 * проиграться анимация присевшего игрока */
 			if (curentState() == States.LAY_BACK || curentState() == States.LAY_BELLY || curentState() == States.FISH_KICK) {
-				Do(States.SIT, true);
+				if (getHealth() > 0) 
+					Do(States.SIT, true);
 			}
 			/* Если закончилась супрпроежка, то переводим игрока в состояние обычного бега */
 			else if (curentState() == States.TOP_RUN || curentState() == States.DRIBBLING_UP || curentState() == States.DRIBBLING_DOWN) {
 				Do(States.RUN, true);
 				resetVelocityTo(this.RUN_SPEED, Math.abs(getVelocityY()));
 			}
-			else if (curentState() != States.RUN /*&& curentState() != States.JUMP*/  && curentState() != States.DECELERATION) {
+			else if (curentState() != States.RUN && curentState() != States.DECELERATION) {
 				Do(States.STAY, true);
 			}
 		}

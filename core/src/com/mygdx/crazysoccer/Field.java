@@ -199,10 +199,10 @@ public class Field extends Stage {
 		sounds = new Sounds();
 		
 		// Загрузка фоновой музыки
-		sounds.load("bg01", "sound/bg/background02.ogg");
+		sounds.load("bg01", "sound/bg/background01.ogg");
 		sounds.play("bg01");
 		sounds.loop("bg01", true);
-		sounds.volume("bg01",0.3f);
+		sounds.volume("bg01",0.4f);
 		
 		// Звук паса
 		sounds.load("pass01", "sound/sfx/pass01.ogg");
@@ -224,6 +224,9 @@ public class Field extends Stage {
 		
 		// Звук "юлы"
 		sounds.load("whirligid01", "sound/sfx/whirligid01.ogg");
+		
+		// Звук "дрибблинга"
+		sounds.load("dribbling01", "sound/sfx/dribbling01.ogg");
 		
 		// Звук несильного ветра
 		sounds.load("wind01", "sound/sfx/wind01.ogg");

@@ -185,6 +185,10 @@ public class Ball extends Actor {
 		return this.JUMP_HEIGHT;
 	}
 	
+	public float getMass() {
+		return this.MASS;
+	}
+	
 	public void setAbsX(float x) {
 		this.POS_X = x;
 	}
@@ -236,13 +240,12 @@ public class Ball extends Actor {
 	
 	public void kick(float impulse, float dstX, float dstY, boolean upFlag) {
 		
+//		System.out.println(impulse);
+		
 		float alpha = calcAlpha(dstX, dstY);
 		
 		// Подсчет скорости мяча при ударе
 		float v = impulse / this.MASS;
-		
-//		this.CURENT_SPEED_X = v * (float)Math.sin(alpha * Math.PI / 180.0f);
-//		this.CURENT_SPEED_Y = v * (float)Math.cos(alpha * Math.PI / 180.0f);
 		
 		this.setVelocityX(v * (float)Math.sin(alpha));
 		this.setVelocityY(v * (float)Math.cos(alpha));
@@ -659,8 +662,8 @@ public class Ball extends Actor {
 			if (this.getAbsX() < field.gates[0].getBottomBar().x - 70 && this.getVelocityX() < 0) {
 				this.setVelocityX(-0.3f * this.getVelocityX());
 				
-				if (Math.abs(this.getVelocityX()) > field.gates[1].minFlatusVelocity()) {
-					field.gates[1].drawFlatus();
+				if (Math.abs(this.getVelocityX()) > field.gates[0].minFlatusVelocity()) {
+					field.gates[0].drawFlatus();
 				}
 			}
 			
@@ -747,6 +750,10 @@ public class Ball extends Actor {
 	
 	private boolean ballInNet() {
 		return this.IS_BALL_IN_NET;
+	}
+	
+	public float getRestitution() {
+		return this.RESTITUTION;
 	}
 	
 	public void ballInNet(boolean b) {

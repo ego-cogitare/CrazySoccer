@@ -50,7 +50,7 @@ public class Field extends Stage {
 	private String BG_TRACK = "bg01";
 	
 	// Количество игроков на поле
-	private final int PLAYERS_AMOUNT = 5;
+	private final int PLAYERS_AMOUNT = 10;
 	
 	// Служебные переменные
 	private int Z_INDEX;
@@ -137,7 +137,7 @@ public class Field extends Stage {
 	    font = new BitmapFont();
 	    batch = new SpriteBatch();
 	    
-		//Загрузка музыки и звуковых эффектов  *
+		// Загрузка музыки и звуковых эффектов  *
 		loadSounds();
 		
 		// Загрузка спрайтов
@@ -168,13 +168,16 @@ public class Field extends Stage {
 			// Привязка слушателя ввода для игрока
 			players[i].setActionsListener(actions);
 
-			// Установка идентификатора ворот по которым игрок будет наносить удар
-			if (i != 1) {
-				players[i].setDestinationGateId(Gate.RIGHT_GATES);
-			}
-			else {
-				players[i].setDestinationGateId(Gate.LEFT_GATES);
-			}
+			// Установка ворот, по которым игрок должен наносить удар
+			players[i].setDestinationGateId(
+					i <= 4 ? Gate.RIGHT_GATES : Gate.LEFT_GATES
+			);
+			
+			// Привязка игрока к команде
+			players[i].setTeamId(
+					i <= 4 ? Teams.NEKKETSU : Teams.ITALY
+			);
+
 			
 			// Добавление игрока (актера) на сцену (поле)
 			this.addActor(players[i]);
@@ -241,6 +244,9 @@ public class Field extends Stage {
 		
 		// Звук "дрибблинга"
 		sounds.load("dribbling01", "sound/sfx/dribbling01.ogg");
+		
+		// Звук подката / удара плечом
+		sounds.load("tackle01", "sound/sfx/tackle01.ogg");
 		
 		// Звук несильного ветра
 		sounds.load("wind01", "sound/sfx/wind01.ogg");
@@ -533,7 +539,7 @@ public class Field extends Stage {
 		ball.setAbsX(worldWidth / 2.0f);
 		ball.setAbsY(worldHeight / 2.0f);
 		
-		players[0].setAbsX(worldWidth / 2.0f);
+		players[0].setAbsX(worldWidth / 2.0f - 23);
 		players[0].setAbsY(fieldOffsetY + fieldHeight / 2.0f);
 		
 		players[1].setAbsX(600);
@@ -547,6 +553,27 @@ public class Field extends Stage {
 		
 		players[4].setAbsX(worldWidth / 2.0f - 350);
 		players[4].setAbsY(worldHeight - 500);
+		
+		
+		players[5].setAbsX(worldWidth / 2.0f + 350);
+		players[5].setAbsY(worldHeight - 500);
+		players[5].direction = Directions.LEFT;
+		
+		players[6].setAbsX(worldWidth / 2.0f + 350);
+		players[6].setAbsY(500);
+		players[6].direction = Directions.LEFT;
+		
+		players[7].setAbsX(worldWidth - 600);
+		players[7].setAbsY(worldHeight - 500);
+		players[7].direction = Directions.LEFT;
+		
+		players[8].setAbsX(worldWidth - 600);
+		players[8].setAbsY(500);
+		players[8].direction = Directions.LEFT;
+		
+		players[9].setAbsX(worldWidth / 2.0f + 350);
+		players[9].setAbsY(fieldOffsetY + fieldHeight / 2.0f);
+		players[9].direction = Directions.LEFT;
 		
 		gates[0].setAbsX(290);
 		gates[0].setAbsY(worldHeight / 2 - 100);
@@ -863,33 +890,33 @@ public class Field extends Stage {
 			
 			
 			
-			case Keys.Z:
-				actions.remove(Actions.Action.ACTION1_3);
-			break;
-			
-			case Keys.X:
-				actions.remove(Actions.Action.ACTION2_3);
-			break;
-			
-			case Keys.C:
-				actions.remove(Actions.Action.ACTION3_3);
-			break;
-			
-			case Keys.NUM_1:
-				actions.remove(Actions.Action.LEFT_3);
-			break;
-			
-			case Keys.NUM_2:
-				actions.remove(Actions.Action.RIGHT_3);
-			break;
-			
-			case Keys.NUM_3:
-				actions.remove(Actions.Action.DOWN_3);
-			break;
-			
-			case Keys.NUM_4:
-				actions.remove(Actions.Action.UP_3);
-			break;
+//			case Keys.Z:
+//				actions.remove(Actions.Action.ACTION1_3);
+//			break;
+//			
+//			case Keys.X:
+//				actions.remove(Actions.Action.ACTION2_3);
+//			break;
+//			
+//			case Keys.C:
+//				actions.remove(Actions.Action.ACTION3_3);
+//			break;
+//			
+//			case Keys.NUM_1:
+//				actions.remove(Actions.Action.LEFT_3);
+//			break;
+//			
+//			case Keys.NUM_2:
+//				actions.remove(Actions.Action.RIGHT_3);
+//			break;
+//			
+//			case Keys.NUM_3:
+//				actions.remove(Actions.Action.DOWN_3);
+//			break;
+//			
+//			case Keys.NUM_4:
+//				actions.remove(Actions.Action.UP_3);
+//			break;
 		}
 		
 //		actions.debug();
@@ -971,33 +998,33 @@ public class Field extends Stage {
 			
 			
 			// Кнопки управления вторым игроком
-			case Keys.Z:
-				actions.add(Actions.Action.ACTION1_3);
-			break;
-			
-			case Keys.X:
-				actions.add(Actions.Action.ACTION2_3);
-			break;
-			
-			case Keys.C:
-				actions.add(Actions.Action.ACTION3_3);
-			break;
-			
-			case Keys.NUM_1:
-				actions.add(Actions.Action.LEFT_3);
-			break;
-			
-			case Keys.NUM_2:
-				actions.add(Actions.Action.RIGHT_3);
-			break;
-			
-			case Keys.NUM_3:
-				actions.add(Actions.Action.DOWN_3);
-			break;
-			
-			case Keys.NUM_4:
-				actions.add(Actions.Action.UP_3);
-			break;
+//			case Keys.Z:
+//				actions.add(Actions.Action.ACTION1_3);
+//			break;
+//			
+//			case Keys.X:
+//				actions.add(Actions.Action.ACTION2_3);
+//			break;
+//			
+//			case Keys.C:
+//				actions.add(Actions.Action.ACTION3_3);
+//			break;
+//			
+//			case Keys.NUM_1:
+//				actions.add(Actions.Action.LEFT_3);
+//			break;
+//			
+//			case Keys.NUM_2:
+//				actions.add(Actions.Action.RIGHT_3);
+//			break;
+//			
+//			case Keys.NUM_3:
+//				actions.add(Actions.Action.DOWN_3);
+//			break;
+//			
+//			case Keys.NUM_4:
+//				actions.add(Actions.Action.UP_3);
+//			break;
 		}
 		
 //		actions.debug();

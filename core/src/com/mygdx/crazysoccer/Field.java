@@ -248,6 +248,9 @@ public class Field extends Stage {
 		// Звук подката / удара плечом
 		sounds.load("tackle01", "sound/sfx/tackle01.ogg");
 		
+		// Звук столкновения при ударе плечом
+		sounds.load("hit01", "sound/sfx/hit01.ogg");
+		
 		// Звук несильного ветра
 		sounds.load("wind01", "sound/sfx/wind01.ogg");
 		
@@ -793,7 +796,63 @@ public class Field extends Stage {
 				sounds.play("balllanding02", true);
 			}
 		}
+		
+		
+		// Проверка столкновений игроков, при выполнении ударов / подкатов (для отбора мяча)
+		for (int i = 0; i < PLAYERS_AMOUNT - 1; i++) {
+			
+			for (int j = i + 1; j < PLAYERS_AMOUNT; j++) {
+				
+				// Проверка, не находятся ли игроки в одной и той же моканде
+				if (players[i].getTeamId() != players[j].getTeamId()) {
+					
+					float distance = MathUtils.distance(players[i].getAbsX(), 0, players[j].getAbsX(), 0);
+					
+					if (distance < 70 && Math.abs(players[i].getAbsY() - players[j].getAbsY()) < 35) {
+						
+						// Игрок i атакует игрока j
+						if (attackStates.indexOf(players[i].curentState()) >= 0 && attackStates.indexOf(players[j].curentState()) == -1) {
+							attackPlayerByPlayer(j,i);
+						}
+						// Игрок j атакует игрока i
+						else if (attackStates.indexOf(players[j].curentState()) >= 0 && attackStates.indexOf(players[i].curentState()) == -1) {
+							attackPlayerByPlayer(i,j);
+						}
+						// Игрок i атакует игрока j, игрок j атакует игрока i
+						else if (attackStates.indexOf(players[i].curentState()) >= 0 && attackStates.indexOf(players[j].curentState()) >= 0) {
+							attackPlayerByPlayer(j,i);
+							attackPlayerByPlayer(i,j);
+						}
+					}
+				}
+			}
+		}
 	}
+	
+	public void attackPlayerByPlayer(int playerA, int playerB) {
+		if (players[playerA].Can(States.DEAD)) {
+			players[playerA].Do(States.DEAD, true);
+			
+			// Если это не подкат, то откидывает игрока, которого атаковали
+			if (players[playerB].curentState() != States.TACKLE_ATTACK) {
+				players[playerA].setJumpVelocity(4.0f);
+				sounds.play("hit01", true);
+			}
+		}
+	}
+	
+	// Перечень атакующих действий
+	public static ArrayList<States> attackStates = new ArrayList<States>(
+		Arrays.asList(
+			States.BODY_ATTACK,
+			States.TACKLE_ATTACK,
+			States.FISH_KICK,
+			States.DRIBBLING_DOWN,
+			States.DRIBBLING_UP,
+			States.WHIRLIGIG_KICK,
+			States.FOOT_ATTACK
+		)
+	); 
 	
 	// Переносим тени от персонажей в самую глубину чтобы не перекрывать спрайты
 	private void hideShadows() {

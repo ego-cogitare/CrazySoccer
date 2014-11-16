@@ -218,6 +218,7 @@ public class Ball extends Actor {
 	}
 	
 	public void isCatched(boolean c) {
+		if (!c) this.MANAGED_PLAYER_ID = -1;
 		this.CATCHED = c;
 	}
 	
@@ -710,7 +711,7 @@ public class Ball extends Actor {
 		
 		// Реализация гравитации (гравитация начинает действовать только когда сумма абсолютных
 		// скоростей по осям OX и OY < 15)
-		if (this.absVelocity() < this.ALLOW_GRAVITY_FROM && (this.JUMP_HEIGHT > 0 || this.JUMP_VELOCITY > 0)) {
+		if ((this.absVelocity() < this.ALLOW_GRAVITY_FROM || this.absVelocity() == 0) && (this.getAbsH() > 0 || this.getJumpVelocity() > 0)) {
 			
 			// Текущая вертикальная скорость мяча
 			if (curentState() == States.HEAD_BACK_SUPER_KICK) {

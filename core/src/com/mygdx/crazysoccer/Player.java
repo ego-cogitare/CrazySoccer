@@ -1,8 +1,9 @@
 package com.mygdx.crazysoccer;
 
-import java.lang.Thread.State;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.ArrayList;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
@@ -119,8 +120,8 @@ public class Player extends Actor {
 		
 		BODY_ATTACK, 		// Атака плечом
 		TACKLE_ATTACK, 		// Атака подкатом
+		FOOT_ATTACK, 		// Атака ногами в полете
 	} 
-	
 	
 	// В какую сторону повернут персонаж
 	public static enum Directions {
@@ -393,7 +394,7 @@ public class Player extends Actor {
         
         // Создаем анимацию ударенного мячом игрока
         animations.put(States.DEAD, 
-    		new Animation(10.0f, 
+    		new Animation(4.0f, 
 				animationStatesMap[0][0]
 			)
         );
@@ -426,6 +427,17 @@ public class Player extends Actor {
         animations.put(States.TACKLE_ATTACK, 
     		new Animation(5.0f, 
 				animationMap[3][4]
+			)
+		);
+        
+        // Атака ногами вперед
+        animations.put(States.FOOT_ATTACK, 
+    		new Animation(0.10f, 
+				animationMap[0][3],
+				animationMap[3][5],
+				animationMap[3][5],
+				animationMap[3][5],
+				animationMap[3][5]
 			)
 		);
         
@@ -739,6 +751,7 @@ public class Player extends Actor {
 						!state.get(States.JUMP) &&
 						!state.get(States.BODY_ATTACK) &&
 						!state.get(States.TACKLE_ATTACK) &&
+						!state.get(States.FOOT_ATTACK) &&
 						!state.get(States.FISH_KICK) &&
 						!state.get(States.DRIBBLING_UP) &&
 						!state.get(States.DRIBBLING_DOWN) &&
@@ -775,6 +788,7 @@ public class Player extends Actor {
 						!state.get(States.DRIBBLING_DOWN) &&
 						!state.get(States.BODY_ATTACK) &&
 						!state.get(States.TACKLE_ATTACK) &&
+						!state.get(States.FOOT_ATTACK) &&
 						!state.get(States.JUMP);
 			break;
 			
@@ -813,6 +827,8 @@ public class Player extends Actor {
 						!state.get(States.WHIRLIGIG_KICK) &&
 						!state.get(States.BODY_ATTACK) &&
 						!state.get(States.TACKLE_ATTACK) &&
+						!state.get(States.FOOT_ATTACK) &&
+						(!ball.isCatched() || this.catchBall()) &&
 						!state.get(States.PASS);
 			break;
 			
@@ -824,6 +840,7 @@ public class Player extends Actor {
 						!state.get(States.HEAD_PASS) &&
 						!state.get(States.BODY_ATTACK) &&
 						!state.get(States.TACKLE_ATTACK) &&
+						!state.get(States.FOOT_ATTACK) &&
 						!state.get(States.LAY_BELLY) &&
 						!state.get(States.FISH_KICK) &&
 						!state.get(States.PASS) &&
@@ -847,8 +864,10 @@ public class Player extends Actor {
 						!state.get(States.FISH_KICK) &&
 						!state.get(States.BODY_ATTACK) &&
 						!state.get(States.TACKLE_ATTACK) &&
+						!state.get(States.FOOT_ATTACK) &&
 						!state.get(States.WHIRLIGIG_KICK) &&
 						!this.ACTION_DONE &&
+					    (!ball.isCatched() || this.catchBall()) &&
 						!state.get(States.PASS);
 			break;
 			
@@ -864,6 +883,7 @@ public class Player extends Actor {
 						!state.get(States.HEAD_PASS) &&
 						!state.get(States.BODY_ATTACK) &&
 						!state.get(States.TACKLE_ATTACK) &&
+						!state.get(States.FOOT_ATTACK) &&
 						!state.get(States.LAY_BELLY) &&
 						!state.get(States.PASS) &&
 						!state.get(States.WHIRLIGIG_KICK) &&
@@ -884,10 +904,12 @@ public class Player extends Actor {
 						!state.get(States.LAY_BACK) &&
 						!state.get(States.BODY_ATTACK) &&
 						!state.get(States.TACKLE_ATTACK) &&
+						!state.get(States.FOOT_ATTACK) &&
 						!state.get(States.LAY_BELLY) &&
 						!state.get(States.HEAD_PASS) &&
 						!state.get(States.PASS) && 
 						!this.ACTION_DONE &&
+					   (!ball.isCatched() || this.catchBall()) &&
 						(
 							((dArrowPressed()) || (this.getAbsH() == 0 && ball.getAbsH() > 60)) && !ball.isCatched() || 
 							(ball.isCatched() && dArrowPressed() && getAbsH() > 0)
@@ -904,9 +926,11 @@ public class Player extends Actor {
 						!state.get(States.LAY_BELLY) &&
 						!state.get(States.BODY_ATTACK) &&
 						!state.get(States.TACKLE_ATTACK) &&
+						!state.get(States.FOOT_ATTACK) &&
 						!state.get(States.HEAD_PASS) &&
 						!state.get(States.PASS) && 
 						!this.ACTION_DONE &&
+					   (!ball.isCatched() || this.catchBall()) &&
 						(
 							((conterdArrowPressed()) || (this.getAbsH() == 0 && ball.getAbsH() > 60)) && !ball.isCatched() || 
 							(ball.isCatched() && conterdArrowPressed() && getAbsH() > 0)
@@ -915,10 +939,10 @@ public class Player extends Actor {
 			
 			case WHIRLIGIG_KICK:
 				isCan = this.getAbsH() > 25 &&
+						ball.getAbsH() > 5 &&
 						this.maxVelocity() > 0 &&
+						(!this.ACTION_DONE || curentState() == States.FOOT_KICK) &&
 						!ball.isCatched() &&
-						!this.ACTION_DONE &&
-						!this.catchBall() &&
 						!state.get(States.WHIRLIGIG_KICK) &&
 						!state.get(States.DEAD) &&
 						!state.get(States.FISH_KICK);
@@ -958,6 +982,7 @@ public class Player extends Actor {
 						!state.get(States.PASS) &&
 						!state.get(States.BODY_ATTACK) &&
 						!state.get(States.TACKLE_ATTACK) &&
+						!state.get(States.FOOT_ATTACK) &&
 						!state.get(States.HEAD_PASS) &&
 						!state.get(States.DRIBBLING_UP) &&
 						!state.get(States.DRIBBLING_DOWN) &&
@@ -971,9 +996,12 @@ public class Player extends Actor {
 			 *  2. Он не мертв 
 			 */ 
 			case CATCH_BALL:
-				isCan = !catchBall() && 
+				isCan = !this.catchBall() &&
+						!ball.isCatched() &&
 						!state.get(States.DEAD) &&
 						!state.get(States.SIT) &&
+						!state.get(States.BODY_ATTACK) &&
+						!state.get(States.FOOT_ATTACK) &&
 						!state.get(States.LAY_BACK) &&
 						!state.get(States.LAY_BELLY);
 			break;
@@ -996,6 +1024,7 @@ public class Player extends Actor {
 						!state.get(States.DRIBBLING_DOWN) &&
 						!state.get(States.BODY_ATTACK) &&
 						!state.get(States.TACKLE_ATTACK) &&
+						!state.get(States.FOOT_ATTACK) &&
 						!state.get(States.LAY_BELLY);
 			break;
 			
@@ -1011,9 +1040,28 @@ public class Player extends Actor {
 						!state.get(States.DRIBBLING_DOWN) &&
 						!state.get(States.BODY_ATTACK) &&
 						!state.get(States.TACKLE_ATTACK) &&
+						!state.get(States.FOOT_ATTACK) &&
 						!state.get(States.LAY_BELLY) &&
 						this.getAbsH() == 0;
 			break;
+			
+			case FOOT_ATTACK:
+				isCan = !state.get(States.DEAD) &&
+						!state.get(States.LAY_BACK) &&
+						!state.get(States.KNEE_CATCH) && 
+						!state.get(States.FISH_KICK) &&
+						!state.get(States.FOOT_KICK) &&
+						!state.get(States.WHIRLIGIG_KICK) &&
+						!state.get(States.SIT) &&
+						!state.get(States.DRIBBLING_UP) &&
+						!state.get(States.DRIBBLING_DOWN) &&
+						!state.get(States.BODY_ATTACK) &&
+						!state.get(States.TACKLE_ATTACK) &&
+						!state.get(States.FOOT_ATTACK) &&
+						!state.get(States.LAY_BELLY) &&
+						this.getAbsH() > 0 &&
+						Math.abs(this.getVelocityX()) > 0;
+				break;
 			
 			default:
 				isCan = false;
@@ -1141,13 +1189,14 @@ public class Player extends Actor {
 			
 			case DEAD:
 				this.stateTime = 0.0f;
+				this.catchBall(false);
 			break;
 			
 			case CHEST_CATCH:
 				this.stateTime = 0.0f;
 			break;
 			
-			case BODY_ATTACK:
+			case BODY_ATTACK: case FOOT_ATTACK:
 				this.stateTime = 0.0f;
 				field.sounds.play("tackle01");
 			break;
@@ -1249,19 +1298,19 @@ public class Player extends Actor {
 		return actionsListener.getActionStateFor(Controls.RIGHT, this.PLAYER_ID).triplePressed;
 	}
 	
-	/*
+	
 	private boolean action1DblPressed() {
 		return actionsListener.getActionStateFor(Controls.ACTION1, this.PLAYER_ID).doublePressed;
 	}
 	
-	private boolean action2DblPressed() {
+	/*private boolean action2DblPressed() {
 		return actionsListener.getActionStateFor(Controls.ACTION2, this.PLAYER_ID).doublePressed;
 	}
 	
 	private boolean action3DblPressed() {
 		return actionsListener.getActionStateFor(Controls.ACTION3, this.PLAYER_ID).doublePressed;
-	}
-	*/
+	}*/
+	
 	
 	private boolean action1Pressed() {
 		return actionsListener.getActionStateFor(Controls.ACTION1, this.PLAYER_ID).pressed;
@@ -1457,12 +1506,12 @@ public class Player extends Actor {
 		// Удар головой / ногой
 		if (action1Pressed()) {
 			// Если сейчас игрок делает вернушку, то отключаем ее
-			if (curentState() == States.WHIRLIGIG_KICK) {
-				Do(States.STAY, true);
-			}
+//			if (curentState() == States.WHIRLIGIG_KICK) {
+//				Do(States.STAY, true);
+//			}
 			
 			// Можно ли выполнить удар юлой
-			if (Can(States.WHIRLIGIG_KICK)) {
+			if (action1DblPressed() && Can(States.WHIRLIGIG_KICK)) {
 				Do(States.WHIRLIGIG_KICK, true);
 			}
 			// Может ли игрок ударить рыбкой
@@ -1500,8 +1549,12 @@ public class Player extends Actor {
 			
 			// Если мяч контроллируется командой противника
 			if (ballManagedByOpponents()) {
+				// Удар ногами в лету
+				if (Can(States.FOOT_ATTACK)) {
+					Do(States.FOOT_ATTACK, true);
+				}
 				// Подкат
-				if (Can(States.TACKLE_ATTACK)) {
+				else if (Can(States.TACKLE_ATTACK)) {
 					Do(States.TACKLE_ATTACK, true);
 				}
 			}
@@ -1549,7 +1602,8 @@ public class Player extends Actor {
 				(
 					curentState() != States.WALKING && 
 					curentState() != States.RUN && 
-					curentState() != States.TOP_RUN && 
+					curentState() != States.JUMP && 
+					curentState() != States.TOP_RUN &&  
 					curentState() != States.DRIBBLING_UP && 
 					curentState() != States.DRIBBLING_DOWN
 				) && 
@@ -1610,16 +1664,17 @@ public class Player extends Actor {
 				break;
 				
 				case FOOT_KICK:
-					// Если высота мяча больше чем минимальная высота которая необходима для того 
-					// чтобы игрок выполняющий удар смог произвести суперудар, и расстояние до ворот
-					// меньше чем максимальное расстояние на которое игрок может выполнить суперудар
-					// то игрок производит суперудар
-					if (this.superKickAviable()) {
-						ball.Do(Ball.States.FOOT_SUPER_KICK, true);
-					}
 					
-					// Выполнение удара по мячу
-					if (currentFrame() >= 4 && currentFrame() <= 7) this.ballKick();
+					// Выполнение удара по мячу возможно тогда, когда мяч никем не контроллируется
+					// или контроллируется игроком, который наносит удар
+					if (!ball.isCatched() || this.catchBall()) {
+						if (this.superKickAviable()) 
+							ball.Do(Ball.States.FOOT_SUPER_KICK, true);
+						
+						// Выполнение удара по мячу
+						if (currentFrame() >= 4 && currentFrame() <= 7) 
+							this.ballKick();
+					}
 				break;
 				
 				case HEAD_KICK:
@@ -1679,7 +1734,7 @@ public class Player extends Actor {
 					
 					// Определение кому отдать пас
 					if (this.PLAYER_ID == 0)
-						ball.pass(field.players[1].getAbsX(),field.players[1].getAbsY());
+						ball.pass(field.players[9].getAbsX(),field.players[9].getAbsY());
 					else 
 						ball.pass(field.players[0].getAbsX(),field.players[0].getAbsY());
 				break;
@@ -1690,7 +1745,7 @@ public class Player extends Actor {
 					if (currentFrame() >= 2) {
 						
 						// Отмечаем что игрок теряет мяч
-						this.catchBall(false);
+						this.catchBall(false); 
 						
 						// Мяч не контроллируется никем
 						ball.managerByBlayer(-1);
@@ -1700,7 +1755,7 @@ public class Player extends Actor {
 						
 						// Определение кому отдать пас
 						if (this.PLAYER_ID == 0)
-							ball.pass(field.players[1].getAbsX(),field.players[1].getAbsY());
+							ball.pass(field.players[9].getAbsX(),field.players[9].getAbsY());
 						else 
 							ball.pass(field.players[0].getAbsX(),field.players[0].getAbsY());
 					}
@@ -1734,9 +1789,9 @@ public class Player extends Actor {
 						float ballImpulse = ball.absVelocity() * ball.getMass();
 						
 						// Проверка, убивает ли мяч с силой ballImpulse игрока
-						if (this.isEnoughToKill(ballImpulse)) 
+						if (Can(States.DEAD) && isEnoughToKill(ballImpulse)) 
 						{
-							this.hitByBall(ballImpulse / 2.0f);
+							hitByBall(ballImpulse / 2.0f);
 						}
 						// Иначе - игрок принимает мяч
 						else if (Can(States.CATCH_BALL))
@@ -1835,6 +1890,10 @@ public class Player extends Actor {
 		}
 	}
 	
+	/**
+	 * Контроллируется ли мяч каким-то из игроков команды соперника
+	 * @return TRUE - если да, FALSE - нет
+	 */
 	public boolean ballManagedByOpponents() {
 		
 		// Идентификатор игрока, который контроллирует мяч
@@ -1848,7 +1907,9 @@ public class Player extends Actor {
 		}
 	}
 	
-	// Поворот игрока к мячу, когда он принимает его
+	/**
+	 * Поворот игрока к мячу, когда он принимает его
+	 */
 	public void turnToBall() {
 		if (getAbsH() == 0) {
 			if (ball.getVelocityX() > 0 && direction == Directions.RIGHT) {
@@ -1860,7 +1921,11 @@ public class Player extends Actor {
 		}
 	}
 	
-	// Убъет ли мяч пущеный с силой force игрока
+	/**
+	 * Убъет ли мяч пущеный с силой force игрока
+	 * @param force - сила с которой мяч ударяем по игроку
+	 * @return Boolean - выдержит ли игрок удар мячом (false) или не выдержит (true)
+	 */
 	public boolean isEnoughToKill(float force) {
 		// Добавляем 1% от текущего показателя жизненной енергии (но не больше 7 единиц)
 		float extraStrength = this.HEALTH * 0.01f;
@@ -1869,7 +1934,10 @@ public class Player extends Actor {
 		return force > this.MIN_FORCE_TO_KILL + extraStrength;
 	}
 	
-	// Нанесение удара мячом по игроку 
+	/**
+	 * Нанесение удара мячом по игроку 
+	 * @param Int strength - сила с которой выполняется удар по мячу 
+	 */
 	public void hitByBall(float strength) {
 		// Переводим игрока в состояние "убит" 
 		Do(States.DEAD, true);
@@ -1906,7 +1974,9 @@ public class Player extends Actor {
 		//System.out.println("Impulse: "+strength);
 	}
 	
-	// Выполнение удара по мячу
+	/**
+	 * Выполнение удара по мячу
+	 */
 	private void ballKick() {
 		
 		if (curentState() != States.FISH_KICK) {
@@ -1932,7 +2002,9 @@ public class Player extends Actor {
 		field.sounds.play("kick01", true);
 	}
 	
-	// Выполнение суперудара ноловой / через себя по мячу
+	/**
+	 * Выполнение суперудара ноловой / через себя по мячу
+	 */
 	private void ballHeadBackSuperKick() {
 		// Определение точки куда бить игроку
 		ball.headBackSuperKick(this.getKickStrength() * 1.2f, this.netCenter(this.DESTINATION_GATE_ID).x, this.netCenter(this.DESTINATION_GATE_ID).y);
@@ -1947,7 +2019,11 @@ public class Player extends Actor {
 		field.sounds.play("kick01", true);
 	}
 	
-	// Определение точки середины ворот
+	/**
+	 * Определение точки середины ворот
+	 * @param gateId
+	 * @return Vector2 - координаты центра ворот
+	 */
 	private Vector2 netCenter(int gateId) {
 		// Определение точки куда бить игроку
 		float dstX = field.gates[gateId].getBottomBar().x;
@@ -1956,7 +2032,10 @@ public class Player extends Actor {
 		return new Vector2(dstX, dstY);
 	}
 	
-	// Находится ли мяч рядом
+	/**
+	 * Находится ли мяч рядом
+	 * @return Boolean
+	 */
 	public boolean ballIsNear() {
 		/* В зависимости от состояния игрока (удар рукой / ногой / рыбкой в полете) будем вносить поправки на каком
 		   расстоянии от мяча можно сделать то или иное действие:
@@ -2019,7 +2098,7 @@ public class Player extends Actor {
 			
 			
 			// Если игрок владеет мячом то привязываем перемещение мяча к этом игроку
-			if (this.catchBall() && field.inField(ball.getAbsX(),ball.getAbsY())) {
+			if (this.catchBall() && ball.isCatched() && field.inField(ball.getAbsX(),ball.getAbsY())) {
 				if (this.direction == Directions.RIGHT) {
 					ball.moveBallBy(new Vector2(this.getAbsX()-ball.getAbsX() + 40, this.getAbsY()-ball.getAbsY() - 1));
 				}
@@ -2040,18 +2119,28 @@ public class Player extends Actor {
 		}
 	}
 	
-	
-	// Контролирует ли мяч игрок
+	/** 
+	 * Контролирует ли мяч игрок
+	 * @return Boolean
+	 */
 	public boolean catchBall() {
 		return this.CATCH_BALL;
 	}
 	
 	public void catchBall(boolean c) {
-		if (c) field.sounds.play("catchball01",true);
-		ball.isCatched(c);
+		if (c) { 
+			field.sounds.play("catchball01",true);
+			ball.isCatched(true);
+		}
+		else if (this.CATCH_BALL) {
+			ball.isCatched(false);
+		}
 		this.CATCH_BALL = c;
 	}
 	
+	/**
+	 * Завершение анимации
+	 */
 	public void finishAnimations() {
 		// Если окончено текущее действие
 		if (animations.get(this.curentState()).isAnimationFinished(stateTime)) {

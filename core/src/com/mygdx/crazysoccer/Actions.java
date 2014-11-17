@@ -6,13 +6,6 @@ import java.util.Map;
 // Допустимые действия для обработки
 public class Actions {
 	
-	// Перечень допустимых действий
-	public static enum Action {
-		UP_1, DOWN_1, LEFT_1, RIGHT_1, ACTION1_1, ACTION2_1, ACTION3_1,
-		UP_2, DOWN_2, LEFT_2, RIGHT_2, ACTION1_2, ACTION2_2, ACTION3_2,
-//		UP_3, DOWN_3, LEFT_3, RIGHT_3, ACTION1_3, ACTION2_3, ACTION3_3
-	}
-	
 	public static enum Controls {
 		UP, DOWN, LEFT, RIGHT, ACTION1, ACTION2, ACTION3
 	}
@@ -23,20 +16,30 @@ public class Actions {
 		public boolean triplePressed;
 	}
 	
-	private Map<Action, Long> actionTime = new HashMap<Action, Long>();
-	public Map<Action, Boolean> actions = new HashMap<Action, Boolean>();
-	public Map<Action, Boolean> doublePressed = new HashMap<Action, Boolean>();
-	public Map<Action, Boolean> triplePressed = new HashMap<Action, Boolean>();
+	// Количество игроков, для которых необходимо обрабатывать ввод действий
+	private int PLAYERS_AMOUNT = 0;
+	
+	private Map<String, Long> actionTime = new HashMap<String, Long>();
+	public Map<String, Boolean> actions = new HashMap<String, Boolean>();
+	public Map<String, Boolean> doublePressed = new HashMap<String, Boolean>();
+	public Map<String, Boolean> triplePressed = new HashMap<String, Boolean>();
 	public ActionDescription ad;
 	
-	public Actions() {
+	public Actions(int playersAmount) {
+		this.PLAYERS_AMOUNT = playersAmount;
 		ad = new ActionDescription();
-		clear();
-		//System.out.println("Actions class initialized...");
+		init();
 	}
 	
-	public void add(Action action) {
+	private String playerAction(Controls control, int playerId) {
+		return control.toString() + "_" + String.valueOf(playerId);
+	}
+	
+	public void add(Controls control, int playerId) {
 		long timeAction = System.nanoTime();
+		
+		// Получаем action для игрока
+		String action = playerAction(control, playerId);
 		
 		// Время с момента последнего вызова этого действия
 		long deltaTime = Math.round((timeAction - actionTime.get(action)) / 1000000);
@@ -56,118 +59,54 @@ public class Actions {
 		
 		actions.put(action, true);
 		actionTime.put(action, timeAction);
+		
 		//debug();
 	}
 	
-	public ActionDescription get(Action action) {
+	public void remove(Controls control, int playerId) {
+		
+		String action = playerAction(control, playerId);
+		
+		actions.put(action, false);
+	}
+	
+	public ActionDescription get(String action) {
 		ad.pressed = actions.get(action);
 		ad.doublePressed = doublePressed.get(action);
 		ad.triplePressed = triplePressed.get(action);
 		return ad;
 	}
 	
-	public void remove(Action action) {
-		actions.put(action, false);
-	}
-	
 	// Отключение действия
 	public void disableAction(Controls control, int playerId) {
-		switch (playerId) {
-			case 0:
-				switch (control) {
-					case UP: 
-						actions.put(Action.UP_1, false);
-					break;
-					
-					case DOWN: 
-						actions.put(Action.DOWN_1, false);
-					break;
-					
-					case LEFT: 
-						actions.put(Action.LEFT_1, false);
-					break;
-					
-					case RIGHT: 
-						actions.put(Action.RIGHT_1, false);
-					break;
-					
-					case ACTION1: 
-						actions.put(Action.ACTION1_1, false);
-					break;
-					
-					case ACTION2: 
-						actions.put(Action.ACTION2_1, false);
-					break;
-					
-					case ACTION3: 
-						actions.put(Action.ACTION3_1, false);
-					break;
-				}
+		switch (control) {
+			case UP: 
+				actions.put("UP_"+String.valueOf(playerId), false);
 			break;
 			
-			case 9:
-				switch (control) {
-					case UP: 
-						actions.put(Action.UP_2, false);
-					break;
-					
-					case DOWN: 
-						actions.put(Action.DOWN_2, false);
-					break;
-					
-					case LEFT: 
-						actions.put(Action.LEFT_2, false);
-					break;
-					
-					case RIGHT: 
-						actions.put(Action.RIGHT_2, false);
-					break;
-					
-					case ACTION1: 
-						actions.put(Action.ACTION1_2, false);
-					break;
-					
-					case ACTION2: 
-						actions.put(Action.ACTION2_2, false);
-					break;
-					
-					case ACTION3: 
-						actions.put(Action.ACTION3_2, false);
-					break;
-				}
+			case DOWN: 
+				actions.put("DOWN_"+String.valueOf(playerId), false);
 			break;
 			
-//			case 2:
-//				switch (control) {
-//					case UP: 
-//						actions.put(Action.UP_3, false);
-//					break;
-//					
-//					case DOWN: 
-//						actions.put(Action.DOWN_3, false);
-//					break;
-//					
-//					case LEFT: 
-//						actions.put(Action.LEFT_3, false);
-//					break;
-//					
-//					case RIGHT: 
-//						actions.put(Action.RIGHT_3, false);
-//					break;
-//					
-//					case ACTION1: 
-//						actions.put(Action.ACTION1_3, false);
-//					break;
-//					
-//					case ACTION2: 
-//						actions.put(Action.ACTION2_3, false);
-//					break;
-//					
-//					case ACTION3: 
-//						actions.put(Action.ACTION3_3, false);
-//					break;
-//				}
-//			break;
+			case LEFT: 
+				actions.put("LEFT_"+String.valueOf(playerId), false);
+			break;
+			
+			case RIGHT: 
+				actions.put("RIGHT_"+String.valueOf(playerId), false);
+			break;
+			
+			case ACTION1: 
+				actions.put("ACTION1_"+String.valueOf(playerId), false);
+			break;
+			
+			case ACTION2: 
+				actions.put("ACTION2_"+String.valueOf(playerId), false);
+			break;
+			
+			case ACTION3: 
+				actions.put("ACTION3_"+String.valueOf(playerId), false);
+			break;
 		}
 	}
 	
@@ -175,124 +114,57 @@ public class Actions {
 		
 		ActionDescription result = this.ad;
 		
-		switch (playerId) {
-			case 0:
-				switch (control) {
-					case UP: 
-						result = this.get(Action.UP_1);
-					break;
-					
-					case DOWN: 
-						result = this.get(Action.DOWN_1);
-					break;
-					
-					case LEFT: 
-						result = this.get(Action.LEFT_1);
-					break;
-					
-					case RIGHT: 
-						result = this.get(Action.RIGHT_1);
-					break;
-					
-					case ACTION1: 
-						result = this.get(Action.ACTION1_1);
-					break;
-					
-					case ACTION2: 
-						result = this.get(Action.ACTION2_1);
-					break;
-					
-					case ACTION3: 
-						result = this.get(Action.ACTION3_1);
-					break;
-				}
+		switch (control) {
+			case UP: 
+				result = this.get("UP_"+String.valueOf(playerId));
 			break;
 			
-			case 9:
-				switch (control) {
-					case UP: 
-						result = this.get(Action.UP_2);
-					break;
-					
-					case DOWN: 
-						result = this.get(Action.DOWN_2);
-					break;
-					
-					case LEFT: 
-						result = this.get(Action.LEFT_2);
-					break;
-					
-					case RIGHT: 
-						result = this.get(Action.RIGHT_2);
-					break;
-					
-					case ACTION1: 
-						result = this.get(Action.ACTION1_2);
-					break;
-					
-					case ACTION2: 
-						result = this.get(Action.ACTION2_2);
-					break;
-					
-					case ACTION3: 
-						result = this.get(Action.ACTION3_2);
-					break;
-				}
+			case DOWN: 
+				result = this.get("DOWN_"+String.valueOf(playerId));
 			break;
 			
-//			case 2:
-//				switch (control) {
-//					case UP: 
-//						result = this.get(Action.UP_3);
-//					break;
-//					
-//					case DOWN: 
-//						result = this.get(Action.DOWN_3);
-//					break;
-//					
-//					case LEFT: 
-//						result = this.get(Action.LEFT_3);
-//					break;
-//					
-//					case RIGHT: 
-//						result = this.get(Action.RIGHT_3);
-//					break;
-//					
-//					case ACTION1: 
-//						result = this.get(Action.ACTION1_3);
-//					break;
-//					
-//					case ACTION2: 
-//						result = this.get(Action.ACTION2_3);
-//					break;
-//					
-//					case ACTION3: 
-//						result = this.get(Action.ACTION3_3);
-//					break;
-//				}
-//			break;
+			case LEFT: 
+				result = this.get("LEFT_"+String.valueOf(playerId));
+			break;
 			
-			default:
-				result.pressed = result.doublePressed = result.triplePressed = false;
+			case RIGHT: 
+				result = this.get("RIGHT_"+String.valueOf(playerId));
+			break;
+			
+			case ACTION1: 
+				result = this.get("ACTION1_"+String.valueOf(playerId));
+			break;
+			
+			case ACTION2: 
+				result = this.get("ACTION2_"+String.valueOf(playerId));
+			break;
+			
+			case ACTION3: 
+				result = this.get("ACTION3_"+String.valueOf(playerId));
 			break;
 		}
 		
 		return result;
 	}
 	
-	public void clear() {
-		for (int i = 0; i < Action.values().length; i++) {
-			actions.put(Action.values()[i], false);
-			actionTime.put(Action.values()[i], 0L);
-			doublePressed.put(Action.values()[i], false);
-			triplePressed.put(Action.values()[i], false);
+	private void init() {
+		for (int i = 0; i < Controls.values().length; i++) {
+			
+			for (int j = 0; j < this.PLAYERS_AMOUNT; j++) {
+				
+				actions.put(Controls.values()[i].toString() + "_" + String.valueOf(j), false);
+				actionTime.put(Controls.values()[i].toString() + "_" + String.valueOf(j), 0L);
+				doublePressed.put(Controls.values()[i].toString() + "_" + String.valueOf(j), false);
+				triplePressed.put(Controls.values()[i].toString() + "_" + String.valueOf(j), false);
+			}
 		}
 	}
 	
 	public void debug() {
-		for (int i = 0; i < Action.values().length; i++) {
-			if (actions.get(Action.values()[i])) {
-				System.out.println("Action: " + Action.values()[i] + "\nState: " + actions.get(Action.values()[i]) + "\nDouble pressed: " + doublePressed.get(Action.values()[i]) + "\nTriple pressed: "+triplePressed.get(Action.values()[i])+"\n");
+		for (int i = 0; i < Controls.values().length; i++) {
+			if (actions.get(Controls.values()[i].toString() + "_1")) {
+				//System.out.println("Action: " + Controls.values()[i].toString() + "_0"  + "\nState: " + actions.get(Controls.values()[i].toString() + "_0") + "\nDouble pressed: " + doublePressed.get(Controls.values()[i].toString() + "_0") + "\nTriple pressed: "+triplePressed.get(Controls.values()[i].toString() + "_0")+"\n");
+				//System.out.println(Controls.values()[i].toString());
 			}
 		}
 	}

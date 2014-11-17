@@ -64,13 +64,15 @@ public class Field extends Stage {
 	public static int SPRITES_HEIGHT;
 	
 	// Екземпляр мяча
-	private Ball ball;
+	public Ball ball;
 	
 	// Ворота
 	public Gate[] gates = new Gate[2];
 	
 	// Екземпляр класса описывающего игрока
 	public Player[] players = new Player[PLAYERS_AMOUNT];
+	
+	public AI[] ai = new AI[2];
 	
 	// Листья
 	private Leaf[] leafs = new Leaf[5];
@@ -116,7 +118,7 @@ public class Field extends Stage {
     public ShapeRenderer shapeRenderer;
 	
     // Сохранение нажатых клавиш и их времени
-    public Actions actions = new Actions();
+    public Actions actions = new Actions(PLAYERS_AMOUNT);
     
     // Класс для работы со звуком
 	public Sounds sounds;
@@ -186,6 +188,34 @@ public class Field extends Stage {
 			players[i].attachField(this);
 			players[i].attachBall(ball);
 		}
+		
+		
+		
+		// Экземпляр класса ИИ
+		ai[0] = new AI();
+		
+		// Передаем ИИ ссылку на поле
+		ai[0].attachField(this);
+		
+		// Добавляем ID игрока, за которого будет играть ИИ 
+		ai[0].addPlayer(9);
+		ai[0].addPlayer(8);
+		ai[0].addPlayer(7);
+		ai[0].addPlayer(6);
+		ai[0].addPlayer(5);
+		
+		// Экземпляр класса ИИ
+		ai[1] = new AI();
+		
+		// Передаем ИИ ссылку на поле
+		ai[1].attachField(this);
+		
+		// Добавляем ID игрока, за которого будет играть ИИ 
+		//ai[1].addPlayer(0);
+		ai[1].addPlayer(1);
+		ai[1].addPlayer(2);
+		ai[1].addPlayer(3);
+		ai[1].addPlayer(4);
 		
 		// Создание листьев
 		for (int i = 0; i < leafs.length; i++) {
@@ -640,6 +670,11 @@ public class Field extends Stage {
 				}
 			}
 			
+			// Игра ИИ
+			ai[0].play();
+			
+			ai[1].play();
+			
 			// Сортировака спрайтов по глубине
 			zIndexSorting();
 			
@@ -890,95 +925,63 @@ public class Field extends Stage {
 		{
 			// Кнопки управления первым игроком
 			case Keys.UP: //UP
-				actions.remove(Actions.Action.UP_1);
+				actions.remove(Actions.Controls.UP, 0);
 			break;
 			
 			case Keys.DOWN: //DOWN
-				actions.remove(Actions.Action.DOWN_1);
+				actions.remove(Actions.Controls.DOWN, 0);
 			break;
 				
 			case Keys.LEFT: //LEFT
-				actions.remove(Actions.Action.LEFT_1);
+				actions.remove(Actions.Controls.LEFT, 0);
 			break;
 				
 			case Keys.RIGHT: //RIGHT
-				actions.remove(Actions.Action.RIGHT_1);
+				actions.remove(Actions.Controls.RIGHT, 0);
 			break;
 			
 			case Keys.Q:
-				actions.remove(Actions.Action.ACTION1_1);
+				actions.remove(Actions.Controls.ACTION1, 0);
 			break;
 			
 			case Keys.W:
-				actions.remove(Actions.Action.ACTION2_1);
+				actions.remove(Actions.Controls.ACTION2, 0);
 			break;
 			
 			case Keys.E:
-				actions.remove(Actions.Action.ACTION3_1);
+				actions.remove(Actions.Controls.ACTION3, 0);
 			break;
-			
 			
 			
 			case Keys.A:
-				actions.remove(Actions.Action.ACTION1_2);
+				actions.remove(Actions.Controls.ACTION1, 9);
 			break;
 			
 			case Keys.S:
-				actions.remove(Actions.Action.ACTION2_2);
+				actions.remove(Actions.Controls.ACTION2, 9);
 			break;
 			
 			case Keys.D:
-				actions.remove(Actions.Action.ACTION3_2);
+				actions.remove(Actions.Controls.ACTION3, 9);
 			break;
 			
 			case Keys.NUMPAD_4:
-				actions.remove(Actions.Action.LEFT_2);
+				actions.remove(Actions.Controls.LEFT, 9);
 			break;
 			
 			case Keys.NUMPAD_6:
-				actions.remove(Actions.Action.RIGHT_2);
+				actions.remove(Actions.Controls.RIGHT, 9);
 			break;
 			
 			case Keys.NUMPAD_5:
-				actions.remove(Actions.Action.DOWN_2);
+				actions.remove(Actions.Controls.DOWN, 9);
 			break;
 			
 			case Keys.NUMPAD_8:
-				actions.remove(Actions.Action.UP_2);
+				actions.remove(Actions.Controls.UP, 9);
 			break;
-			
-			
-			
-//			case Keys.Z:
-//				actions.remove(Actions.Action.ACTION1_3);
-//			break;
-//			
-//			case Keys.X:
-//				actions.remove(Actions.Action.ACTION2_3);
-//			break;
-//			
-//			case Keys.C:
-//				actions.remove(Actions.Action.ACTION3_3);
-//			break;
-//			
-//			case Keys.NUM_1:
-//				actions.remove(Actions.Action.LEFT_3);
-//			break;
-//			
-//			case Keys.NUM_2:
-//				actions.remove(Actions.Action.RIGHT_3);
-//			break;
-//			
-//			case Keys.NUM_3:
-//				actions.remove(Actions.Action.DOWN_3);
-//			break;
-//			
-//			case Keys.NUM_4:
-//				actions.remove(Actions.Action.UP_3);
-//			break;
 		}
 		
-//		actions.debug();
 		return false;
 	}
 	
@@ -989,33 +992,65 @@ public class Field extends Stage {
 		{
 			// Кнопки управления первым игроком
 			case Keys.UP: //UP
-				actions.add(Actions.Action.UP_1);
+				actions.add(Actions.Controls.UP, 0);
 			break;
 			
 			case Keys.DOWN: //DOWN
-				actions.add(Actions.Action.DOWN_1);
+				actions.add(Actions.Controls.DOWN, 0);
 			break;
 				
 			case Keys.LEFT: //LEFT
-				actions.add(Actions.Action.LEFT_1);
+				actions.add(Actions.Controls.LEFT, 0);
 			break;
 				
 			case Keys.RIGHT: //RIGHT
-				actions.add(Actions.Action.RIGHT_1);
+				actions.add(Actions.Controls.RIGHT, 0);
 			break;
 			
 			case Keys.Q:
-				actions.add(Actions.Action.ACTION1_1);
+				actions.add(Actions.Controls.ACTION1, 0);
 			break;
 			
 			case Keys.W:
-				actions.add(Actions.Action.ACTION2_1);
+				actions.add(Actions.Controls.ACTION2, 0);
 			break;
 			
 			case Keys.E:
-				actions.add(Actions.Action.ACTION3_1);
+				actions.add(Actions.Controls.ACTION3, 0);
 			break;
 			
+			
+			// Кнопки управления вторым игроком
+			case Keys.A:
+				actions.add(Actions.Controls.ACTION1, 9);
+			break;
+			
+			case Keys.S:
+				actions.add(Actions.Controls.ACTION2, 9);
+			break;
+			
+			case Keys.D:
+				actions.add(Actions.Controls.ACTION3, 9);
+			break;
+			
+			case Keys.NUMPAD_4:
+				actions.add(Actions.Controls.LEFT, 9);
+			break;
+			
+			case Keys.NUMPAD_6:
+				actions.add(Actions.Controls.RIGHT, 9);
+			break;
+			
+			case Keys.NUMPAD_5:
+				actions.add(Actions.Controls.DOWN, 9);
+			break;
+			
+			case Keys.NUMPAD_8:
+				actions.add(Actions.Controls.UP, 9);
+			break;
+			
+			
+			// Пауза
 			case Keys.ENTER:
 				if (gameState == GameStates.RUN) {
 					setPause();
@@ -1025,67 +1060,7 @@ public class Field extends Stage {
 				}
 			break;
 			
-			
-			// Кнопки управления вторым игроком
-			case Keys.A:
-				actions.add(Actions.Action.ACTION1_2);
-			break;
-			
-			case Keys.S:
-				actions.add(Actions.Action.ACTION2_2);
-			break;
-			
-			case Keys.D:
-				actions.add(Actions.Action.ACTION3_2);
-			break;
-			
-			case Keys.NUMPAD_4:
-				actions.add(Actions.Action.LEFT_2);
-			break;
-			
-			case Keys.NUMPAD_6:
-				actions.add(Actions.Action.RIGHT_2);
-			break;
-			
-			case Keys.NUMPAD_5:
-				actions.add(Actions.Action.DOWN_2);
-			break;
-			
-			case Keys.NUMPAD_8:
-				actions.add(Actions.Action.UP_2);
-			break;
-			
-			
-			// Кнопки управления вторым игроком
-//			case Keys.Z:
-//				actions.add(Actions.Action.ACTION1_3);
-//			break;
-//			
-//			case Keys.X:
-//				actions.add(Actions.Action.ACTION2_3);
-//			break;
-//			
-//			case Keys.C:
-//				actions.add(Actions.Action.ACTION3_3);
-//			break;
-//			
-//			case Keys.NUM_1:
-//				actions.add(Actions.Action.LEFT_3);
-//			break;
-//			
-//			case Keys.NUM_2:
-//				actions.add(Actions.Action.RIGHT_3);
-//			break;
-//			
-//			case Keys.NUM_3:
-//				actions.add(Actions.Action.DOWN_3);
-//			break;
-//			
-//			case Keys.NUM_4:
-//				actions.add(Actions.Action.UP_3);
-//			break;
 		}
-		
 //		actions.debug();
 		return false;
 	}

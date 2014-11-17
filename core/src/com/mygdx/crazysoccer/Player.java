@@ -774,7 +774,11 @@ public class Player extends Actor {
 			 * 	1. не бъет ногой
 			 *  2. не бъет рукой
 			 */
-			case RUN: case TOP_RUN: 
+			case TOP_RUN: 
+//				isCan = false;
+//			break;
+				
+			case RUN: 
 				isCan = !state.get(States.KNEE_CATCH)  && 
 						!state.get(States.FOOT_KICK) &&
 						!state.get(States.SIT) &&
@@ -1258,7 +1262,7 @@ public class Player extends Actor {
 		return animations.get(this.curentState()).getKeyFrameIndex(stateTime);
 	}
 	
-	private boolean upPressed() {
+	public boolean upPressed() {
 		return actionsListener.getActionStateFor(Controls.UP, this.PLAYER_ID).pressed;
 	}
 	
@@ -1266,7 +1270,7 @@ public class Player extends Actor {
 		return actionsListener.getActionStateFor(Controls.UP, this.PLAYER_ID).doublePressed;
 	}
 	
-	private boolean downPressed() {
+	public boolean downPressed() {
 		return actionsListener.getActionStateFor(Controls.DOWN, this.PLAYER_ID).pressed;
 	}
 	
@@ -1274,11 +1278,11 @@ public class Player extends Actor {
 		return actionsListener.getActionStateFor(Controls.DOWN, this.PLAYER_ID).doublePressed;
 	}
 	
-	private boolean leftPressed() {
+	public boolean leftPressed() {
 		return actionsListener.getActionStateFor(Controls.LEFT, this.PLAYER_ID).pressed;
 	}
 	
-	private boolean leftDblPressed() {
+	public boolean leftDblPressed() {
 		return actionsListener.getActionStateFor(Controls.LEFT, this.PLAYER_ID).doublePressed;
 	}
 	
@@ -1286,11 +1290,11 @@ public class Player extends Actor {
 		return actionsListener.getActionStateFor(Controls.LEFT, this.PLAYER_ID).triplePressed;
 	}
 	
-	private boolean rightPressed() {
+	public boolean rightPressed() {
 		return actionsListener.getActionStateFor(Controls.RIGHT, this.PLAYER_ID).pressed;
 	}
 	
-	private boolean rightDblPressed() {
+	public boolean rightDblPressed() {
 		return actionsListener.getActionStateFor(Controls.RIGHT, this.PLAYER_ID).doublePressed;
 	}
 	
@@ -2131,6 +2135,12 @@ public class Player extends Actor {
 		if (c) { 
 			field.sounds.play("catchball01",true);
 			ball.isCatched(true);
+			
+			for (int i = 0; i < field.players.length; i++) {
+				if (i != this.getPlayerId()) {
+					field.players[i].catchBall(false);
+				}
+			}
 		}
 		else if (this.CATCH_BALL) {
 			ball.isCatched(false);

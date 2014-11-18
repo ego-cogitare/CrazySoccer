@@ -765,7 +765,7 @@ public class Player extends Actor {
 							(((rightPressed() && (direction == Directions.LEFT)) || (leftPressed() && (direction == Directions.RIGHT))) && (((maxVelocity() > WALKING_SPEED) && (FRICTION == GRASS_FRICTION)) || (((maxVelocity() > 0) && (FRICTION != GRASS_FRICTION)))))
 						) &&
 						!state.get(States.BODY_ATTACK) &&
-						!state.get(States.TACKLE_ATTACK) &&
+						!state.get(States.TACKLE_ATTACK) && false &&
 						this.getAbsH() == 0;
 			break;
 			

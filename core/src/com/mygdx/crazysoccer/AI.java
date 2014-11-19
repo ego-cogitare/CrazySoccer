@@ -38,7 +38,7 @@ public class AI {
 	// Игра ИИ
 	public void play() {
 		
-		if (System.nanoTime() - LAST_PLAY_TIME < 100000000L) {
+		if (System.nanoTime() - LAST_PLAY_TIME < 200000000L) {
 			return;
 		}
 		else {
@@ -52,34 +52,65 @@ public class AI {
 				if (!field.players[playerId].catchBall()) {
 					
 					// Игрок стремится подойти к мячу
-					if (field.ball.getAbsX() - field.players[playerId].getAbsX() > 20 && field.players[playerId].rightPressed() == false) {
-						actionsStack.get(playerId).add(Controls.RIGHT);
-					}
-					else if (field.ball.getAbsX() - field.players[playerId].getAbsX() < -20 && field.players[playerId].leftPressed() == false) {
-						actionsStack.get(playerId).add(Controls.LEFT);
-					}
-					else {
+					if (field.ball.getAbsX() - field.players[playerId].getAbsX() > 50 && field.players[playerId].rightPressed() == false) {
 						field.actions.remove(Controls.LEFT, playerId);
+						
+						if (field.players[playerId].curentState() != States.RUN) {
+							field.actions.add(Controls.RIGHT, playerId);
+							//field.actions.add(Controls.RIGHT, playerId);
+						}
+					}
+					else if (field.ball.getAbsX() - field.players[playerId].getAbsX() < -50 && field.players[playerId].leftPressed() == false) {
 						field.actions.remove(Controls.RIGHT, playerId);
+						
+						if (field.players[playerId].curentState() != States.RUN) {
+							field.actions.add(Controls.LEFT, playerId);
+							//field.actions.add(Controls.LEFT, playerId);
+						}
 					}
 					
-					if (field.ball.getAbsY() - field.players[playerId].getAbsY() > 20 && field.players[playerId].upPressed() == false) {
-						actionsStack.get(playerId).add(Controls.UP);
+					if (Math.abs(field.ball.getAbsX() - field.players[playerId].getAbsX()) <= 50) {
+						field.actions.remove(Controls.LEFT, playerId);
+						field.actions.remove(Controls.RIGHT, playerId);
+						
+						if (field.players[playerId].curentState() == States.RUN) {
+							if (field.players[playerId].getVelocityX() < 0) 
+								field.actions.add(Controls.RIGHT, playerId);
+							else
+								field.actions.add(Controls.LEFT, playerId);
+						}
 					}
-					else if (field.ball.getAbsY() - field.players[playerId].getAbsY() < -20 && field.players[playerId].downPressed() == false) {
-						actionsStack.get(playerId).add(Controls.DOWN);
+					
+					//System.out.println(field.ball.getAbsX() - field.players[playerId].getAbsX());
+					//System.out.println(field.ball.getAbsY() - field.players[playerId].getAbsY());
+					
+					if (field.ball.getAbsY() - field.players[playerId].getAbsY() > 30 && field.players[playerId].upPressed() == false) {
+						field.actions.add(Controls.UP, playerId);
+						field.actions.remove(Controls.DOWN, playerId);
 					}
-					else {
+					else if (field.ball.getAbsY() - field.players[playerId].getAbsY() < -30 && field.players[playerId].downPressed() == false) {
+						field.actions.add(Controls.DOWN, playerId);
+						field.actions.remove(Controls.UP, playerId);
+					}
+					
+					if (Math.abs(field.ball.getAbsY() - field.players[playerId].getAbsY()) <= 30) {
 						field.actions.remove(Controls.UP, playerId);
 						field.actions.remove(Controls.DOWN, playerId);
 					}
 				}
+				// Игрок владеет мячом
 				else {
 					
-					actionsStack.get(playerId).add(Controls.ACTION1);
+					// Команда удар
+					this.sendCommand(playerId, Controls.ACTION1);
 				}
 			
+				
+				if (playerId == 9) {
+					field.actions.debug(playerId);
+				}
 			}
+			
 			
 			for (int i = 0; i < actionsStack.size(); i++) {
 				for (int j = 0; j < actionsStack.get(i).size(); j++) {
@@ -89,11 +120,24 @@ public class AI {
 				}
 			}
 		}
+		
+	}
+	
+	/**
+	 * Отправка команды от ИИ к игроку
+	 * @param playerId
+	 * @param control
+	 */
+	private void sendCommand(int playerId, Controls control) {
+		
+		actionsStack.get(playerId).add(control);
 	}
 	
 	
-	
-	// Отображение ID игроков, за которых играет ИИ
+	/**
+	 * Отображение ID игроков, за которых играет ИИ
+	 * @return
+	 */
 	public String getPlayFor() {
 		return this.PLAY_FOR.toString();
 	}

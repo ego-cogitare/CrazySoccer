@@ -199,10 +199,10 @@ public class Field extends Stage {
 		
 		// Добавляем ID игрока, за которого будет играть ИИ 
 		ai[0].addPlayer(9);
-		ai[0].addPlayer(8);
-		ai[0].addPlayer(7);
-		ai[0].addPlayer(6);
-		ai[0].addPlayer(5);
+//		ai[0].addPlayer(8);
+//		ai[0].addPlayer(7);
+//		ai[0].addPlayer(6);
+//		ai[0].addPlayer(5);
 		
 		// Экземпляр класса ИИ
 		ai[1] = new AI();
@@ -213,9 +213,9 @@ public class Field extends Stage {
 		// Добавляем ID игрока, за которого будет играть ИИ 
 		//ai[1].addPlayer(0);
 		ai[1].addPlayer(1);
-		ai[1].addPlayer(2);
-		ai[1].addPlayer(3);
-		ai[1].addPlayer(4);
+//		ai[1].addPlayer(2);
+//		ai[1].addPlayer(3);
+//		ai[1].addPlayer(4);
 		
 		// Создание листьев
 		for (int i = 0; i < leafs.length; i++) {

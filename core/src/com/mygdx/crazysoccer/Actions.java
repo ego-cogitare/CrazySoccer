@@ -1,5 +1,7 @@
 package com.mygdx.crazysoccer;
 
+import java.io.Console;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -160,12 +162,18 @@ public class Actions {
 		}
 	}
 	
-	public void debug() {
+	public void debug(int playerId) {
+		
 		for (int i = 0; i < Controls.values().length; i++) {
-			if (actions.get(Controls.values()[i].toString() + "_1")) {
-				//System.out.println("Action: " + Controls.values()[i].toString() + "_0"  + "\nState: " + actions.get(Controls.values()[i].toString() + "_0") + "\nDouble pressed: " + doublePressed.get(Controls.values()[i].toString() + "_0") + "\nTriple pressed: "+triplePressed.get(Controls.values()[i].toString() + "_0")+"\n");
+			//if (actions.get(Controls.values()[playerId])) {
+				System.out.println(
+					"Action : " + Controls.values()[i].toString() + "\n"+
+					"1      : " + (actions.get(Controls.values()[i].toString() + "_" + String.valueOf(playerId)) ? 1 : 0)  + 
+					"\n2      : " + (doublePressed.get(Controls.values()[i].toString() + "_" + String.valueOf(playerId)) ? 1 : 0) + 
+					"\n3      : " + (triplePressed.get(Controls.values()[i].toString() + "_" + String.valueOf(playerId)) ? 1 : 0) + "\n");
+				
 				//System.out.println(Controls.values()[i].toString());
-			}
+			//}
 		}
 	}
 }

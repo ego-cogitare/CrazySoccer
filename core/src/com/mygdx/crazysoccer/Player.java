@@ -1,5 +1,6 @@
 package com.mygdx.crazysoccer;
 
+import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.HashMap;
@@ -87,6 +88,10 @@ public class Player extends Actor {
     private float POS_X = 0.0f;
     private float POS_Y = 0.0f;
     
+    // Координаты точки на поле, за которыми закреплен игрок
+    private float HOME_X = 0.0f;
+    private float HOME_Y = 0.0f; 
+    
     // Ускорение мяча при контакет с землей при выполнении суперудара головой / через себя
     private float HEAD_BACK_SUPER_KICK_ACC = 25.0f;
     
@@ -122,6 +127,25 @@ public class Player extends Actor {
 		TACKLE_ATTACK, 		// Атака подкатом
 		FOOT_ATTACK, 		// Атака ногами в полете
 	} 
+	
+	// Кому подчинен игрок
+	public static enum AddictedTo {
+		HUMAN,				// Человеку
+		AI					// ИИ	
+	}
+	
+	// Подчиненность по умолчанию
+	public AddictedTo addictedTo = AddictedTo.HUMAN;
+	
+	// Амплуа игрока
+	public static enum Amplua {
+		FW,					// Нападающий 
+		MF,					// Полузащитник
+		DF,					// Защитник	
+		GK					// Вратарь
+	}
+	
+	public Amplua amplua;
 	
 	// В какую сторону повернут персонаж
 	public static enum Directions {
@@ -456,6 +480,42 @@ public class Player extends Actor {
 		this.ball = b;
 	}
 	
+	public float getRunSpeed() {
+		return this.RUN_SPEED;
+	}
+	
+	/**
+	 * Получение координаты Х на поле, за которой закреплен игрок
+	 * @return
+	 */
+	public float getHomeX() {
+		return this.HOME_X;
+	}
+	
+	/**
+	 * Получение координаты Y на поле, за которой закреплен игрок
+	 * @return
+	 */
+	public float getHomeY() {
+		return this.HOME_Y;
+	}
+	
+	/**
+	 * Установка координаты Х на поле, за которой закреплен игрок
+	 * @return
+	 */
+	public void setHomeX(float homeX) {
+		this.HOME_X = homeX;
+	}
+	
+	/**
+	 * Установка координаты Y на поле, за которой закреплен игрок
+	 * @return
+	 */
+	public void setHomeY(float homeY) {
+		this.HOME_Y = homeY;
+	}
+	
 	/**
 	 * Получение идентфикатора игрока
 	 * @return Integer - идентификатор игрока
@@ -762,7 +822,7 @@ public class Player extends Actor {
 			
 			case DECELERATION: 
 				isCan = (
-							(((rightPressed() && (direction == Directions.LEFT)) || (leftPressed() && (direction == Directions.RIGHT))) && (((maxVelocity() > WALKING_SPEED) && (FRICTION == GRASS_FRICTION)) || (((maxVelocity() > 0) && (FRICTION != GRASS_FRICTION)))))
+							(((rightPressed() && (direction == Directions.LEFT)) || (leftPressed() && (direction == Directions.RIGHT))) && (((maxVelocity() > WALKING_SPEED) && (FRICTION == GRASS_FRICTION)) || (((maxVelocity() > WALKING_SPEED) && (FRICTION != GRASS_FRICTION)))))
 						) &&
 						!state.get(States.BODY_ATTACK) &&
 						!state.get(States.TACKLE_ATTACK) &&
@@ -775,13 +835,15 @@ public class Player extends Actor {
 			 *  2. не бъет рукой
 			 */
 			case TOP_RUN: 
-//				isCan = false;
-//			break;
+				isCan = addictedTo == AddictedTo.HUMAN;
+				//isCan = addictedTo == AddictedTo.HUMAN || (addictedTo == AddictedTo.AI && Math.abs(field.ball.getAbsX() - getAbsX()) > 300);
+			break;
 				
 			case RUN: 
 				isCan = !state.get(States.KNEE_CATCH)  && 
 						!state.get(States.FOOT_KICK) &&
 						!state.get(States.SIT) &&
+						//!state.get(States.RUN) &&
 						!state.get(States.DEAD) &&
 						!state.get(States.LAY_BACK) &&
 						!state.get(States.LAY_BELLY) &&
@@ -793,7 +855,17 @@ public class Player extends Actor {
 						!state.get(States.BODY_ATTACK) &&
 						!state.get(States.TACKLE_ATTACK) &&
 						!state.get(States.FOOT_ATTACK) &&
-						!state.get(States.JUMP);
+						!state.get(States.JUMP) &&
+						(
+							addictedTo == AddictedTo.HUMAN || 
+							(
+								addictedTo == AddictedTo.AI && 
+								(
+									Math.abs(field.ball.getAbsX() - getAbsX()) > 90 || 
+									this.catchBall()
+								)
+							)
+						);
 			break;
 			
 			/* 
@@ -1378,7 +1450,7 @@ public class Player extends Actor {
 	}
 	
 	// Максимальное расстояние до ворот на котором игрок может выполнить суперудар
-	private float superKickMaxLength() {
+	public float superKickMaxLength() {
 		
 		float maxLength = 0;
 		
@@ -1396,11 +1468,18 @@ public class Player extends Actor {
 		return maxLength;
 	}
 	
+	/**
+	 * Расстояние до ворот 
+	 */
+	public float distanceToDestGates() {
+		return MathUtils.distance(ball.getAbsX(), ball.getAbsY(), field.gates[getDestinationGateId()].getAbsX(), field.gates[getDestinationGateId()].getAbsY());
+	}
+	
 	// Может ли игрок выполнить суперудар
-	private boolean superKickAviable() {
+	public boolean superKickAviable() {
 		
 		if (MathUtils.distance(ball.getAbsX(), ball.getAbsY(), field.gates[this.DESTINATION_GATE_ID].getAbsX(), field.gates[this.DESTINATION_GATE_ID].getAbsY()) < this.superKickMaxLength()) {
-			return (ball.getAbsH() > this.superKickMinHeight());
+			return (ball.getAbsH() > this.superKickMinHeight() && getAbsH() > 0);
 		}
 		else {
 			return false;
@@ -1658,6 +1737,23 @@ public class Player extends Actor {
 		// Перемещение персонажа
 		movePlayerBy(new Vector2(this.CURENT_SPEED_X, this.CURENT_SPEED_Y));
 		
+		// Если игрок запутался в сетке, то пытаемся найти выход из нее
+		if (addictedTo == AddictedTo.AI) {
+			if ((upPressed() || downPressed()) && getVelocityY() == 0) {
+				field.actions.remove(Actions.Controls.UP, getPlayerId());
+				field.actions.remove(Actions.Controls.DOWN, getPlayerId());
+				field.actions.add(getAbsX() < 1800 ? Actions.Controls.RIGHT : Actions.Controls.LEFT, getPlayerId());
+			}
+			else if (rightPressed() && getVelocityX() == 0) {
+				field.actions.remove(Actions.Controls.RIGHT, getPlayerId());
+				field.actions.add(Actions.Controls.UP, getPlayerId());
+			}
+			else if (leftPressed() && getVelocityX() == 0) {
+				field.actions.remove(Actions.Controls.LEFT, getPlayerId());
+				field.actions.add(Actions.Controls.UP, getPlayerId());
+			}
+		}
+			
 		// Если игрок находится в непосредственной близости возле мяча
 		if (this.ballIsNear()) {
 			
@@ -1945,6 +2041,9 @@ public class Player extends Actor {
 	public void hitByBall(float strength) {
 		// Переводим игрока в состояние "убит" 
 		Do(States.DEAD, true);
+		
+		// Звук удара мячом по игроку
+		field.sounds.play("hit01", true);
 		
 		// Подкидываем игрока
 		this.setJumpVelocity(ball.absVelocity() / this.getMass() * strength);

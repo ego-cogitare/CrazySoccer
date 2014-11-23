@@ -29,6 +29,7 @@ import com.badlogic.gdx.math.Polyline;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.mygdx.crazysoccer.Player.AddictedTo;
 import com.mygdx.crazysoccer.Player.Directions;
 import com.mygdx.crazysoccer.Player.States;
 import com.mygdx.crazysoccer.Wind.WindDirections;
@@ -100,7 +101,7 @@ public class Field extends Stage {
 	int innerBoxHeight = 150;
 	int outerBoxWidth = 300;
 	int outerBoxHeight = 280;
-	
+
 	// Параметры игрового экрана
 	public float camMaxX;
 	public float camMaxY;
@@ -110,6 +111,8 @@ public class Field extends Stage {
 	// Смещение игрового поля относительно карты (левого нижнего угла)
 	public int fieldOffsetX;
 	public int fieldOffsetY;  
+	
+	float[][] playersArrangment = new float[10][2];
 	
 	public TiledMap fieldMap;
     public TiledMapRenderer fieldMapRenderer;
@@ -180,6 +183,13 @@ public class Field extends Stage {
 					i <= 4 ? Teams.NEKKETSU : Teams.ITALY
 			);
 
+			// Кем управляется игрок
+			if (i == 0) {
+				players[i].addictedTo = AddictedTo.HUMAN;
+			}
+			else {
+				players[i].addictedTo = AddictedTo.AI;
+			}
 			
 			// Добавление игрока (актера) на сцену (поле)
 			this.addActor(players[i]);
@@ -211,7 +221,7 @@ public class Field extends Stage {
 		ai[1].attachField(this);
 		
 		// Добавляем ID игрока, за которого будет играть ИИ 
-		//ai[1].addPlayer(0);
+		ai[1].addPlayer(0);
 		ai[1].addPlayer(1);
 		ai[1].addPlayer(2);
 		ai[1].addPlayer(3);
@@ -337,6 +347,37 @@ public class Field extends Stage {
         		// Определение наибольшей координаты X, в которую можно смещать камеру     
         		this.camMaxX = this.worldWidth - Gdx.graphics.getWidth() / 2.0f;
         		this.camMaxY = this.worldHeight - Gdx.graphics.getHeight() / 2.0f;
+        		
+        		playersArrangment[0][0] = worldWidth / 2.0f - 23;
+        		playersArrangment[0][1] = fieldOffsetY + fieldHeight / 2.0f;
+        		
+        		playersArrangment[1][0] = 800;
+        		playersArrangment[1][1] = 500;
+        		
+        		playersArrangment[2][0] = 800;
+        		playersArrangment[2][1] = worldHeight - 500;
+        		
+        		playersArrangment[3][0] = worldWidth / 2.0f - 350;
+        		playersArrangment[3][1] = 500;
+        		
+        		playersArrangment[4][0] = worldWidth / 2.0f - 350;
+        		playersArrangment[4][1] = worldHeight - 500;
+        		
+        		playersArrangment[5][0] = worldWidth / 2.0f + 350;
+        		playersArrangment[5][1] = worldHeight - 500;
+        		
+        		playersArrangment[6][0] = worldWidth / 2.0f + 350;
+        		playersArrangment[6][1] = 500;
+        		
+        		playersArrangment[7][0] = worldWidth - 800;
+        		playersArrangment[7][1] = worldHeight - 500;
+        		
+        		playersArrangment[8][0] = worldWidth - 800;
+        		playersArrangment[8][1] = 500;
+        		
+        		playersArrangment[9][0] = worldWidth / 2.0f + 350;
+        		playersArrangment[9][1] = fieldOffsetY + fieldHeight / 2.0f;
+        		
         		
         		// Расстановка игроков
         		this.actorsArrangement();
@@ -572,42 +613,24 @@ public class Field extends Stage {
 		ball.setAbsX(worldWidth / 2.0f);
 		ball.setAbsY(worldHeight / 2.0f);
 		
-		players[0].setAbsX(worldWidth / 2.0f - 23);
-		players[0].setAbsY(fieldOffsetY + fieldHeight / 2.0f);
+		for (int i = 0; i < playersArrangment.length; i++) {
+			players[i].setAbsX(playersArrangment[i][0]);
+			players[i].setAbsY(playersArrangment[i][1]);
+		}
+
+		for (int i = 0; i < playersArrangment.length; i++) {
+			players[i].setAbsX(playersArrangment[i][0]);
+			players[i].setHomeX(playersArrangment[i][0]);
+			players[i].setAbsY(playersArrangment[i][1]);
+			players[i].setHomeY(playersArrangment[i][1]);
+		}
 		
-		players[1].setAbsX(600);
-		players[1].setAbsY(500);
-		
-		players[2].setAbsX(600);
-		players[2].setAbsY(worldHeight - 500);
-		
-		players[3].setAbsX(worldWidth / 2.0f - 350);
-		players[3].setAbsY(500);
-		
-		players[4].setAbsX(worldWidth / 2.0f - 350);
-		players[4].setAbsY(worldHeight - 500);
-		
-		
-		players[5].setAbsX(worldWidth / 2.0f + 350);
-		players[5].setAbsY(worldHeight - 500);
-		players[5].direction = Directions.LEFT;
-		
-		players[6].setAbsX(worldWidth / 2.0f + 350);
-		players[6].setAbsY(500);
-		players[6].direction = Directions.LEFT;
-		
-		players[7].setAbsX(worldWidth - 600);
-		players[7].setAbsY(worldHeight - 500);
-		players[7].direction = Directions.LEFT;
-		
-		players[8].setAbsX(worldWidth - 600);
-		players[8].setAbsY(500);
-		players[8].direction = Directions.LEFT;
-		
-		players[9].setAbsX(worldWidth / 2.0f + 350);
-		players[9].setAbsY(fieldOffsetY + fieldHeight / 2.0f);
+		players[5].direction = 
+		players[6].direction = 
+		players[7].direction = 
+		players[8].direction = 
 		players[9].direction = Directions.LEFT;
-		
+
 		gates[0].setAbsX(290);
 		gates[0].setAbsY(worldHeight / 2 - 100);
 		
@@ -673,7 +696,7 @@ public class Field extends Stage {
 			// Игра ИИ
 			ai[0].play();
 			
-			//ai[1].play();
+			ai[1].play();
 			
 			// Сортировака спрайтов по глубине
 			zIndexSorting();
@@ -841,9 +864,10 @@ public class Field extends Stage {
 				// Проверка, не находятся ли игроки в одной и той же моканде
 				if (players[i].getTeamId() != players[j].getTeamId()) {
 					
-					float distance = MathUtils.distance(players[i].getAbsX(), 0, players[j].getAbsX(), 0);
+					float distanceX = Math.abs(players[i].getAbsX() - players[j].getAbsX());
+					float distanceY = Math.abs(players[i].getAbsY() - players[j].getAbsY());
 					
-					if (distance < 70 && Math.abs(players[i].getAbsY() - players[j].getAbsY()) < 35) {
+					if (distanceX < 65 && distanceY < 35) {
 						
 						// Игрок i атакует игрока j
 						if (attackStates.indexOf(players[i].curentState()) >= 0 && attackStates.indexOf(players[j].curentState()) == -1) {
@@ -868,10 +892,11 @@ public class Field extends Stage {
 		if (players[playerA].Can(States.DEAD)) {
 			players[playerA].Do(States.DEAD, true);
 			
+			sounds.play("hit01", true);
+			
 			// Если это не подкат, то откидывает игрока, которого атаковали
 			if (players[playerB].curentState() != States.TACKLE_ATTACK) {
 				players[playerA].setJumpVelocity(4.0f);
-				sounds.play("hit01", true);
 			}
 		}
 	}

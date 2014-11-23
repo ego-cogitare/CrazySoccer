@@ -3,6 +3,7 @@ package com.mygdx.crazysoccer;
 import java.util.ArrayList;
 
 import com.mygdx.crazysoccer.Actions.Controls;
+import com.mygdx.crazysoccer.Player.Directions;
 import com.mygdx.crazysoccer.Player.States;
 
 public class AI {
@@ -23,6 +24,12 @@ public class AI {
 	public void addPlayer(int playerId) {
 		PLAY_FOR.add(playerId);
 	}
+	
+	// Приблизился ли игрок к мячу по оси ОХ
+	private boolean ACHIEVE_BALL_X = false;
+	
+	// Приблизился ли игрок к мячу по оси ОY
+	private boolean ACHIEVE_BALL_Y = false;
 	
 	// Получение ссылки на игровой мир
 	public void attachField(Field field) {
@@ -59,8 +66,6 @@ public class AI {
 			return "["+this.PLAYER_ID+", "+this.START+", "+this.DURATION+", "+this.CONTROL.toString()+"]";
 		}
 	}
-	
-	private AIButton aiButton;
 	
 	// Очередь действий, которые ИИ решил применить к игроку
 	public ArrayList<ArrayList<AIButton>> actionsStack = new ArrayList<ArrayList<AIButton>>(); 
@@ -130,11 +135,16 @@ public class AI {
 	}
 	
 	private void aiCommand(int playerId, long timeOffset, long pressDuration, Controls button) {
-		if (this.actionsStack.get(playerId).size() < 4) {
+		if (this.actionsStack.get(playerId).size() < 5) {
 			this.actionsStack.get(playerId).add(
 				new AIButton(playerId, timeOffset * 1000000, pressDuration * 1000000, button)
 			);
 		}
+	}
+	
+	private boolean aiCommandExists(int playerId, Controls control) {
+		
+		return actionsStack.get(playerId).indexOf(control) != -1;
 	}
 	
 	private void sendCommandToPlayer(int playerId, Controls command) {
@@ -145,8 +155,179 @@ public class AI {
 		field.actions.remove(command, playerId);
 	}
 	
+	private void removeCommandFromPlayer(int playerId, Controls command1, Controls command2) {
+		field.actions.remove(command1, playerId);
+		field.actions.remove(command2, playerId);
+	}
+	
 	private Player getPlayer(int playerId) {
 		return field.players[playerId];
+	}
+	
+	private void updateTicker() {
+		LAST_PLAY_TIME = System.nanoTime();
+	}
+	
+	/**
+	 * Перемещение персонажа в нужную позицию
+	 * @param followX
+	 * @param followY
+	 * @param playerId
+	 */
+	private boolean moveTo(float followX, float followY, int playerId, float dX, float dY) {
+		
+		boolean acieveX = false;
+		boolean acieveY = false;
+		
+		if (followX - getPlayer(playerId).getAbsX() > dX/* && !getPlayer(playerId).rightPressed()*/) {
+			
+			removeCommandFromPlayer(playerId, Controls.LEFT);
+			
+			//if (getPlayer(playerId).curentState() != States.RUN) {
+				aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.RIGHT);
+			//}
+//			aiCommand(playerId, 100, this.DEF_PRESS_DURATION, Controls.RIGHT);
+		}
+		else if (followX - getPlayer(playerId).getAbsX() < -dX/* && !getPlayer(playerId).leftPressed()*/) {
+			
+			removeCommandFromPlayer(playerId, Controls.RIGHT);
+			
+			//if (getPlayer(playerId).curentState() != States.RUN) {
+				aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.LEFT);
+			//}
+//			aiCommand(playerId, 100, this.DEF_PRESS_DURATION, Controls.LEFT);
+		}
+		
+		if (followY - getPlayer(playerId).getAbsY() > dY && !getPlayer(playerId).upPressed()) {
+			
+			removeCommandFromPlayer(playerId, Controls.DOWN);
+			sendCommandToPlayer(playerId, Controls.UP);
+		}
+		else if (followY - getPlayer(playerId).getAbsY() < -dY && !getPlayer(playerId).downPressed()) {
+			
+			removeCommandFromPlayer(playerId, Controls.UP);
+			sendCommandToPlayer(playerId, Controls.DOWN);
+		}
+		
+		
+		// Проверка достиг ли игрок цели по оси OX
+		if (MathUtils.distance(followX, 0, getPlayer(playerId).getAbsX(), 0) < dX) {
+			
+			if (getPlayer(playerId).getVelocityX() >= getPlayer(playerId).getRunSpeed()) {
+				aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.LEFT);
+			}
+			else if (getPlayer(playerId).getVelocityX() <= -getPlayer(playerId).getRunSpeed()) {
+				aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.RIGHT);
+			}
+			
+			acieveX = true;
+		}
+		else {
+			acieveX = false;
+		}
+		
+		// Проверка достиг ли игрок цели по оси OY
+		if (MathUtils.distance(followY, 0, getPlayer(playerId).getAbsY(), 0) < dY) {
+			
+			removeCommandFromPlayer(playerId, Controls.UP, Controls.DOWN);
+			
+			acieveY = true;
+		}
+		else {
+			acieveY = false;
+		}
+		
+		return acieveX & acieveY;
+	}
+	
+	/**
+	 * Полная остановка игрока
+	 * @param playerId
+	 */
+	public void playerStop(int playerId) {
+		
+		removeCommandFromPlayer(playerId, Controls.LEFT, Controls.RIGHT);
+		removeCommandFromPlayer(playerId, Controls.UP, Controls.DOWN);
+		
+		if (getPlayer(playerId).curentState() == States.RUN) {
+			
+			if (getPlayer(playerId).getVelocityX() > 0) {
+				sendCommandToPlayer(playerId, Controls.LEFT);
+			}
+			else if (getPlayer(playerId).getVelocityX() < 0) {
+				sendCommandToPlayer(playerId, Controls.RIGHT);
+			}
+		}
+		
+		if (getPlayer(playerId).Can(States.STAY)) {
+			getPlayer(playerId).Do(States.STAY, true);
+		}
+	}
+
+	/**
+	 * Очистка очереди выполнения команд игрока
+	 * @param playerId
+	 */
+	private void clearActionStack(int playerId) {
+		actionsStack.get(playerId).clear();
+	}
+	
+	/**
+	 * Перечень возможных суперударов 
+	 * @author ASRock960
+	 */
+	private static enum SuperKickTypes {
+		HEAD,
+		BACK,
+		FOOT
+	}
+	
+	/**
+	 * Переводит игрока в состояние бега в указанном направлении
+	 * @param playerId
+	 * @param contorl
+	 */
+	private void makeRun(int playerId, Controls control) {
+		// Если игрок бежит в противоположном направлении
+		if (getPlayer(playerId).curentState() == States.RUN) {
+			
+			if (control == Controls.RIGHT && getPlayer(playerId).getVelocityX() < 0) {
+				aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.RIGHT);
+			}
+			else if (control == Controls.LEFT && getPlayer(playerId).getVelocityX() > 0) {
+				aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.LEFT);
+			}
+		}
+		else {
+			aiCommand(playerId, 100, this.DEF_PRESS_DURATION, control);
+			aiCommand(playerId, 150, this.DEF_PRESS_DURATION, control);
+		}
+	}
+	
+	/**
+	 * Выполнение суперудара 
+	 */
+	private void superKick(SuperKickTypes type, int playerId) {
+		
+		switch (type) {
+		
+			case HEAD:
+				aiCommand(playerId,   0, this.DEF_PRESS_DURATION, Controls.ACTION3);
+				aiCommand(playerId, 200, this.DEF_PRESS_DURATION, getPlayer(playerId).getDestinationGateId() == Gate.LEFT_GATES ? Controls.LEFT : Controls.RIGHT);
+				aiCommand(playerId, 200, this.DEF_PRESS_DURATION, Controls.ACTION1);
+			break;
+			
+			case FOOT:
+				aiCommand(playerId,   0, this.DEF_PRESS_DURATION, Controls.ACTION3);
+				aiCommand(playerId, 200, this.DEF_PRESS_DURATION, Controls.ACTION1);
+			break;
+			
+			case BACK:
+				aiCommand(playerId,   0, this.DEF_PRESS_DURATION, Controls.ACTION3);
+				aiCommand(playerId, 200, this.DEF_PRESS_DURATION, getPlayer(playerId).getDestinationGateId() == Gate.LEFT_GATES ? Controls.RIGHT : Controls.LEFT);
+				aiCommand(playerId, 200, this.DEF_PRESS_DURATION, Controls.ACTION1);
+			break;
+		}
 	}
 	
 	// Игра ИИ
@@ -161,82 +342,91 @@ public class AI {
 				fetchFirstAction(playerId);
 				disableOldActions(playerId);
 			}
-			
-			//field.actions.debug(playerId);
 		}
 		else {
-			LAST_PLAY_TIME = System.nanoTime();
+			this.updateTicker();
 			
+			
+			// Проход по игрокам и принятие решения какое действие должен выполнять игрок
 			for (int i = 0; i < PLAY_FOR.size(); i++) {
 				
+				// Получение идентификатора игрока
 				int playerId = PLAY_FOR.get(i);
-			
-				if (getPlayer(playerId).catchBall()) {
-					
-					aiCommand(playerId,   0, this.DEF_PRESS_DURATION, Controls.ACTION3);
-					aiCommand(playerId, 200, this.DEF_PRESS_DURATION, Controls.RIGHT);
-					aiCommand(playerId, 200, this.DEF_PRESS_DURATION, Controls.ACTION1);
-					
-//					if (!getPlayer(playerId).rightPressed()) 
-//						aiCommand(playerId,    0, 500, Controls.RIGHT);
-//					
-//					if (!getPlayer(playerId).downPressed())
-//						aiCommand(playerId,  1000, 500, Controls.DOWN);
-//					
-//					if (!getPlayer(playerId).leftPressed())
-//						aiCommand(playerId, 2000, 500, Controls.LEFT);
-//					
-//					if (!getPlayer(playerId).upPressed())
-//						aiCommand(playerId, 3000, 500, Controls.UP);
-					
-					System.out.println(playerId + " : " + this.queueToString(playerId));
-				}
-				else {
 				
-					// Игрок стремится подойти к мячу
-					if (field.ball.getAbsX() - field.players[playerId].getAbsX() > 50 && field.players[playerId].rightPressed() == false) {
-						field.actions.remove(Controls.LEFT, playerId);
+				//if (playerId == 9) System.out.println(queueToString(playerId));
+				
+				/**
+				 * Поведение игрока зависит от того, кто контроллирует мяч.
+				 * Если мяч контроллирует кто-то из команды этого игрока, то игрок должен либо пытаться вернуться на загимаемую позицию
+				 * либо способствовать продвижению атаки. В противном случае игрок должен пытаться отобрать мяч, если мяч находится в 
+				 * зоне ответственности игрока.
+				 */
+				
+				// Куда следовать для отбора мяча
+				float followX = -1;
+				float followY = -1;
+				
+				if (this.getPlayer(playerId).ballManagedByOpponents()) {
+					followX = field.players[field.ball.managerByBlayer()].getAbsX();
+					followY = field.players[field.ball.managerByBlayer()].getAbsY();
+				}
+				else if (!field.ball.isCatched()) {
+					
+//					if (field.ball.getAbsH() == 0) {
+						followX = field.ball.getAbsX();
+						followY = field.ball.getAbsY();
+//					}
+//					else {
+//						
+//					}
+				}
+				
+				// Если мяч ничейный или контроллируется оппонентом
+				if (followX != -1 && followY != -1) {
+					
+					if (moveTo(followX, followY, playerId, 40, 16)) {
+						// Если игрок добрался до мяча, то выполняется попытка отбора мяча
+						aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.ACTION1);
+					}
+					else {
 						
-						if (field.players[playerId].curentState() != States.RUN) {
-							field.actions.add(Controls.RIGHT, playerId);
-							//field.actions.add(Controls.RIGHT, playerId);
+					}
+				}
+				// Мяч контроллируется игроком команды к которой принадлежит данный игрок
+				else {
+					
+					// Если мяч контроллируется игроком
+					if (this.getPlayer(playerId).catchBall()) {
+						
+						//System.out.println(getPlayer(playerId).distanceToDestGates());
+						
+						// Если доступен суперудар, то выполняем его, иначе движемся в сторону ворот, по которым нужно бить
+						if (getPlayer(playerId).distanceToDestGates() < getPlayer(playerId).superKickMaxLength()) {
+							
+							// Произвольным образом выбираем тип суперудара, которым будет бить игрок
+							int ind = MathUtils.random(0, SuperKickTypes.values().length - 1);
+							
+							// Выполнение суперудара
+							superKick(SuperKickTypes.values()[ind], playerId);
+						}
+						else {
+							makeRun(
+								playerId, 
+								getPlayer(playerId).getDestinationGateId() == Gate.LEFT_GATES ? Controls.LEFT : Controls.RIGHT
+							);
 						}
 					}
-					else if (field.ball.getAbsX() - field.players[playerId].getAbsX() < -50 && field.players[playerId].leftPressed() == false) {
-						field.actions.remove(Controls.RIGHT, playerId);
-						
-						if (field.players[playerId].curentState() != States.RUN) {
-							field.actions.add(Controls.LEFT, playerId);
-							//field.actions.add(Controls.LEFT, playerId);
+					// Мяч контроллируется другим игроком команды к которой принадлежит игрок
+					else {
+						// Игрок возвращается на свою позицию на поле
+						if (moveTo(getPlayer(playerId).getHomeX(), getPlayer(playerId).getHomeY(), playerId, 70, 30)) {
+							
+							// Если игрок достиг своей позиции на поле, за которой он закреплен поворачиваем его в нужную сторону
+							getPlayer(playerId).direction = getPlayer(playerId).getDestinationGateId() == Gate.LEFT_GATES ? Directions.LEFT : Directions.RIGHT;
 						}
-					}
-					
-					if (Math.abs(field.ball.getAbsX() - field.players[playerId].getAbsX()) <= 50) {
-						field.actions.remove(Controls.LEFT, playerId);
-						field.actions.remove(Controls.RIGHT, playerId);
 						
-						if (field.players[playerId].curentState() == States.RUN) {
-							if (field.players[playerId].getVelocityX() < 0) 
-								field.actions.add(Controls.RIGHT, playerId);
-							else
-								field.actions.add(Controls.LEFT, playerId);
-						}
+						//playerStop(playerId);
 					}
-					
-					if (field.ball.getAbsY() - field.players[playerId].getAbsY() > 30 && field.players[playerId].upPressed() == false) {
-						field.actions.add(Controls.UP, playerId);
-						field.actions.remove(Controls.DOWN, playerId);
-					}
-					else if (field.ball.getAbsY() - field.players[playerId].getAbsY() < -30 && field.players[playerId].downPressed() == false) {
-						field.actions.add(Controls.DOWN, playerId);
-						field.actions.remove(Controls.UP, playerId);
-					}
-					
-					if (Math.abs(field.ball.getAbsY() - field.players[playerId].getAbsY()) <= 30) {
-						field.actions.remove(Controls.UP, playerId);
-						field.actions.remove(Controls.DOWN, playerId);
-					}
-					
 				}
 				
 			}

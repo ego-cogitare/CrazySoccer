@@ -109,4 +109,15 @@ class MathUtils {
 		
 		return (float)Math.sqrt((ax1 - ax2) * (ax1 - ax2) + (ay1 - ay2) * (ay1 - ay2));
 	}
+	
+	/**
+	 * Генерирование случайного числа в диапазоне min..max
+	 * @param min
+	 * @param max
+	 * @return int - случайное число в указанном диапазоне
+	 */
+	public static int random(int min, int max) {
+		
+		return Math.round((float)Math.random() * (max - min)) + min;
+	}
 }

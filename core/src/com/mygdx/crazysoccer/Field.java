@@ -209,10 +209,10 @@ public class Field extends Stage {
 		
 		// Добавляем ID игрока, за которого будет играть ИИ 
 		ai[0].addPlayer(9);
-		ai[0].addPlayer(8);
-		ai[0].addPlayer(7);
-		ai[0].addPlayer(6);
-		ai[0].addPlayer(5);
+//		ai[0].addPlayer(8);
+//		ai[0].addPlayer(7);
+//		ai[0].addPlayer(6);
+//		ai[0].addPlayer(5);
 		
 		// Экземпляр класса ИИ
 		ai[1] = new AI();
@@ -221,11 +221,11 @@ public class Field extends Stage {
 		ai[1].attachField(this);
 		
 		// Добавляем ID игрока, за которого будет играть ИИ 
-		ai[1].addPlayer(0);
-		ai[1].addPlayer(1);
-		ai[1].addPlayer(2);
-		ai[1].addPlayer(3);
-		ai[1].addPlayer(4);
+//		ai[1].addPlayer(0);
+//		ai[1].addPlayer(1);
+//		ai[1].addPlayer(2);
+//		ai[1].addPlayer(3);
+//		ai[1].addPlayer(4);
 		
 		// Создание листьев
 		for (int i = 0; i < leafs.length; i++) {
@@ -493,6 +493,92 @@ public class Field extends Stage {
 			}
 		}
 	}
+	
+	/**
+	 * Получение ID ближайшего игрока к игроку с ID = playerId
+	 * 
+	 * @param playerId<int> - ID игрока, для которого искать ближайшего игрока
+	 * 
+	 * @param searchAmong<int> - Среди кого искать
+	 * 	 Player.NEAREST_RIVAL - искать среди противников
+	 * 	 Player.NEAREST_ALLY - искать среди союзников
+	 * 	 Player.NEAREST_BOTH - искать среди всех
+	 * 
+	 * @param aliveOnly<boolean> - Искать только среди жывих (не States.DEAD) игроков
+	 *  
+	 * @return ID - ближайшего игрока 
+	 */
+	public int playerNearest(int playerId, int searchAmong, boolean aliveOnly, boolean up, boolean right, boolean down, boolean left) { 
+		
+		int nearestPlayerId = -1; 
+		float nearestPlayerDist = 99999; 
+		float curPlayerDist = 0.0f;
+		boolean flag      = false, 
+				aliveFlag = false, 
+				upFlag    = false, 
+				rightFlag = false, 
+				downFlag  = false, 
+				leftFlag  = false;
+		
+		if (up) down = false;
+		if (right) left = false;
+		
+		for (int i = 0; i < players.length; i++) {
+			
+			// Искать среди всех и живых и прибитых
+			if (aliveOnly == false)
+				aliveFlag = true;
+			// Искать только среди живых
+			else
+				aliveFlag = !players[players[i].getPlayerId()].isDead();
+			
+			//upFlag = rightFlag = downFlag = leftFlag = false;
+			
+			if (up) 
+				upFlag = players[players[i].getPlayerId()].getAbsY() >= players[playerId].getAbsY();
+			else 
+				upFlag = true;
+			
+			if (right) 
+				rightFlag = players[players[i].getPlayerId()].getAbsX() >= players[playerId].getAbsX();
+			else 
+				rightFlag = true;
+			
+			if (down) 
+				downFlag = players[players[i].getPlayerId()].getAbsY() <= players[playerId].getAbsY();
+			else 
+				downFlag = true;
+			
+			if (left) 
+				leftFlag = players[players[i].getPlayerId()].getAbsX() <= players[playerId].getAbsX();
+			else 
+				leftFlag = true;
+			
+			
+			if (searchAmong == 0) {
+				flag = (players[playerId].getTeamId() != players[players[i].getPlayerId()].getTeamId() && aliveFlag) ? true : false;
+			}
+			else if (searchAmong == 1) {
+				flag = (players[playerId].getTeamId() == players[players[i].getPlayerId()].getTeamId() && aliveFlag) ? true : false;
+			}
+			else if (searchAmong == 2) {
+				flag = aliveFlag; 
+			}
+			
+			if (players[i].getPlayerId() != playerId && flag && upFlag && rightFlag && downFlag && leftFlag) {
+				// Расстояние к текущему игроку
+				curPlayerDist = MathUtils.distance(players[playerId].getAbsX(), players[playerId].getAbsY(), players[players[i].getPlayerId()].getAbsX(), players[players[i].getPlayerId()].getAbsY());
+				
+				// Если текущий игрок ближе
+				if (curPlayerDist < nearestPlayerDist) {
+					nearestPlayerDist = curPlayerDist;
+					nearestPlayerId = players[i].getPlayerId();
+				}				
+			}
+		}
+		
+		return nearestPlayerId;
+	}
 
 	// Проверка находится ли клетка внутри полигона (озера / болота)
 	public boolean isCellInPolygon(float x, float y) {
@@ -654,7 +740,7 @@ public class Field extends Stage {
 		}
 	}
 	
-	public void processGame() { 
+	public void processGame() {
 		
 		drawField();
 		
@@ -850,6 +936,11 @@ public class Field extends Stage {
 				// Меняем направление движения мяча на противоположное
 				ball.setVelocityX(-ball.getVelocityX());
 				
+				// Переводим мяч в режим обычного полета (на случай если он летел после суперудара, когда гравитация на мяч отключена)
+				ball.Do(Ball.States.FLY_MEDIUM, true);
+				ball.allowGravityFrom(999.0f);
+				ball.setJumpVelocity(0.0f);
+				
 				// Звук удара мяча о каркас ворот
 				sounds.play("balllanding02", true);
 			}
@@ -897,6 +988,8 @@ public class Field extends Stage {
 			// Если это не подкат, то откидывает игрока, которого атаковали
 			if (players[playerB].curentState() != States.TACKLE_ATTACK) {
 				players[playerA].setJumpVelocity(4.0f);
+				players[playerA].setVelocityX(players[playerB].getVelocityX() / 2.0f);
+				players[playerA].setVelocityY(players[playerB].getVelocityY() / 2.0f);
 			}
 		}
 	}

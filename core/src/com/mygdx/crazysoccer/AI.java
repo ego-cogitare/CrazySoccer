@@ -14,6 +14,9 @@ public class AI {
 	// Список игроков, за которых будет играть ИИ
 	private ArrayList<Integer> PLAY_FOR = new ArrayList<Integer>(); 
 	
+	// Список идентификаторов игроков из команды соперников
+	private ArrayList<ArrayList<Integer>> opponents = new ArrayList<ArrayList<Integer>>();
+	
 	// Время последнего принятия решения ИИ
 	private long LAST_PLAY_TIME = 0; 
 	
@@ -23,13 +26,9 @@ public class AI {
 	// Добавление игрока, за которого будет играть ИИ
 	public void addPlayer(int playerId) {
 		PLAY_FOR.add(playerId);
+		
+		setOpponentPlayers(playerId);
 	}
-	
-	// Приблизился ли игрок к мячу по оси ОХ
-	private boolean ACHIEVE_BALL_X = false;
-	
-	// Приблизился ли игрок к мячу по оси ОY
-	private boolean ACHIEVE_BALL_Y = false;
 	
 	// Получение ссылки на игровой мир
 	public void attachField(Field field) {
@@ -74,6 +73,7 @@ public class AI {
 		
 		for (int i = 0; i < 10; i++) {
 			actionsStack.add(i, new ArrayList<AIButton>());
+			opponents.add(i, new ArrayList<Integer>());
 		}
 	}
 	
@@ -166,6 +166,18 @@ public class AI {
 	
 	private void updateTicker() {
 		LAST_PLAY_TIME = System.nanoTime();
+	}
+	
+	/**
+	 * Установка списка игроков из команды оппонентов
+	 * @param playerId
+	 */
+	private void setOpponentPlayers(int playerId) {
+		for (int i = 0; i < field.players.length; i++) {
+			if (getPlayer(playerId).getTeamId() != field.players[i].getTeamId()) {
+				this.opponents.get(playerId).add(field.players[i].getPlayerId());
+			}
+		}
 	}
 	
 	/**
@@ -365,16 +377,23 @@ public class AI {
 				// Куда следовать для отбора мяча
 				float followX = -1;
 				float followY = -1;
+				float dX = 32;
+				float dY = 16;
 				
-				if (this.getPlayer(playerId).ballManagedByOpponents()) {
-					followX = field.players[field.ball.managerByBlayer()].getAbsX();
-					followY = field.players[field.ball.managerByBlayer()].getAbsY();
+				if (getPlayer(playerId).ballManagedByOpponents()) {
+					followX = getPlayer(field.ball.managerByBlayer()).getAbsX();
+					followY = getPlayer(field.ball.managerByBlayer()).getAbsY();
+					dX = 64;
+					dY = 16;
 				}
 				else if (!field.ball.isCatched()) {
 					
 //					if (field.ball.getAbsH() == 0) {
 						followX = field.ball.getAbsX();
 						followY = field.ball.getAbsY();
+						
+						dX = 32;
+						dY = 16;
 //					}
 //					else {
 //						
@@ -384,12 +403,54 @@ public class AI {
 				// Если мяч ничейный или контроллируется оппонентом
 				if (followX != -1 && followY != -1) {
 					
-					if (moveTo(followX, followY, playerId, 40, 16)) {
-						// Если игрок добрался до мяча, то выполняется попытка отбора мяча
-						aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.ACTION1);
-					}
-					else {
+					if (moveTo(followX, followY, playerId, dX, dY)) {
 						
+						// Если игрок добрался до мяча, то выполняется попытка отбора мяча
+						if (Math.random() > 0.5f) {
+							aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.ACTION2);
+						}
+						else {
+							aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.ACTION1);
+						}
+					}
+					// Пока игрок движется к ничейному мячу (или к мячу который контроллирует оппонентом)
+					else {
+						/* Целесообразно выполнять удар в прыжке при следующих ситуациях:
+						 *   1. Когда игрок доганяет игрока сзади (т.е. его скорость больше скорости убегающего)
+						 */
+						
+						// ID игрока, который управляет мячом
+						int managedBy = field.ball.managerByBlayer();
+						
+						if
+						(
+							(
+								managedBy >= 0 &&
+								getPlayer(playerId).ballManagedByOpponents() &&
+								Math.abs(getPlayer(playerId).getVelocityX()) > getPlayer(managedBy).getVelocityX() &&
+								MathUtils.distance(getPlayer(playerId).getAbsX(), getPlayer(playerId).getAbsY(), getPlayer(managedBy).getAbsX(), getPlayer(managedBy).getAbsY()) < 180 &&
+								(
+									(
+										getPlayer(managedBy).getVelocityX() != 0 &&
+										getPlayer(managedBy).getAbsH() == 0
+									)
+									||
+									(
+										getPlayer(managedBy).getAbsH() > 0
+									)
+								)
+							)
+						) 
+						{
+							// Игрок подпрыгивает
+							aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.ACTION3);
+					
+							// и бъет ногами или корпусом
+							if (Math.random() > 0.5f)  
+								aiCommand(playerId, 100, this.DEF_PRESS_DURATION, Controls.ACTION1);
+							else
+								aiCommand(playerId, 100, this.DEF_PRESS_DURATION, Controls.ACTION2);
+						}
 					}
 				}
 				// Мяч контроллируется игроком команды к которой принадлежит данный игрок
@@ -414,6 +475,10 @@ public class AI {
 								playerId, 
 								getPlayer(playerId).getDestinationGateId() == Gate.LEFT_GATES ? Controls.LEFT : Controls.RIGHT
 							);
+							
+							//aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.UP);
+							
+							removeCommandFromPlayer(playerId, Controls.UP, Controls.DOWN);
 						}
 					}
 					// Мяч контроллируется другим игроком команды к которой принадлежит игрок

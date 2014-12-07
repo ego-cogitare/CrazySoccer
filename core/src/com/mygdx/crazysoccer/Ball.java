@@ -298,7 +298,7 @@ public class Ball extends Actor {
 			if (h < 5.5f) h = 5.5f; else if (h > 8.5f) h = 8.5f;
 			
 			// Сила, с которой нужно отправить мяч, чтобы он долетел
-			f = l / (h * 3.50f);
+			f = l / (h * 3.75f);
 			
 			// Удар по мячу
 			kick(f, dstX, dstY, true);

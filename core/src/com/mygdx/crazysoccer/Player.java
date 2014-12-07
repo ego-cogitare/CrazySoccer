@@ -34,6 +34,23 @@ public class Player extends Actor {
 	private static final int FRAME_COLS = 8;    
     private static final int FRAME_ROWS = 8;
     
+    /* Предопределенные константы для локализации поиска */
+    /**
+     * Ближайший соперник
+     */
+	public static final int NEAREST_RIVAL = 0;
+	/**
+     * Ближайший союзник
+     */
+	public static final int NEAREST_ALLY  = 1;
+	/**
+     * Ближайший игрок (любой)
+     */
+	public static final int NEAREST_BOTH  = 2;
+	
+	// Идентификатор ближайшего игрока	
+	private int NEAREST_PLAYER_ID = 0;
+    
     // Спрайт для отрисовки персонажа
     public SpriteBatch spriteBatch;
     
@@ -82,7 +99,7 @@ public class Player extends Actor {
     // Параметры перемещения персонажа
     private float CURENT_SPEED_X = 0.0f;
     private float CURENT_SPEED_Y = 0.0f;
-    private float WALKING_SPEED = 3.5f;
+    private float WALKING_SPEED = 3.0f;
     private float RUN_SPEED = 6.0f;
     private float TOP_RUN_SPEED = 9.0f;
     private float POS_X = 0.0f;
@@ -805,6 +822,7 @@ public class Player extends Actor {
 						!state.get(States.HEAD_KICK) &&
 						!state.get(States.SIT) &&
 						!state.get(States.DEAD) &&
+						!state.get(States.PASS) &&
 						!state.get(States.HEAD_PASS) &&
 						!state.get(States.LAY_BACK) &&
 						!state.get(States.LAY_BELLY) &&
@@ -1208,7 +1226,7 @@ public class Player extends Actor {
 			break;
 			
 			case PASS: case HEAD_PASS:
-				disableDirections();
+				//disableDirections();
 				actionsListener.disableAction(Controls.ACTION2, this.PLAYER_ID);
 				this.stateTime = 0.0f;
 				
@@ -1833,10 +1851,7 @@ public class Player extends Actor {
 					field.sounds.play("pass01", true);
 					
 					// Определение кому отдать пас
-					if (this.PLAYER_ID == 0)
-						ball.pass(field.players[9].getAbsX(),field.players[9].getAbsY());
-					else 
-						ball.pass(field.players[0].getAbsX(),field.players[0].getAbsY());
+					pass();
 				break;
 				
 				case PASS:
@@ -1854,10 +1869,7 @@ public class Player extends Actor {
 						field.sounds.play("pass01", true);
 						
 						// Определение кому отдать пас
-						if (this.PLAYER_ID == 0)
-							ball.pass(field.players[9].getAbsX(),field.players[9].getAbsY());
-						else 
-							ball.pass(field.players[0].getAbsX(),field.players[0].getAbsY());
+						pass();
 					}
 				break;
 				
@@ -1971,6 +1983,57 @@ public class Player extends Actor {
 			// Проигрывание звука приземления
 			field.sounds.play("landing01", true);
 		}
+	}
+	
+	/**
+	 * Bыполнение паса игроком 
+	 */
+	public void pass() {
+		
+		boolean up = false, down = false, right = false, left = false;
+		
+		// Определяем сторону с которой искать игрока для паса
+		right = (direction == Directions.RIGHT);
+		left  = (direction == Directions.LEFT);
+		
+		// Переопредление направления куда давать пас
+		up = upPressed(); down = downPressed();
+		
+		// Если зажата клавиша направления паса, переопределяем направление паса
+		if (rightPressed()) {
+			left = false;
+			right = true;
+		} 
+		if (leftPressed()) {
+			right = false;
+			left = true;
+		} 
+		
+		// Поиск ближайшего игрока, который соответсвует критерям паса
+		NEAREST_PLAYER_ID = 
+			field.playerNearest(
+				this.getPlayerId(),
+				Player.NEAREST_ALLY,
+				true,
+				up,    // Вверх
+				right, // Вправо
+				down,  // Вниз
+				left   // Влево
+			);
+		
+		// Найден игрок, который мог бы получить пасс согласно критериев
+		if (NEAREST_PLAYER_ID >= 0) 
+			ball.pass(
+				field.players[NEAREST_PLAYER_ID].getAbsX(),
+				field.players[NEAREST_PLAYER_ID].getAbsY()
+			);
+		
+		// Игрок для получения паса не найден, скидываем мяч по направлению игрока
+		else
+			ball.pass(
+				getAbsX() + (right ? 400 : 0) + (left ? -400 : 0),
+				getAbsY() + (up ? 150 : 0) + (down ? -150 : 0)
+			);
 	}
 	
 	/**
@@ -2221,6 +2284,14 @@ public class Player extends Actor {
 			}
 		}
 	}
+	
+	/**
+	 * 
+	 * @return boolean - true, если игрок не способен выполнять какие-либо действия
+	 */
+	public boolean isDead() {
+		return (curentState() == States.DEAD || curentState() == States.LAY_BACK || curentState() == States.LAY_BELLY);
+	}	
 	
 	/** 
 	 * Контролирует ли мяч игрок

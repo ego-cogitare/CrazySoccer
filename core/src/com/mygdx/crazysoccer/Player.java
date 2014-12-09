@@ -1898,7 +1898,7 @@ public class Player extends Actor {
 				// Если персонаж ничего не делает и мяч никем не контролируется
 				default:
 					if (!ball.isCatched()) {
-						float ballImpulse = ball.absVelocity() * ball.getMass();
+						float ballImpulse = ball.impulse();
 						
 						// Проверка, убивает ли мяч с силой ballImpulse игрока
 						if (Can(States.DEAD) && isEnoughToKill(ballImpulse)) 

@@ -191,47 +191,32 @@ public class AI {
 		boolean acieveX = false;
 		boolean acieveY = false;
 		
-		if (followX - getPlayer(playerId).getAbsX() > dX/* && !getPlayer(playerId).rightPressed()*/) {
-			
+		if (followX - getPlayer(playerId).getAbsX() > dX) {
 			removeCommandFromPlayer(playerId, Controls.LEFT);
-			
-			//if (getPlayer(playerId).curentState() != States.RUN) {
-				aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.RIGHT);
-			//}
-//			aiCommand(playerId, 100, this.DEF_PRESS_DURATION, Controls.RIGHT);
+			makeRun(playerId, Controls.RIGHT);
 		}
-		else if (followX - getPlayer(playerId).getAbsX() < -dX/* && !getPlayer(playerId).leftPressed()*/) {
-			
+		else if (followX - getPlayer(playerId).getAbsX() < -dX) {
 			removeCommandFromPlayer(playerId, Controls.RIGHT);
-			
-			//if (getPlayer(playerId).curentState() != States.RUN) {
-				aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.LEFT);
-			//}
-//			aiCommand(playerId, 100, this.DEF_PRESS_DURATION, Controls.LEFT);
+			makeRun(playerId, Controls.LEFT);
 		}
 		
 		if (followY - getPlayer(playerId).getAbsY() > dY && !getPlayer(playerId).upPressed()) {
-			
 			removeCommandFromPlayer(playerId, Controls.DOWN);
 			sendCommandToPlayer(playerId, Controls.UP);
 		}
 		else if (followY - getPlayer(playerId).getAbsY() < -dY && !getPlayer(playerId).downPressed()) {
-			
 			removeCommandFromPlayer(playerId, Controls.UP);
 			sendCommandToPlayer(playerId, Controls.DOWN);
 		}
 		
-		
 		// Проверка достиг ли игрок цели по оси OX
 		if (MathUtils.distance(followX, 0, getPlayer(playerId).getAbsX(), 0) < dX) {
-			
 			if (getPlayer(playerId).getVelocityX() >= getPlayer(playerId).getRunSpeed()) {
 				aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.LEFT);
 			}
 			else if (getPlayer(playerId).getVelocityX() <= -getPlayer(playerId).getRunSpeed()) {
 				aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.RIGHT);
 			}
-			
 			acieveX = true;
 		}
 		else {
@@ -240,9 +225,7 @@ public class AI {
 		
 		// Проверка достиг ли игрок цели по оси OY
 		if (MathUtils.distance(followY, 0, getPlayer(playerId).getAbsY(), 0) < dY) {
-			
 			removeCommandFromPlayer(playerId, Controls.UP, Controls.DOWN);
-			
 			acieveY = true;
 		}
 		else {
@@ -302,7 +285,6 @@ public class AI {
 	private void makeRun(int playerId, Controls control) {
 		// Если игрок бежит в противоположном направлении
 		if (getPlayer(playerId).curentState() == States.RUN) {
-			
 			if (control == Controls.RIGHT && getPlayer(playerId).getVelocityX() < 0) {
 				aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.RIGHT);
 			}
@@ -345,7 +327,7 @@ public class AI {
 	// Игра ИИ
 	public void play() {
 		
-		if (System.nanoTime() - LAST_PLAY_TIME < 100000000L) {
+		if (System.nanoTime() - LAST_PLAY_TIME < 120000000L) {
 			
 			for (int i = 0; i < PLAY_FOR.size(); i++) {
 				
@@ -377,7 +359,7 @@ public class AI {
 				// Куда следовать для отбора мяча
 				float followX = -1;
 				float followY = -1;
-				float dX = 32;
+				float dX = 48;
 				float dY = 16;
 				
 				if (getPlayer(playerId).ballManagedByOpponents()) {
@@ -402,6 +384,24 @@ public class AI {
 				
 				// Если мяч ничейный или контроллируется оппонентом
 				if (followX != -1 && followY != -1) {
+					
+					// Защита игроком самого себя, чтобы не давать себя ударить мячом
+					if 
+					(
+						!field.ball.isCatched() &&				 
+						getPlayer(playerId).isEnoughToKill(field.ball.impulse()) &&
+						MathUtils.distance(getPlayer(playerId).getAbsX(), getPlayer(playerId).getAbsY(), field.ball.getAbsX(), field.ball.getAbsY()) < 400 &&
+						(
+							(field.ball.getVelocityX() > 0 && getPlayer(playerId).getAbsX() > field.ball.getAbsX()) ||
+							(field.ball.getVelocityX() < 0 && getPlayer(playerId).getAbsX() < field.ball.getAbsX())
+						)
+					) 
+					{
+						//aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.LEFT);
+						aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.ACTION1);
+					}
+					
+					
 					
 					if (moveTo(followX, followY, playerId, dX, dY)) {
 						

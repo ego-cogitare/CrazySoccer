@@ -244,6 +244,11 @@ public class Ball extends Actor {
 		return this.LAST_MANAGED_PLAYER_ID;
 	}
 	
+	// Импульс удара мяча
+	public float impulse() {
+		return absVelocity() * getMass();
+	}
+	
 	public void kick(float impulse, float dstX, float dstY, boolean upFlag) {
 		
 //		System.out.println(impulse);

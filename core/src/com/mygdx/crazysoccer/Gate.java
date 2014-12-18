@@ -24,8 +24,8 @@ public class Gate extends Actor {
 	private float MIN_FLATUS_VELOCITY = 4.2f;
 	
 	// Идентификатор ворот
-	public static int LEFT_GATES = 0;
-	public static int RIGHT_GATES = 1;
+	public static final int LEFT_GATES = 0;
+	public static final int RIGHT_GATES = 1;
 	
 	private TextureRegion gate;
 	private SpriteBatch gateSprite;

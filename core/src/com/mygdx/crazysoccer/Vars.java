@@ -1,7 +1,7 @@
 package com.mygdx.crazysoccer;
 
 public class Vars {
-	public static final int WINDOW_WIDTH = 1280;
+	public static final int WINDOW_WIDTH = 1024;
 	public static final int WINDOW_HEIGHT = 900;
 	public static final boolean FULL_SCREEN = false;
 	

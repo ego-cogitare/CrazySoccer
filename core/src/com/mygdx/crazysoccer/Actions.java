@@ -62,7 +62,7 @@ public class Actions {
 		actions.put(action, true);
 		actionTime.put(action, timeAction);
 		
-		//debug();
+		//debug(9);
 	}
 	
 	public void remove(Controls control, int playerId) {

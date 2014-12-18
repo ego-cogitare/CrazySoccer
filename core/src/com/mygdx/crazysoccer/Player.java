@@ -36,17 +36,17 @@ public class Player extends Actor {
     
     /* Предопределенные константы для локализации поиска */
     /**
-     * Ближайший соперник
+     * соперник
      */
-	public static final int NEAREST_RIVAL = 0;
+	public static final int RIVAL = 0;
 	/**
-     * Ближайший союзник
+     * союзник
      */
-	public static final int NEAREST_ALLY  = 1;
+	public static final int ALLY  = 1;
 	/**
-     * Ближайший игрок (любой)
+     * игрок (любой)
      */
-	public static final int NEAREST_BOTH  = 2;
+	public static final int BOTH  = 2;
 	
 	// Идентификатор ближайшего игрока	
 	private int NEAREST_PLAYER_ID = 0;
@@ -573,6 +573,17 @@ public class Player extends Actor {
 		return this.DESTINATION_GATE_ID;
 	}
 	
+	/** 
+	 * Получение идентификатора ворот по которым игрок должен наносить удар
+	 * @return
+	 */
+	public int getOwnGateId() {
+		if (this.DESTINATION_GATE_ID == Gate.LEFT_GATES) 
+			return Gate.RIGHT_GATES;
+		else
+			return Gate.LEFT_GATES;
+	}
+	
 	/**
 	 * Установка идентификатора ворот по которым игрок должен наносить удар
 	 * @param gateId
@@ -677,6 +688,16 @@ public class Player extends Actor {
 		}
 		
 		return flip;
+	}
+	
+	// Повернут ли игрок в сторону ворот, в которые он должен наносить удары
+	public boolean turnedToDestinationGates() {
+		return (direction == Directions.LEFT && DESTINATION_GATE_ID == Gate.LEFT_GATES) || (direction == Directions.RIGHT && DESTINATION_GATE_ID == Gate.RIGHT_GATES);
+	}
+	
+	// Повернут ли игрок в сторону своих ворот
+	public boolean turnedToOwnGates() {
+		return (direction == Directions.LEFT && DESTINATION_GATE_ID == Gate.RIGHT_GATES) || (direction == Directions.RIGHT && DESTINATION_GATE_ID == Gate.LEFT_GATES);
 	}
 	
 	// Возвращает текущую высоту прыжка персонажа
@@ -879,7 +900,7 @@ public class Player extends Actor {
 							(
 								addictedTo == AddictedTo.AI && 
 								(
-									Math.abs(field.ball.getAbsX() - getAbsX()) > 90 || 
+									Math.abs(field.ball.getAbsX() - getAbsX()) > 60 || 
 									this.catchBall()
 								)
 							)
@@ -1475,11 +1496,11 @@ public class Player extends Actor {
 		switch (this.PLAYER_ID) {
 			
 			case 0: // Стальная нога
-				maxLength = 2300;
+				maxLength = 1000;
 			break;
 			
 			default:
-				maxLength = 2300;
+				maxLength = 1000;
 			break;
 		}
 		
@@ -1487,10 +1508,17 @@ public class Player extends Actor {
 	}
 	
 	/**
-	 * Расстояние до ворот 
+	 * Расстояние до чужих ворот 
 	 */
 	public float distanceToDestGates() {
 		return MathUtils.distance(ball.getAbsX(), ball.getAbsY(), field.gates[getDestinationGateId()].getAbsX(), field.gates[getDestinationGateId()].getAbsY());
+	}
+	
+	/**
+	 * Расстояние до своих ворот 
+	 */
+	public float distanceToOwnGates() {
+		return MathUtils.distance(ball.getAbsX(), ball.getAbsY(), field.gates[getOwnGateId()].getAbsX(), field.gates[getOwnGateId()].getAbsY());
 	}
 	
 	// Может ли игрок выполнить суперудар
@@ -1506,6 +1534,8 @@ public class Player extends Actor {
 	
 	@Override
 	public void act(float delta) {
+		
+		//if (catchBall()) System.out.println(direction);
 		
 		// Если игрок находится на земле, то сбрасываем флаг того, что 
 		// игрок исчерпал лимит ударов в полете
@@ -2013,7 +2043,7 @@ public class Player extends Actor {
 		NEAREST_PLAYER_ID = 
 			field.playerNearest(
 				this.getPlayerId(),
-				Player.NEAREST_ALLY,
+				Player.ALLY,
 				true,
 				up,    // Вверх
 				right, // Вправо
@@ -2074,7 +2104,7 @@ public class Player extends Actor {
 	 * Поворот игрока к мячу, когда он принимает его
 	 */
 	public void turnToBall() {
-		if (getAbsH() == 0) {
+		if (getAbsH() == 0 && getVelocityX() == 0) {
 			if (ball.getVelocityX() > 0 && direction == Directions.RIGHT) {
 				direction = Directions.LEFT; 
 			}

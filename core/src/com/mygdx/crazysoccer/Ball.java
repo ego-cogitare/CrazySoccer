@@ -35,6 +35,10 @@ public class Ball extends Actor {
  	private float MASS = 3.0f;
  	private float DIAMETER = SPRITE_SCALE * SPRITE_WIDTH;
  	private float PASS_IMPULSE = 30.0f;
+ 	
+ 	// Координаты приземления мяча
+ 	private float LANDING_X = 0;
+ 	private float LANDING_Y = 0;
     
     // Парамерты высоты расположения мяча
     private float JUMP_HEIGHT = 0;
@@ -239,6 +243,22 @@ public class Ball extends Actor {
 		return this.MANAGED_PLAYER_ID;
 	}
 	
+	/**
+	 *  Предполагаемая X-координата приземления мяча
+	 * @return
+	 */
+	public float getLandingX() {
+		return LANDING_X;
+	}
+	
+	/**
+	 *  Предполагаемая Y-координата приземления мяча
+	 * @return
+	 */
+	public float getLandingY() {
+		return LANDING_Y;
+	}
+	
 	// Получение ID игрока которым контроллируется мяч
 	public int lastManagerByBlayer() {
 		return this.LAST_MANAGED_PLAYER_ID;
@@ -249,9 +269,14 @@ public class Ball extends Actor {
 		return absVelocity() * getMass();
 	}
 	
+	/**
+	 * Нанесения удара по мячу
+	 */
 	public void kick(float impulse, float dstX, float dstY, boolean upFlag) {
 		
-//		System.out.println(impulse);
+		// Сохранение предполагаемой точки приземления мяча
+		this.LANDING_X = dstX;
+		this.LANDING_Y = dstY;
 		
 		float alpha = calcAlpha(dstX, dstY);
 		
@@ -280,7 +305,15 @@ public class Ball extends Actor {
 		}
 	}
 	
-	public void pass(float dstX, float dstY) {
+	/**
+	 * Выполнение паса 
+	 */
+	public void pass(float dstX, float dstY) 
+	{
+		// Сохранение предполагаемой точки приземления мяча
+		this.LANDING_X = dstX;
+		this.LANDING_Y = dstY;
+	
 		// Сила с которой нужно давать пас, чтобы мяч достиг адресата
 		float f = 0;
 		

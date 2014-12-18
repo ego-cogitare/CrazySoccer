@@ -209,10 +209,10 @@ public class Field extends Stage {
 		
 		// Добавляем ID игрока, за которого будет играть ИИ 
 		ai[0].addPlayer(9);
-//		ai[0].addPlayer(8);
-//		ai[0].addPlayer(7);
-//		ai[0].addPlayer(6);
-//		ai[0].addPlayer(5);
+		ai[0].addPlayer(8);
+		ai[0].addPlayer(7);
+		ai[0].addPlayer(6);
+		ai[0].addPlayer(5);
 		
 		// Экземпляр класса ИИ
 		ai[1] = new AI();
@@ -222,10 +222,10 @@ public class Field extends Stage {
 		
 		// Добавляем ID игрока, за которого будет играть ИИ 
 //		ai[1].addPlayer(0);
-//		ai[1].addPlayer(1);
-//		ai[1].addPlayer(2);
-//		ai[1].addPlayer(3);
-//		ai[1].addPlayer(4);
+		ai[1].addPlayer(1);
+		ai[1].addPlayer(2);
+		ai[1].addPlayer(3);
+		ai[1].addPlayer(4);
 		
 		// Создание листьев
 		for (int i = 0; i < leafs.length; i++) {
@@ -257,9 +257,9 @@ public class Field extends Stage {
 		
 		// Загрузка фоновой музыки
 		sounds.load(BG_TRACK, "sound/bg/background01.ogg");
-		sounds.play(BG_TRACK);
-		sounds.loop(BG_TRACK, true);
-		sounds.volume(BG_TRACK, 0.5f);
+//		sounds.play(BG_TRACK);
+//		sounds.loop(BG_TRACK, true);
+//		sounds.volume(BG_TRACK, 0.5f);
 		
 		// Звук паса
 		sounds.load("pass01", "sound/sfx/pass01.ogg");
@@ -578,6 +578,50 @@ public class Field extends Stage {
 		}
 		
 		return nearestPlayerId;
+	}
+	
+	/**
+	 * Есть ли в радиусе r от мяча количество игроков союзника / соперника n
+	 * @param x
+	 * @param y
+	 * @return true - если необходимое количество найдено
+	 */
+	public boolean playersNearThePoint(int playerId, float r, int n, int searchAmong)
+	{
+		boolean flag = false;
+		int found = 0;
+		
+		for (int i = 0; i < players.length; i++) {
+			
+			if (playerId != players[i].getPlayerId()) 
+			{
+				if (searchAmong == 0) {
+					flag = (players[playerId].getTeamId() != players[players[i].getPlayerId()].getTeamId()) ? true : false;
+				}
+				else if (searchAmong == 1) {
+					flag = (players[playerId].getTeamId() == players[players[i].getPlayerId()].getTeamId()) ? true : false;
+				}
+				else if (searchAmong == 2) {
+					flag = true; 
+				}
+				
+				if 
+				(
+					flag && 
+					MathUtils.distance(
+						players[playerId].getAbsX(), 
+						players[playerId].getAbsY(), 
+						players[players[i].getPlayerId()].getAbsX(), 
+						players[players[i].getPlayerId()].getAbsY()
+					) < r
+				) 
+				{
+					if (++found >= n) return true;
+				}
+			}
+		}
+		
+		return false;
 	}
 
 	// Проверка находится ли клетка внутри полигона (озера / болота)

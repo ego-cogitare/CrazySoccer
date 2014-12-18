@@ -387,7 +387,7 @@ public class AI {
 				else if (!field.ball.isCatched()) 
 				{
 					// Если мяч находится на земле то игрок следует в позицию местонахождения мяча
-					if (field.ball.getAbsH() < 300) 
+					if (field.ball.getAbsH() < 10 || field.ball.absVelocity() < 0.5f) 
 					{
 						followX = field.ball.getAbsX();
 						followY = field.ball.getAbsY();
@@ -415,12 +415,15 @@ public class AI {
 				// Если мяч находится в зоне видимости AI
 				if (dstToBall < 600) 
 				{
-					// Если мяч ничейный или контроллируется оппонентом
+					/****************************************************
+					 * Если мяч ничейный или контроллируется оппонентом *
+					 ****************************************************/
 					if (followX != -1 && followY != -1) 
 					{
-						/* 
-						 * Защита игроком самого себя, чтобы не давать себя ударить мячом
-						 */
+						
+						/****************************************************************** 
+						 * Защита игроком самого себя, чтобы не давать себя ударить мячом *
+						 ******************************************************************/
 						if 
 						(
 							!field.ball.isCatched() &&
@@ -445,11 +448,11 @@ public class AI {
 						}
 						
 						
-						/* 
-						 * Ситуация когда нужно бить рыбкой:
-						 * 	1. когда игрок находится достаточно близко к мячу чтобы выполнить FISH_KICK;
-						 *  2. ближайший игрок к мячу это игрок соперника или игрок соперника находится достаточно близко
-						 */
+						/************************************************************************************************** 
+						 * Ситуация когда нужно бить рыбкой:															  *
+						 * 	1. когда игрок находится достаточно близко к мячу чтобы выполнить FISH_KICK;				  *
+						 *  2. ближайший игрок к мячу это игрок соперника или игрок соперника находится достаточно близко *
+						 **************************************************************************************************/
 						if 
 						(
 							// Если мяч ничейный 	
@@ -513,15 +516,28 @@ public class AI {
 						}
 						
 						
-						// Выполняется поиск мяча игроком и попытка отбора мяча когда игрок добрался до игрока соперника с мячом 
-						if (moveTo(followX, followY, playerId, dX, dY)) {
-							
-							// Если игрок добрался до мяча, то выполняется попытка отбора мяча
-							if (Math.random() > 0.5f) {
-								aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.ACTION2);
+//						System.out.println(followX+" "+followY);
+//						System.out.println(field.ball.getLandingX()+" "+field.ball.getLandingY());
+						
+						/********************************************************************************************
+						 *                                   Если игрок достиг мяча                                 *
+						 ********************************************************************************************/ 
+						if (moveTo(followX, followY, playerId, dX, dY)) 
+						{
+							// Если мяч контроллируется игроком-соперником, тогда пробуем отобрать мяч
+							if (field.ball.isCatched()) 
+							{
+								// Если игрок добрался до мяча, то выполняется попытка отбора мяча
+								if (Math.random() > 0.5f) {
+									aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.ACTION2);
+								}
+								else {
+									aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.ACTION1);
+								}
 							}
-							else {
-								aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.ACTION1);
+							else if (!field.ball.inField()) 
+							{
+								aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.ACTION2);
 							}
 						}
 						// Пока игрок движется к ничейному мячу (или к мячу который контроллирует оппонентом)
@@ -541,8 +557,8 @@ public class AI {
 								(
 									managedBy >= 0 &&
 									getPlayer(playerId).ballManagedByOpponents() &&
-									Math.abs(getPlayer(playerId).getVelocityX()) > getPlayer(managedBy).getVelocityX() &&
-									MathUtils.distance(getPlayer(playerId).getAbsX(), getPlayer(playerId).getAbsY(), getPlayer(managedBy).getAbsX(), getPlayer(managedBy).getAbsY()) < 180 &&
+									Math.abs(getPlayer(playerId).getVelocityX()) > Math.abs(getPlayer(managedBy).getVelocityX()) &&
+									MathUtils.distance(getPlayer(playerId).getAbsX(), getPlayer(playerId).getAbsY(), getPlayer(managedBy).getAbsX(), getPlayer(managedBy).getAbsY()) < 200 &&
 									(
 										(
 											getPlayer(managedBy).getVelocityX() != 0 &&
@@ -572,17 +588,26 @@ public class AI {
 							}
 						}
 					}
-					// Мяч контроллируется игроком или игроком команды к которой принадлежит данный игрок
+					
+					
+					/***************************************************************************************
+					 *  Мяч контроллируется игроком или игроком команды к которой принадлежит данный игрок *
+					 ***************************************************************************************/
 					else 
 					{
 						// Если мяч контроллируется игроком
-						if (this.getPlayer(playerId).catchBall()) {
-							
+						if (this.getPlayer(playerId).catchBall()) 
+						{
 							/**
 							 * Анализ игровой ситуации игроком который владеет мячом 
 							 */
 							
-							// 1: попытки уклонения от игроков соперника
+							
+							/**
+							 * 1: Попытки уклонения от игроков соперника
+							 * 	 1.1. Если в опасной зоне игрока 1 противник, то игрок пытается уклониться от него
+							 *   1.2. Если в опасной зоне игрока количество противников более 1, то игрок делает атаку корпусом 
+							 */
 							float dstBtwPlayers = (nrstRival == -1) ? 9999 : getPlayer(playerId).getAbsX() - getPlayer(nrstRival).getAbsX();
 							
 							if 
@@ -650,7 +675,16 @@ public class AI {
 								}
 							}
 							
-							// Если уклоняясь игрок приблизился к ауту
+							
+							// 2: когда и кому отдать пас
+							
+							// 3: атака мячом с целью нейтрализовать противника
+							
+							
+							/*********************************************************************************
+							 *  Если уклоняясь игрок приблизился к ауту то отключаем его дальнейшее движение *
+							 *  за пределы поля																 *
+							 *********************************************************************************/
 							if 
 							(
 								getPlayer(playerId).getAbsY() < field.fieldOffsetY + 80 || 
@@ -659,10 +693,6 @@ public class AI {
 							{
 								removeCommandFromPlayer(playerId, Controls.UP, Controls.DOWN);
 							}
-							
-							// 2: когда и кому отдать пас
-							
-							// 3: атака мячом с целью нейтрализовать противника
 							
 							
 							

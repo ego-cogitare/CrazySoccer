@@ -77,6 +77,9 @@ public class Ball extends Actor {
     // Принимает значение true если мяч влетел в ворота
     private boolean IS_BALL_IN_NET = false;
     
+    // Находится ли мяч в пределах поля
+    private boolean IS_BALL_IN_FIELD = true;
+    
     // Набор анимаций мяча
     public Map<States, Animation> animations;
     
@@ -175,6 +178,14 @@ public class Ball extends Actor {
 	// Возвращает диаметр мяча с учетом параметра Scale
 	public float getDiameter() {
 		return DIAMETER;
+	}
+	
+	public boolean inField() {
+		return IS_BALL_IN_FIELD;
+	}
+	
+	public void inField(boolean b) {
+		IS_BALL_IN_FIELD = b;
 	}
 	
 	public float getAbsX() {
@@ -785,6 +796,10 @@ public class Ball extends Actor {
 				if (this.JUMP_VELOCITY > 0.15f) field.sounds.play("balllanding02",true);
 				
 				this.JUMP_HEIGHT = 0;
+				
+				// Сохраняем координаты приземления мяча
+				LANDING_X = getAbsX();
+				LANDING_Y = getAbsY();
 			}
 		}
 		

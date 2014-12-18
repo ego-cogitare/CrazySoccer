@@ -208,7 +208,7 @@ public class Field extends Stage {
 		ai[0].attachField(this);
 		
 		// Добавляем ID игрока, за которого будет играть ИИ 
-		ai[0].addPlayer(9);
+//		ai[0].addPlayer(9);
 		ai[0].addPlayer(8);
 		ai[0].addPlayer(7);
 		ai[0].addPlayer(6);
@@ -898,6 +898,9 @@ public class Field extends Stage {
 			}
 			ballOutPlayed = true;
 		}
+		
+		// Отмечаем находится ли мяч в поле или вне его
+		ball.inField(!ballOutPlayed);
 	}
 	
 	public void zIndexSorting() {

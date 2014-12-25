@@ -39,6 +39,7 @@ public class Field extends Stage {
 	private BitmapFont font;
 	private SpriteBatch batch;
 	
+	// Состояние игры игра / пауза
 	public static enum GameStates {
 		RUN,
 		PAUSE
@@ -257,9 +258,9 @@ public class Field extends Stage {
 		
 		// Загрузка фоновой музыки
 		sounds.load(BG_TRACK, "sound/bg/background01.ogg");
-//		sounds.play(BG_TRACK);
-//		sounds.loop(BG_TRACK, true);
-//		sounds.volume(BG_TRACK, 0.5f);
+		sounds.play(BG_TRACK);
+		sounds.loop(BG_TRACK, true);
+		sounds.volume(BG_TRACK, 0.5f);
 		
 		// Звук паса
 		sounds.load("pass01", "sound/sfx/pass01.ogg");
@@ -788,11 +789,6 @@ public class Field extends Stage {
 		
 		drawField();
 		
-		// Вывод FPS
-		batch.begin();
-		font.draw(batch, "FPS: " + Integer.valueOf(Gdx.graphics.getFramesPerSecond()).toString(), 10, Gdx.graphics.getHeight() - 10);
-		batch.end();
-		
 		if (gameState == GameStates.RUN) {
 			// Изменение силы ветра
 			if (Math.random() > 0.995f) {
@@ -837,6 +833,11 @@ public class Field extends Stage {
 			// Отслеживание столкновений
 			detectCollisions();
 		}
+		
+		// Вывод FPS
+		batch.begin();
+		font.draw(batch, "FPS: " + Integer.valueOf(Gdx.graphics.getFramesPerSecond()).toString(), 10, Gdx.graphics.getHeight() - 10);
+		batch.end();
 	}
 	
 	@Override

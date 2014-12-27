@@ -16,7 +16,6 @@ import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.maps.MapObject;
@@ -37,7 +36,6 @@ import com.mygdx.crazysoccer.Wind.WindDirections;
 public class Field extends Stage {
 	
 	private BitmapFont font;
-	private SpriteBatch batch;
 	
 	// Состояние игры игра / пауза
 	public static enum GameStates {
@@ -49,7 +47,7 @@ public class Field extends Stage {
 	public GameStates gameState;
 	
 	// Файл музыки фона
-	private String BG_TRACK = "bg01";
+	public String BG_TRACK = "bg01";
 	
 	// Количество игроков на поле
 	private final int PLAYERS_AMOUNT = 10;
@@ -124,9 +122,6 @@ public class Field extends Stage {
     // Сохранение нажатых клавиш и их времени
     public Actions actions = new Actions(PLAYERS_AMOUNT);
     
-    // Класс для работы со звуком
-	public Sounds sounds;
-	
 	// Вершины многоугольников описывающих лужи / болота
 	private ArrayList<Vector2> diche;
 	private ArrayList<ArrayList<Vector2>> diches = new ArrayList<ArrayList<Vector2>>();
@@ -141,13 +136,12 @@ public class Field extends Stage {
 		gameState = GameStates.RUN;
 		
 	    font = new BitmapFont();
-	    batch = new SpriteBatch();
 	    
 		// Загрузка музыки и звуковых эффектов  *
 		loadSounds();
 		
 		// Загрузка спрайтов
-		sprites = new Texture(Gdx.files.internal("atlas.png")); 
+		sprites = new Texture(Gdx.files.internal("graphics/atlas.png")); 
 		SPRITES_WIDTH = sprites.getWidth() / 32;
 		SPRITES_HEIGHT = sprites.getHeight() / 32;
 		
@@ -253,59 +247,56 @@ public class Field extends Stage {
 	}
 	
 	private void loadSounds() {
-		// Класс для работы с музыкой и звуковыми эффектами
-		sounds = new Sounds();
-		
 		// Загрузка фоновой музыки
-		sounds.load(BG_TRACK, "sound/bg/background01.ogg");
-		sounds.play(BG_TRACK);
-		sounds.loop(BG_TRACK, true);
-		sounds.volume(BG_TRACK, 0.5f);
+		Sounds.load(BG_TRACK, "sound/bg/background01.ogg");
+		Sounds.play(BG_TRACK);
+		Sounds.loop(BG_TRACK, true);
+		Sounds.volume(BG_TRACK, 0.5f);
 		
 		// Звук паса
-		sounds.load("pass01", "sound/sfx/pass01.ogg");
+		Sounds.load("pass01", "sound/sfx/pass01.ogg");
 		
 		// Звук полята мяча после удара
-		sounds.load("kick01", "sound/sfx/kick01.ogg");
+		Sounds.load("kick01", "sound/sfx/kick01.ogg");
 		
 		// Звук пробежки
-		sounds.load("run01", "sound/sfx/run01.ogg");
+		Sounds.load("run01", "sound/sfx/run01.ogg");
 		
 		// Звук приземления игрока
-		sounds.load("landing01", "sound/sfx/landing01.ogg");
+		Sounds.load("landing01", "sound/sfx/landing01.ogg");
 		
 		// Звук приема мяча полевым игроком
-		sounds.load("catchball01", "sound/sfx/catchball01.ogg");
+		Sounds.load("catchball01", "sound/sfx/catchball01.ogg");
 		
 		// Звук начала прыжка
-		sounds.load("jump01", "sound/sfx/jump01.ogg");
+		Sounds.load("jump01", "sound/sfx/jump01.ogg");
 		
 		// Звук "юлы"
-		sounds.load("whirligid01", "sound/sfx/whirligid01.ogg");
+		Sounds.load("whirligid01", "sound/sfx/whirligid01.ogg");
 		
 		// Звук "дрибблинга"
-		sounds.load("dribbling01", "sound/sfx/dribbling01.ogg");
+		Sounds.load("dribbling01", "sound/sfx/dribbling01.ogg");
 		
 		// Звук подката / удара плечом
-		sounds.load("tackle01", "sound/sfx/tackle01.ogg");
+		Sounds.load("tackle01", "sound/sfx/tackle01.ogg");
 		
 		// Звук столкновения при ударе плечом
-		sounds.load("hit01", "sound/sfx/hit01.ogg");
+		Sounds.load("hit01", "sound/sfx/hit01.ogg");
 		
 		// Звук несильного ветра
-		sounds.load("wind01", "sound/sfx/wind01.ogg");
+		Sounds.load("wind01", "sound/sfx/wind01.ogg");
 		
 		// Звук сильного ветра
-		sounds.load("wind02", "sound/sfx/wind02.ogg");
+		Sounds.load("wind02", "sound/sfx/wind02.ogg");
 		
 		// Звук удара мяча о поле
-		sounds.load("balllanding02", "sound/sfx/balllanding02.ogg");
+		Sounds.load("balllanding02", "sound/sfx/balllanding02.ogg");
 		
 		// Звук выхода мяча за пределы поля
-		sounds.load("ballout01", "sound/sfx/whistle01.ogg");
+		Sounds.load("ballout01", "sound/sfx/whistle01.ogg");
 		
 		// Звук сигнала о забитом голе
-		sounds.load("goalin01", "sound/sfx/goalin01.ogg");
+		Sounds.load("goalin01", "sound/sfx/goalin01.ogg");
 	}
 	
 	public void LoadMap(String mapName) {
@@ -801,10 +792,10 @@ public class Field extends Stage {
 				
 				// Если сила ветра больше 20 то воспроизводим звук вьюги
 				if (leafs[0].windDirection != WindDirections.NONE && windVelocity > 20) 
-					sounds.play("wind02", true);
+					Sounds.play("wind02", true);
 				// При изменении ветра воспроизводим звук ветра
 				else if (leafs[0].windDirection != WindDirections.NONE && windVelocity > 10) 
-					sounds.play("wind01", true);
+					Sounds.play("wind01", true);
 			}
 			
 			
@@ -835,9 +826,9 @@ public class Field extends Stage {
 		}
 		
 		// Вывод FPS
-		batch.begin();
-		font.draw(batch, "FPS: " + Integer.valueOf(Gdx.graphics.getFramesPerSecond()).toString(), 10, Gdx.graphics.getHeight() - 10);
-		batch.end();
+//		batch.begin();
+//		font.draw(batch, "FPS: " + Integer.valueOf(Gdx.graphics.getFramesPerSecond()).toString(), 10, Gdx.graphics.getHeight() - 10);
+//		batch.end();
 	}
 	
 	@Override
@@ -868,19 +859,19 @@ public class Field extends Stage {
 			for (int i = 0; i < players.length; i++) {
 				if (players[i].catchBall()) {
 					if (players[i].curentState() == States.RUN) {
-						sounds.play("run01");
-						sounds.loop("run01", true);
+						Sounds.play("run01");
+						Sounds.loop("run01", true);
 					}
 					else {
-						sounds.stop("run01");
-						sounds.loop("run01", false);
+						Sounds.stop("run01");
+						Sounds.loop("run01", false);
 					}
 				}
 			}
 		}
 		else {
-			sounds.stop("run01");
-			sounds.loop("run01", false);
+			Sounds.stop("run01");
+			Sounds.loop("run01", false);
 		}
 		
 		
@@ -891,11 +882,11 @@ public class Field extends Stage {
 		else if (!this.inField(ball.getAbsX(),ball.getAbsY()) && !ballOutPlayed) {
 			// Если мяч влетел в ворота
 			if (ball.isGoalIn() > 0) {
-				sounds.play("goalin01", true);
+				Sounds.play("goalin01", true);
 			}
 			// Если мяч ушел за пределы поля вне ворот
 			else {
-				sounds.play("ballout01", true);
+				Sounds.play("ballout01", true);
 			}
 			ballOutPlayed = true;
 		}
@@ -990,7 +981,7 @@ public class Field extends Stage {
 				ball.setJumpVelocity(0.0f);
 				
 				// Звук удара мяча о каркас ворот
-				sounds.play("balllanding02", true);
+				Sounds.play("balllanding02", true);
 			}
 		}
 		
@@ -1031,7 +1022,7 @@ public class Field extends Stage {
 		if (players[playerA].Can(States.DEAD)) {
 			players[playerA].Do(States.DEAD, true);
 			
-			sounds.play("hit01", true);
+			Sounds.play("hit01", true);
 			
 			// Если это не подкат, то откидывает игрока, которого атаковали
 			if (players[playerB].curentState() != States.TACKLE_ATTACK) {
@@ -1068,17 +1059,17 @@ public class Field extends Stage {
 		gameState = GameStates.PAUSE;
 		
 		// Останавливаем все звуки, кроме того, что передано в except
-		sounds.stopAll(BG_TRACK);
-		sounds.pause(BG_TRACK);
+		Sounds.stopAll(BG_TRACK);
+		Sounds.pause(BG_TRACK);
 		
-		sounds.play("ballout01");
+		Sounds.play("ballout01");
 	}
 	
 	// Возобновляет игру
 	public void setResume() {
 		gameState = GameStates.RUN;
-		sounds.play("ballout01");
-		sounds.resume(BG_TRACK);
+		Sounds.play("ballout01");
+		Sounds.resume(BG_TRACK);
 	}
 
 	public void dispose() {

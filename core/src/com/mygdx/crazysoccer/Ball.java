@@ -20,9 +20,6 @@ public class Ball extends Actor {
 	private static final int FRAME_COLS = 8;    
     private static final int FRAME_ROWS = 8;     
     
-    // Спрайт для отрисовки персонажа
-    public SpriteBatch spriteBatch;
-
     public int SPRITE_WIDTH = 16;
     public int SPRITE_HEIGHT = 16;
     public float SPRITE_SCALE = 3.0f;
@@ -119,13 +116,13 @@ public class Ball extends Actor {
         Do(States.STOP, true);
         
         // Загрузка изображения с анимацией персонажа
-        animationSheet = new Texture(Gdx.files.internal("ball.png"));
+        animationSheet = new Texture(Gdx.files.internal("graphics/ball.png"));
         
         // Загрузка карты анимаций персонажа
         animationMap = TextureRegion.split(animationSheet, animationSheet.getWidth()/FRAME_COLS, animationSheet.getHeight()/FRAME_ROWS);
         
         // Спрайт для отрисовки персонажа
-        spriteBatch = new SpriteBatch(); 
+//        spriteBatch = new SpriteBatch(); 
         
         // Анимация движущегося мяча
         flyFrames = new TextureRegion[8];
@@ -793,7 +790,7 @@ public class Ball extends Actor {
 				this.CURENT_SPEED_X += this.CURENT_SPEED_X * this.GRASS_FRICTION;
 				
 				// Воспроизводим звук удара мяча о газон
-				if (this.JUMP_VELOCITY > 0.15f) field.sounds.play("balllanding02",true);
+				if (this.JUMP_VELOCITY > 0.15f) Sounds.play("balllanding02",true);
 				
 				this.JUMP_HEIGHT = 0;
 				
@@ -900,8 +897,8 @@ public class Ball extends Actor {
 		animations.get(this.curentState()).setPlayMode(PlayMode.LOOP);
 		currentFrame = animations.get(curentState()).getKeyFrame(stateTime, true); 
 		
-		spriteBatch.begin();
-        spriteBatch.draw(
+		CrazySoccer.batch.begin();
+		CrazySoccer.batch.draw(
     		currentFrame.getTexture(), 
     		this.getX() - getDiameter() / 2, 
     		this.getY() + this.getAbsH(), 
@@ -919,7 +916,7 @@ public class Ball extends Actor {
     		this.getFlip(),
     		false
 		);
-        spriteBatch.end();
+		CrazySoccer.batch.end();
         
 		// Ресование тени мяча
         shadow.setX(getX() - 16);

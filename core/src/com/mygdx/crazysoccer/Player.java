@@ -1,17 +1,13 @@
 package com.mygdx.crazysoccer;
 
-import java.awt.event.ActionListener;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.ArrayList;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.Animation.PlayMode;
 import com.badlogic.gdx.graphics.g2d.Batch;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion; 
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -50,9 +46,6 @@ public class Player extends Actor {
 	
 	// Идентификатор ближайшего игрока	
 	private int NEAREST_PLAYER_ID = 0;
-    
-    // Спрайт для отрисовки персонажа
-    public SpriteBatch spriteBatch;
     
     // Параметры спрайта
     private int SPRITE_WIDTH = 32;
@@ -207,19 +200,16 @@ public class Player extends Actor {
         direction = Directions.RIGHT;
 		
         // Загрузка изображения с анимацией персонажа
-        animationSheet = new Texture(Gdx.files.internal("kunio.png"));
+        animationSheet = new Texture(Gdx.files.internal("graphics/kunio.png"));
         
         // Загрузка изображения с анимациями состояний
-        statesSheet = new Texture(Gdx.files.internal("states.png"));
+        statesSheet = new Texture(Gdx.files.internal("graphics/states.png"));
         
         // Загрузка карты анимаций персонажа
         animationMap = TextureRegion.split(animationSheet, animationSheet.getWidth()/FRAME_COLS, animationSheet.getHeight()/FRAME_ROWS);
         
         // Загрузка карты анимаций состояний игрока
         animationStatesMap = TextureRegion.split(statesSheet, statesSheet.getWidth()/FRAME_COLS, statesSheet.getHeight()/FRAME_ROWS);
-        
-        // Спрайт для отрисовки персонажа
-        spriteBatch = new SpriteBatch(); 
         
         // Создаем анимацию покоя
         animations.put(States.STAY, 
@@ -1238,12 +1228,12 @@ public class Player extends Actor {
 				this.stateTime = 0.0f;
 				this.ACTION_DONE = true;
 				this.setJumpVelocity(0);
-				field.sounds.play("whirligid01",true);
+				Sounds.play("whirligid01",true);
 			break;
 			
 			case DRIBBLING_UP: case DRIBBLING_DOWN:
 				this.stateTime = 0.0f;
-				field.sounds.play("dribbling01",true);
+				Sounds.play("dribbling01",true);
 			break;
 			
 			case PASS: case HEAD_PASS:
@@ -1266,7 +1256,7 @@ public class Player extends Actor {
 				// Для того чтобы во время прыжка на него не действовала гравитация (он привязан к игроку)
 				if (ball.isCatched()) ball.allowGravityFrom(0);
 				
-				field.sounds.play("jump01",true);
+				Sounds.play("jump01",true);
 			break;
 			
 			case RUN: 
@@ -1282,8 +1272,8 @@ public class Player extends Actor {
 				}
 				actionsListener.disableAction(Controls.LEFT, this.PLAYER_ID);
 				actionsListener.disableAction(Controls.RIGHT, this.PLAYER_ID);
-				field.sounds.play("run01");
-				field.sounds.loop("run01", true);
+				Sounds.play("run01");
+				Sounds.loop("run01", true);
 			break;
 			
 			case TOP_RUN: 
@@ -1291,8 +1281,8 @@ public class Player extends Actor {
 				this.stateTime = 0.0f;
 				actionsListener.disableAction(Controls.LEFT, this.PLAYER_ID);
 				actionsListener.disableAction(Controls.RIGHT, this.PLAYER_ID);
-				field.sounds.play("run01");
-				field.sounds.loop("run01", true);
+				Sounds.play("run01");
+				Sounds.loop("run01", true);
 			break;
 			
 			case STAY: 
@@ -1313,7 +1303,7 @@ public class Player extends Actor {
 			
 			case BODY_ATTACK: case FOOT_ATTACK:
 				this.stateTime = 0.0f;
-				field.sounds.play("tackle01");
+				Sounds.play("tackle01");
 			break;
 			
 			case TACKLE_ATTACK:
@@ -1321,7 +1311,7 @@ public class Player extends Actor {
 				this.setVelocityX(
 					direction == Directions.RIGHT ? 6.0f : -6.0f
 				);
-				field.sounds.play("tackle01");
+				Sounds.play("tackle01");
 			break;
 			
 			case KNEE_CATCH: 
@@ -1878,7 +1868,7 @@ public class Player extends Actor {
 					ball.managerByBlayer(-1);
 					
 					// Проигрывание звука паса
-					field.sounds.play("pass01", true);
+					Sounds.play("pass01", true);
 					
 					// Определение кому отдать пас
 					pass();
@@ -1896,7 +1886,7 @@ public class Player extends Actor {
 						ball.managerByBlayer(-1);
 						
 						// Проигрывание звука паса
-						field.sounds.play("pass01", true);
+						Sounds.play("pass01", true);
 						
 						// Определение кому отдать пас
 						pass();
@@ -2011,7 +2001,7 @@ public class Player extends Actor {
 			this.JUMP_VELOCITY = 0.0f;
 			
 			// Проигрывание звука приземления
-			field.sounds.play("landing01", true);
+			Sounds.play("landing01", true);
 		}
 	}
 	
@@ -2136,7 +2126,7 @@ public class Player extends Actor {
 		Do(States.DEAD, true);
 		
 		// Звук удара мячом по игроку
-		field.sounds.play("hit01", true);
+		Sounds.play("hit01", true);
 		
 		// Подкидываем игрока
 		this.setJumpVelocity(ball.absVelocity() / this.getMass() * strength);
@@ -2195,7 +2185,7 @@ public class Player extends Actor {
 		ball.managerByBlayer(-1);
 		
 		// Звук удара мяча
-		field.sounds.play("kick01", true);
+		Sounds.play("kick01", true);
 	}
 	
 	/**
@@ -2212,7 +2202,7 @@ public class Player extends Actor {
 		ball.managerByBlayer(-1);
 		
 		// Звук удара мяча
-		field.sounds.play("kick01", true);
+		Sounds.play("kick01", true);
 	}
 	
 	/**
@@ -2333,7 +2323,7 @@ public class Player extends Actor {
 	
 	public void catchBall(boolean c) {
 		if (c) { 
-			field.sounds.play("catchball01",true);
+			Sounds.play("catchball01",true);
 			ball.isCatched(true);
 			
 			for (int i = 0; i < field.players.length; i++) {
@@ -2413,8 +2403,8 @@ public class Player extends Actor {
 
 		finishAnimations();
 		
-        spriteBatch.begin();
-        spriteBatch.draw(
+        CrazySoccer.batch.begin();
+        CrazySoccer.batch.draw(
     		currentFrame.getTexture(), 
     		this.getX() - this.width() / 2.0f + offsetX, 
     		this.getY() + this.JUMP_HEIGHT + offsetY, 
@@ -2432,7 +2422,7 @@ public class Player extends Actor {
     		this.getFlipX(), 
     		this.getFlipY()
 		);
-        spriteBatch.end();
+        CrazySoccer.batch.end();
         
         // Ресование тени персонажа
         shadow.setX(getX() - 15);

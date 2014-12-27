@@ -15,13 +15,11 @@ public class Leaf extends Actor {
 	private float maxVelocity = 0.0f;
 	
 	public TextureRegion leaf;
-	public SpriteBatch leafSprite;
 	public WindDirections windDirection;
 	
 	public Leaf(WindDirections wd) {
 		leaf = new TextureRegion(Field.sprites);
 		leaf.setRegion(13*32,0,32,32);
-		leafSprite = new SpriteBatch();
 		windDirection = wd;
 		setWindDirection(windDirection);
 	}
@@ -169,9 +167,9 @@ public class Leaf extends Actor {
 	@Override
 	public void draw(Batch batch, float parentAlpha) {
 		if (Math.abs(velocityX) > 0 || Math.abs(velocityY) > 0) {
-			leafSprite.begin();
-			leafSprite.draw(leaf, getX(), getY(), 32, 32, 32, 32, 1.0f, 1.0f, rotation);
-			leafSprite.end();
+			CrazySoccer.batch.begin();
+			CrazySoccer.batch.draw(leaf, getX(), getY(), 32, 32, 32, 32, 1.0f, 1.0f, rotation);
+			CrazySoccer.batch.end();
 		}
 	}
 }

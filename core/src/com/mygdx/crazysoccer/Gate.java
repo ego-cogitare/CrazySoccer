@@ -28,7 +28,6 @@ public class Gate extends Actor {
 	public static final int RIGHT_GATES = 1;
 	
 	private TextureRegion gate;
-	private SpriteBatch gateSprite;
 	
 	// Фундамент ворот (используется для поиска пересечений)
 	public float[][] gateProjection = new float[8][2];
@@ -40,8 +39,6 @@ public class Gate extends Actor {
 		
 		gate = new TextureRegion(Field.sprites);
 		gate.setRegion(192,0,135,376);
-		
-		gateSprite = new SpriteBatch();
 	}
 	
 	public float getHeight() {
@@ -107,11 +104,11 @@ public class Gate extends Actor {
 	
 	@Override
 	public void draw(Batch batch, float parentAlpha) {		
-		gateSprite.begin();
+		CrazySoccer.batch.begin();
 		
 		// Рисовать ли вздутие ворот
 		if (System.nanoTime() - this.DRAW_FLATUS_TIME_START < 200000000L) {
-			gateSprite.draw(
+			CrazySoccer.batch.draw(
 				Field.sprites, 
 				this.getX() + ((ID == 0) ? -18 : 91), 
 				this.getY() + 30, 
@@ -126,7 +123,7 @@ public class Gate extends Actor {
 			);
 		}
 		
-		gateSprite.draw(
+		CrazySoccer.batch.draw(
 			gate.getTexture(), 
     		this.getX(), 
     		this.getY(), 
@@ -144,6 +141,6 @@ public class Gate extends Actor {
     		ID == 0, 
     		false
 		);
-		gateSprite.end();
+		CrazySoccer.batch.end();
 	}
 }

@@ -23,9 +23,7 @@ public class Drop extends Actor {
 	private WindDirections windDirection;
 	
 	private TextureRegion dropTexture;
-	private SpriteBatch dropSprite;
 	private TextureRegion dropBreakTexture;
-	private SpriteBatch dropBreakSprite;
 	
 	public TextureRegion[] dropBreakFrames; 
 	
@@ -36,10 +34,8 @@ public class Drop extends Actor {
 		super();
 		
 		dropTexture = new TextureRegion(Field.sprites,14*32,32,32,32);
-		dropSprite = new SpriteBatch();
 		
 		dropBreakTexture = new TextureRegion(Field.sprites, 13*32, 32, 32, 32);
-		dropBreakSprite = new SpriteBatch();
 		
 		setRandomPos();
 	}
@@ -108,14 +104,14 @@ public class Drop extends Actor {
 
 	@Override
 	public void draw(Batch batch, float parentAlpha) {
-		dropSprite.begin();
-		dropSprite.draw(dropTexture, getX() + this.getWindVelocity(), getY(), 32, 32, 32, 32, 0.7f, 0.7f, 0);
-		dropSprite.end();
+		CrazySoccer.batch.begin();
+		CrazySoccer.batch.draw(dropTexture, getX() + this.getWindVelocity(), getY(), 32, 32, 32, 32, 0.7f, 0.7f, 0);
+		CrazySoccer.batch.end();
 		
 		if (System.nanoTime() - DROP_BREAK_TIME < 100000000) {
-			dropBreakSprite.begin();
-			dropBreakSprite.draw(dropBreakTexture, DROP_BREAK_X, DROP_BREAK_Y, 32, 32, 32, 32, 1.0f, 1.0f, 0);
-			dropBreakSprite.end();
+			CrazySoccer.batch.begin();
+			CrazySoccer.batch.draw(dropBreakTexture, DROP_BREAK_X, DROP_BREAK_Y, 32, 32, 32, 32, 1.0f, 1.0f, 0);
+			CrazySoccer.batch.end();
 		}
 	}
 }

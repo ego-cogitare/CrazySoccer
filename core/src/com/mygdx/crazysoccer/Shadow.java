@@ -10,7 +10,6 @@ public class Shadow extends Actor {
 	private boolean visibility;
 	
 	public TextureRegion shadow;
-	public SpriteBatch shadowSprite;
 	
 	public Shadow() {
 		this.visibility = true;
@@ -18,8 +17,6 @@ public class Shadow extends Actor {
 		// Загрузка текстуры тени
 		shadow = new TextureRegion(Field.sprites);
 		shadow.setRegion(13*32,64,32,32);
-		
-		shadowSprite = new SpriteBatch(); 
 	}
 	
 	public void setVisibility (boolean visibility) {
@@ -33,8 +30,8 @@ public class Shadow extends Actor {
 	@Override
 	public void draw(Batch batch, float parentAlpha) {
 		if (this.visibility)  {
-			shadowSprite.begin();
-			shadowSprite.draw(
+			CrazySoccer.batch.begin();
+			CrazySoccer.batch.draw(
 				shadow.getTexture(), 
 	    		this.getX(), 
 	    		this.getY(), 
@@ -52,7 +49,7 @@ public class Shadow extends Actor {
 	    		false, 
 	    		false
 			);
-			shadowSprite.end();
+			CrazySoccer.batch.end();
 		}
 	}
 }

@@ -7,7 +7,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.Animation.PlayMode;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
 public class Movie {
@@ -95,7 +95,7 @@ public class Movie {
         	if (this.animation != null) 
         	{
         		// Текущий кадр анимации
-				currentFrame = animation.getKeyFrame(stateTime, true); 
+				currentFrame = animation.getKeyFrame(stateTime, true);
 				  
 				switch (movieType)
 				{
@@ -125,6 +125,7 @@ public class Movie {
 				}
 				
 				CrazySoccer.batch.begin();
+				//CrazySoccer.batch.draw(currentFrame, 0, 0);
 				CrazySoccer.batch.draw(
 		    		currentFrame.getTexture(), 
 		    		getX(), 
@@ -159,6 +160,10 @@ public class Movie {
         	return false;
 		}
         
+        public int getCurentFrame() {
+        	return animation.getKeyFrameIndex(stateTime);
+        }
+        
         public void setClearColor(float R, float G, float B) {
         	this.R = R;
         	this.G = G;
@@ -175,7 +180,8 @@ public class Movie {
     	TEACH_TEACHER,
     	TEACH_PUPIL,
     	TEACH_BLACKBOARD,
-    	CURSOR
+    	CURSOR,
+    	MUSIC_DANCE
     }
     
     public HashMap<MovieTypes, MovieParams> movies;
@@ -184,17 +190,27 @@ public class Movie {
     	movies = new HashMap<MovieTypes, MovieParams>();
     }
     
-    public void loadStatic(MovieTypes name, String fileName, int srcX, int srcY, int width, int height) {
+    public void load(MovieTypes name, String fileName, int srcX, int srcY, int width, int height, float frameDuration) {
     	
     	movies.put(name, new MovieParams(name, fileName, null, width, height));
-    	
-    	// Читаем файл с кадрами анимации
     	framesSheet = new Texture(Gdx.files.internal(movies.get(name).fileName));
-    	
     	movies.get(name).animation = 
-			new Animation(999.0f,
+			new Animation(frameDuration,
 				new TextureRegion(framesSheet, srcX, srcY, width, height)
 			);
+    }
+    
+    public void load(MovieTypes name, Animation animation) {
+    	movies.put(
+			name, 
+			new MovieParams(
+				name, 
+				"", 
+				animation, 
+				animation.getKeyFrame(0).getRegionWidth(),
+				animation.getKeyFrame(0).getRegionHeight()
+			)
+		);
     }
     
     public void load(MovieTypes name, String fileName, int cellsX, int cellsY) 

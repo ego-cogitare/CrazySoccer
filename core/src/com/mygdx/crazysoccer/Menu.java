@@ -195,12 +195,24 @@ public class Menu {
 		return null;
 	}
 	
+	public void reset() {
+		getActive().isActive = false;
+		items.get(0).isActive = true;
+	}
+	
 	public void draw() {
 		for (int i = 0; i < items.size(); i ++) {
+			
+			if (items.get(i).isActive)
+				CrazySoccer.font.setColor(0, 1, 1, 1);
+			else
+				CrazySoccer.font.setColor(1, 1, 1, 1);
 			
 			CrazySoccer.batch.begin();
 			CrazySoccer.font.draw(CrazySoccer.batch, items.get(i).name, items.get(i).x, items.get(i).y);
 			CrazySoccer.batch.end();
+			
+			CrazySoccer.font.setColor(1, 1, 1, 1);
 			
 //			if (items.get(i).isActive) 
 //				System.out.print(">");

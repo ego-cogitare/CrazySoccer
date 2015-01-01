@@ -2,7 +2,6 @@ package com.mygdx.crazysoccer;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.Batch;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.mygdx.crazysoccer.Wind.WindDirections;
@@ -21,7 +20,7 @@ public class Leaf extends Actor {
 		leaf = new TextureRegion(Field.sprites);
 		leaf.setRegion(13*32,0,32,32);
 		windDirection = wd;
-		setWindDirection(windDirection);
+		setWindDirection(windDirection); 
 	}
 	
 	public void setWindVelocity(float v) {

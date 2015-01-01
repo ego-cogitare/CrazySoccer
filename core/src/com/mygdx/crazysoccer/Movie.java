@@ -7,7 +7,6 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
-import com.badlogic.gdx.graphics.g2d.Animation.PlayMode;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
 public class Movie {
@@ -24,7 +23,7 @@ public class Movie {
     	
         private float SCALE_X = 1.0f;
         private float SCALE_Y = 1.0f;
-        private float POS_X = 0;
+        private float POS_X = 0; 
         private float POS_Y = 0;
         private boolean FLIP_X = false;
         private boolean FLIP_Y = false;
@@ -276,6 +275,9 @@ public class Movie {
     					frames[0][6]
 					);
         	break;
+        	
+        	default:
+    		break;
         }
     }
   

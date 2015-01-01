@@ -15,8 +15,6 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.maps.MapObject;
 import com.badlogic.gdx.maps.objects.PolylineMapObject;
@@ -27,15 +25,13 @@ import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.math.Polyline;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.mygdx.crazysoccer.GameScreen.ScreenNames;
 import com.mygdx.crazysoccer.Player.AddictedTo;
 import com.mygdx.crazysoccer.Player.Directions;
 import com.mygdx.crazysoccer.Player.States;
 import com.mygdx.crazysoccer.Wind.WindDirections;
 
 public class Field extends Stage {
-	
-	private BitmapFont font;
 	
 	// Состояние игры игра / пауза
 	public static enum GameStates {
@@ -75,10 +71,10 @@ public class Field extends Stage {
 	public AI[] ai = new AI[2];
 	
 	// Листья
-	private Leaf[] leafs = new Leaf[5];
+	private Leaf[] leafs = new Leaf[3];
 	
 	// Капли
-	private Drop[] drops = new Drop[30];
+	private Drop[] drops = new Drop[3];
 	
 	// Размеры поля в клетках
 	private int CELLS_X;
@@ -115,7 +111,7 @@ public class Field extends Stage {
 	
 	public TiledMap fieldMap;
     public TiledMapRenderer fieldMapRenderer;
-    public static OrthographicCamera camera;
+    public OrthographicCamera camera;
 	
     // Сохранение нажатых клавиш и их времени
     public Actions actions = new Actions(PLAYERS_AMOUNT);
@@ -127,14 +123,10 @@ public class Field extends Stage {
 	// Локализация ячеек карты (находятся ли они внутри озера / болота)
 	private boolean[][] cellsLocation;
     
-	public Field(ScreenViewport screenViewport) {
-		super(screenViewport);
-		
+	public Field() {
 		// Установка состояния игры - активна
 		gameState = GameStates.RUN;
 		
-	    font = new BitmapFont();
-	    
 		// Загрузка музыки и звуковых эффектов  *
 		loadSounds();
 		
@@ -201,7 +193,7 @@ public class Field extends Stage {
 		ai[0].attachField(this);
 		
 		// Добавляем ID игрока, за которого будет играть ИИ 
-//		ai[0].addPlayer(9);
+		ai[0].addPlayer(9);
 		ai[0].addPlayer(8);
 		ai[0].addPlayer(7);
 		ai[0].addPlayer(6);
@@ -723,7 +715,7 @@ public class Field extends Stage {
 //			 }
 //		 }
 	}
-	
+	 
 	// Расположение игроков по полю
 	public void actorsArrangement() {
 		ball.setAbsX(worldWidth / 2.0f);
@@ -817,6 +809,16 @@ public class Field extends Stage {
 			
 			// Отслеживание столкновений
 			detectCollisions();
+		}
+		
+		// Пауза / продолжение игры
+		if (Gdx.input.isKeyJustPressed(Keys.ENTER)) {
+			if (gameState == GameStates.RUN) {
+				setPause();
+			}
+			else if (gameState == GameStates.PAUSE) {
+				setResume();
+			}
 		}
 		
 		// Вывод FPS
@@ -1054,7 +1056,8 @@ public class Field extends Stage {
 		
 		// Останавливаем все звуки, кроме того, что передано в except
 		Sounds.stopAll(BG_TRACK);
-		Sounds.pause(BG_TRACK);
+		//Sounds.pause(BG_TRACK);
+		Sounds.volume(BG_TRACK, 0.3f);
 		
 		Sounds.play("ballout01");
 	}
@@ -1063,11 +1066,56 @@ public class Field extends Stage {
 	public void setResume() {
 		gameState = GameStates.RUN;
 		Sounds.play("ballout01");
-		Sounds.resume(BG_TRACK);
+		//Sounds.resume(BG_TRACK);
+		Sounds.volume(BG_TRACK, 1.0f);
+		
+		// Если в меню было выбрано "сдаться"
+		if (CrazySoccer.menus.get("give_up").getActive().getId() == 1) {
+			// Переключение екрана
+			GameScreen.setScreen(ScreenNames.PREPORATIONS);
+		}
+		CrazySoccer.menus.get("give_up").reset();
 	}
 
+	@Override
 	public void dispose() {
-		this.dispose();
+		
+		Sounds.unload(BG_TRACK);
+		Sounds.unload("pass01");
+		Sounds.unload("kick01");
+		Sounds.unload("run01");
+		Sounds.unload("landing01");
+		Sounds.unload("catchball01");
+		Sounds.unload("jump01");
+		Sounds.unload("whirligid01");
+		Sounds.unload("dribbling01");
+		Sounds.unload("tackle01");
+		Sounds.unload("hit01");
+		Sounds.unload("wind01");
+		Sounds.unload("wind02");
+		Sounds.unload("balllanding02");
+		Sounds.unload("ballout01");
+		Sounds.unload("goalin01");
+		
+		sprites.dispose();
+		
+		ball.remove();
+		
+		for (int i = 0; i < players.length; i++) 
+			players[i].remove();
+		
+		for (int i = 0; i < gates.length; i++) 
+			gates[i].remove();
+		
+		for (int i = 0; i < leafs.length; i++) 
+			leafs[i].remove();
+			
+		for (int i = 0; i < drops.length; i++) 
+			drops[i].remove();
+		
+		fieldMap.dispose();
+		
+		CrazySoccer.shapeRenderer.setProjectionMatrix(CrazySoccer.shapeProjectionMatrix);
 	}
 	
 	@Override
@@ -1199,18 +1247,6 @@ public class Field extends Stage {
 			case Keys.NUMPAD_8:
 				actions.add(Actions.Controls.UP, 9);
 			break;
-			
-			
-			// Пауза
-			case Keys.ENTER:
-				if (gameState == GameStates.RUN) {
-					setPause();
-				}
-				else if (gameState == GameStates.PAUSE) {
-					setResume();
-				}
-			break;
-			
 		}
 //		actions.debug();
 		return false;

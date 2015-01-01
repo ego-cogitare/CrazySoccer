@@ -195,6 +195,11 @@ public class Menu {
 		return null;
 	}
 	
+	public void setActive(int id) {
+		getActive().isActive = false;
+		getItem(id).isActive = true;
+	}
+	
 	public void reset() {
 		getActive().isActive = false;
 		items.get(0).isActive = true;

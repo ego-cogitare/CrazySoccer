@@ -1,7 +1,6 @@
 package com.mygdx.crazysoccer;
 
 import com.badlogic.gdx.graphics.g2d.Batch;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -21,7 +20,7 @@ public class Gate extends Actor {
 	private long DRAW_FLATUS_TIME_START = 0L;
 	
 	// Минимальная скорость удара мяча о сетку, для того чтобы отрисовывать вздувшуюся сетку
-	private float MIN_FLATUS_VELOCITY = 4.2f;
+	private float MIN_FLATUS_VELOCITY = 4.2f; 
 	
 	// Идентификатор ворот
 	public static final int LEFT_GATES = 0;

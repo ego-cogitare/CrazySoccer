@@ -48,9 +48,9 @@ public class Player extends Actor {
 	private int NEAREST_PLAYER_ID = 0;
     
     // Параметры спрайта
+	private float SPRITE_SCALE = 3.0f;
     private int SPRITE_WIDTH = 32;
     private int SPRITE_HEIGHT = 32;
-    private float SPRITE_SCALE = 3.0f;
     
     // Размеры игрока с учетом масштабирования
     private float PLAYER_WIDTH = SPRITE_SCALE * SPRITE_WIDTH;
@@ -177,9 +177,9 @@ public class Player extends Actor {
 	public Shadow shadow;
 	
 	public Texture animationSheet;
-	public Texture statesSheet;
+	public Texture headsSheet;
 	public TextureRegion[][] animationMap;
-	public TextureRegion[][] animationStatesMap;
+	public TextureRegion[][] headsMap;
     
 	// Текущее состояние героя
 	public Map<States, Boolean> state = new HashMap<States, Boolean>();
@@ -200,16 +200,16 @@ public class Player extends Actor {
         direction = Directions.RIGHT;
 		
         // Загрузка изображения с анимацией персонажа
-        animationSheet = new Texture(Gdx.files.internal("graphics/kunio.png"));
+        animationSheet = new Texture(Gdx.files.internal("graphics/body.png"));
         
         // Загрузка изображения с анимациями состояний
-        statesSheet = new Texture(Gdx.files.internal("graphics/states.png"));
+        headsSheet = new Texture(Gdx.files.internal("graphics/heads.png"));
         
         // Загрузка карты анимаций персонажа
-        animationMap = TextureRegion.split(animationSheet, animationSheet.getWidth()/FRAME_COLS, animationSheet.getHeight()/FRAME_ROWS);
+        animationMap = TextureRegion.split(animationSheet, animationSheet.getWidth() / FRAME_COLS, animationSheet.getHeight() / FRAME_ROWS);
         
         // Загрузка карты анимаций состояний игрока
-        animationStatesMap = TextureRegion.split(statesSheet, statesSheet.getWidth()/FRAME_COLS, statesSheet.getHeight()/FRAME_ROWS);
+        headsMap = TextureRegion.split(headsSheet, headsSheet.getWidth() / 16, headsSheet.getHeight() / 16);
         
         // Создаем анимацию покоя
         animations.put(States.STAY, 
@@ -374,18 +374,18 @@ public class Player extends Actor {
 				animationMap[2][2],
 				animationMap[2][2],
 				animationMap[3][2],
-				animationStatesMap[0][7],
-				animationStatesMap[0][7],
-				animationStatesMap[0][7]
+				animationMap[4][7],
+				animationMap[4][7],
+				animationMap[4][7]
 			)
 		);
         
         animations.put(States.DRIBBLING_DOWN, 
     		new Animation(0.07f, 
 				animationMap[3][3],
-				animationStatesMap[0][7],
-				animationStatesMap[0][7],
-				animationStatesMap[0][7],
+				animationMap[4][7],
+				animationMap[4][7],
+				animationMap[4][7],
 				animationMap[3][2],
 				animationMap[2][2],
 				animationMap[2][2],
@@ -426,21 +426,21 @@ public class Player extends Actor {
         // Создаем анимацию ударенного мячом игрока
         animations.put(States.DEAD, 
     		new Animation(4.0f, 
-				animationStatesMap[0][0]
+				animationMap[4][0]
 			)
         );
         
         // Создаем анимацию игрока лежащего на спине
         animations.put(States.LAY_BACK, 
     		new Animation(3.0f, 
-				animationStatesMap[0][1]
+				animationMap[4][1]
 			)
         );
         
         // Создаем анимацию игрока лежащего на животе
         animations.put(States.LAY_BELLY, 
     		new Animation(3.0f, 
-				animationStatesMap[0][2]
+				animationMap[4][2]
 			)
         );
         
@@ -2380,6 +2380,232 @@ public class Player extends Actor {
 		}
 	}
 	
+	public void drawHead() {
+		
+		int cellX = -1;
+		int cellY = -1;
+		int offsetX = 0;
+		int offsetY = 48;
+		boolean flipY = false;
+		
+		int cf = currentFrame();
+		
+		offsetX = (direction == Directions.LEFT) ? 15 : 21; 
+		
+		switch (curentState()) {
+		
+			case STAY: case WALKING: case RUN: case TOP_RUN: case KNEE_CATCH: case CHEST_CATCH: case JUMP: case SIT: case BODY_ATTACK: case BACK_KICK:
+				cellX = Players.getParams(this.getPlayerId()).faceFrontId.x;
+				cellY = Players.getParams(this.getPlayerId()).faceFrontId.y;
+				
+				if (curentState() == States.SIT) {
+					offsetY = 24;
+				}
+				else if (curentState() == States.RUN && cf == 0) { 
+					offsetY = 45;
+				}
+				else if (curentState() == States.CHEST_CATCH) {
+					offsetX = (direction == Directions.LEFT) ? 24 : 12;
+				}
+				else if (curentState() == States.TOP_RUN) {
+					if (direction == Directions.LEFT)
+						offsetX = (cf == 1 || cf == 3) ? 9 : 6;
+					else
+						offsetX = (cf == 1 || cf == 3) ? 27 : 30;
+				}
+				else if (curentState() == States.KNEE_CATCH) {
+					offsetX = direction == Directions.RIGHT ? 9 : 27;
+				}
+				else if (curentState() == States.BODY_ATTACK) { 
+					offsetX = direction == Directions.RIGHT ? 40 : -4;
+				}
+				
+				
+				else if (curentState() == States.BACK_KICK) {
+					if (cf == 0 || cf == 1 || cf == 7 || cf == 8) {
+						offsetX = 15;
+					}
+					else if (cf == 2) {
+						offsetX = 24;
+					}
+					else if (cf == 3) {
+						cellX = Players.getParams(this.getPlayerId()).faceLayId.x;
+						cellY = Players.getParams(this.getPlayerId()).faceLayId.y;
+						flipY = true;
+						offsetX = 63;
+						offsetY = 6;
+					}
+					else if (cf == 4) {
+						flipY = true;
+						cellX = Players.getParams(this.getPlayerId()).faceProfileId.x;
+						cellY = Players.getParams(this.getPlayerId()).faceProfileId.y;
+						offsetX = 27;
+						offsetY = 0;
+					}
+					else if (cf == 5) {
+						flipY = true;
+						cellX = Players.getParams(this.getPlayerId()).faceProfileId.x;
+						cellY = Players.getParams(this.getPlayerId()).faceProfileId.y;
+						offsetX = 18;
+						offsetY = 0;
+					}
+					else if (cf == 6) {
+						cellX = Players.getParams(this.getPlayerId()).faceLayId.x;
+						cellY = Players.getParams(this.getPlayerId()).faceLayId.y;
+						offsetX = -27;
+						offsetY = 42;
+					}
+				}
+			break;
+			
+			case DECELERATION: case PASS: case FOOT_KICK: case HEAD_KICK: case HEAD_PASS: case TACKLE_ATTACK: case FOOT_ATTACK: case WHIRLIGIG_KICK:
+				cellX = Players.getParams(this.getPlayerId()).faceProfileId.x;
+				cellY = Players.getParams(this.getPlayerId()).faceProfileId.y;
+				
+				if (curentState() == States.PASS) {
+					if (direction == Directions.LEFT)
+						offsetX = cf > 2 ? 18 : 9;
+					else
+						offsetX = cf > 2 ? 18 : 27;
+				}
+				else if (curentState() == States.FOOT_KICK) {
+					if (cf == 0) {
+						cellX = Players.getParams(this.getPlayerId()).faceFrontId.x;
+						cellY = Players.getParams(this.getPlayerId()).faceFrontId.y;
+					}
+					else if (cf >= 1 && cf <= 4) {
+						cellX = -1;
+						cellY = -1;
+					}
+					else {
+						offsetX = (direction == Directions.LEFT) ? 12 : 24;
+					}
+				}
+				else if (curentState() == States.HEAD_KICK || curentState() == States.HEAD_PASS) {
+					if (cf == 0) {
+						offsetX = (direction == Directions.RIGHT) ? 12 : 24;
+						cellX = Players.getParams(this.getPlayerId()).faceFrontId.x;
+						cellY = Players.getParams(this.getPlayerId()).faceFrontId.y;
+					}
+					else {
+						offsetY = 45;
+						offsetX = (direction == Directions.RIGHT) ? 39 : -3;
+					}
+				}
+				else if (curentState() == States.TACKLE_ATTACK) {
+					offsetX = direction == Directions.RIGHT ? -3 : 39;
+					offsetY = 24;
+				}
+				else if (curentState() == States.FOOT_ATTACK) {
+					if (cf == 0) {
+						cellX = Players.getParams(this.getPlayerId()).faceFrontId.x;
+						cellY = Players.getParams(this.getPlayerId()).faceFrontId.y;
+					}
+					offsetY = 24;
+					
+					if (direction == Directions.RIGHT) 
+						offsetX = (cf == 0) ? 21 : 0;
+					else 
+						offsetX = (cf == 0) ? 15 : 36;
+				}
+				else if (curentState() == States.WHIRLIGIG_KICK) {
+					if (cf == 1 || cf == 6 || cf == 11) {
+						offsetX = 24;
+					}
+					else if (cf == 3 || cf == 8 || cf == 13) {
+						offsetX = -8;
+					}
+					else {
+						cellX = -1;
+						cellY = -1;
+					}
+				}
+			break;
+			
+			case FISH_KICK:
+				cellX = Players.getParams(this.getPlayerId()).faceLayId.x;
+				cellY = Players.getParams(this.getPlayerId()).faceLayId.y;
+				if (cf == 0) {
+					cellX = Players.getParams(this.getPlayerId()).faceFrontId.x;
+					cellY = Players.getParams(this.getPlayerId()).faceFrontId.y;
+					offsetX = (direction == Directions.RIGHT) ? 24 : 12;
+				}
+				else {
+					offsetX = (direction == Directions.RIGHT) ? 63 : -27;
+					offsetY = 0;
+				}
+			break;
+			
+			case DRIBBLING_UP:
+				if (cf == 0) {
+					cellX = Players.getParams(this.getPlayerId()).faceProfileId.x;
+					cellY = Players.getParams(this.getPlayerId()).faceProfileId.y;
+				}
+				else if (cf == 1 || cf == 2 || cf == 3) {
+					cellX = Players.getParams(this.getPlayerId()).faceFrontId.x;
+					cellY = Players.getParams(this.getPlayerId()).faceFrontId.y;
+					offsetX = direction == Directions.RIGHT ? 24 : 12;
+				}
+				else if (cf == 4) {
+					cellX = Players.getParams(this.getPlayerId()).faceFrontId.x;
+					cellY = Players.getParams(this.getPlayerId()).faceFrontId.y;
+					offsetX = (direction == Directions.LEFT) ? 9 : 27;
+				}
+				else {
+					cellX = -1;
+					cellY = -1;
+				}
+			break;
+			
+			case DRIBBLING_DOWN:
+				if (cf == 0) {
+					cellX = Players.getParams(this.getPlayerId()).faceProfileId.x;
+					cellY = Players.getParams(this.getPlayerId()).faceProfileId.y;
+				}
+				else if (cf == 1 || cf == 2 || cf == 3) {
+					cellX = -1;
+					cellY = -1;
+				}
+				else if (cf == 4) {
+					cellX = Players.getParams(this.getPlayerId()).faceFrontId.x;
+					cellY = Players.getParams(this.getPlayerId()).faceFrontId.y;
+					offsetX = (direction == Directions.LEFT) ? 9 : 27;
+				}
+				else {
+					cellX = Players.getParams(this.getPlayerId()).faceFrontId.x;
+					cellY = Players.getParams(this.getPlayerId()).faceFrontId.y;
+					offsetX = direction == Directions.RIGHT ? 24 : 12;
+				}
+			break;
+			
+			default:
+			break;
+		}
+		
+		if (cellX != -1 && cellY != -1) {
+			CrazySoccer.batch.begin();
+	        CrazySoccer.batch.draw(
+	    		headsMap[cellY][cellX].getTexture(), 
+	    		getX() - 42 + offsetX, 
+	    		getY() + getAbsH() + offsetY, 
+	    		0, 
+	    		0, 
+	    		16, 
+	    		16, 
+	    		this.SPRITE_SCALE, 
+	    		this.SPRITE_SCALE, 
+	    		0, 
+	    		headsMap[cellY][cellX].getRegionX(), 
+	    		headsMap[cellY][cellX].getRegionY(), 
+	    		16, 
+	    		16, 
+	    		getFlipX(), 
+	    		flipY
+			);
+	        CrazySoccer.batch.end();
+		}
+	}
+	
 	@Override
 	public void draw(Batch batch, float parentAlpha) {
 		
@@ -2423,6 +2649,8 @@ public class Player extends Actor {
     		this.getFlipY()
 		);
         CrazySoccer.batch.end();
+        
+        drawHead();
         
         // Ресование тени персонажа
         shadow.setX(getX() - 15);

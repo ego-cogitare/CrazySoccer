@@ -7,7 +7,6 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.Batch;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g2d.Animation.PlayMode;
 import com.badlogic.gdx.math.Vector2;
@@ -516,8 +515,8 @@ public class Ball extends Actor {
 		
 		float w = Gdx.graphics.getWidth();
 		float h = Gdx.graphics.getHeight();
-		float camX = Field.camera.position.x;
-		float camY = Field.camera.position.y;
+		float camX = field.camera.position.x;
+		float camY = field.camera.position.y;
 		
 		boolean doStop = false;
 		
@@ -549,18 +548,18 @@ public class Ball extends Actor {
 			if (this.POS_X < field.fieldMaxWidth / 2.0f) {
 				if (this.POS_X >= w / 2) {
 					if (this.POS_X + movePoint.x < w / 2.0f) {
-						Field.camera.position.set(w / 2.0f, camY, 0);
+						field.camera.position.set(w / 2.0f, camY, 0);
 						setX(movePoint.x + this.POS_X);
 					}
 					else {
-						Field.camera.position.set(camX + movePoint.x, camY, 0);
+						field.camera.position.set(camX + movePoint.x, camY, 0);
 					}
 					this.POS_X += movePoint.x;
 				} 
 				else {
 					if (this.POS_X + movePoint.x > w / 2.0f) {
 						setX(w / 2.0f);
-						Field.camera.position.set(camX + this.POS_X + movePoint.x - w / 2.0f, camY, 0);
+						field.camera.position.set(camX + this.POS_X + movePoint.x - w / 2.0f, camY, 0);
 					}
 					else {
 						setX(getX() + movePoint.x);
@@ -571,21 +570,21 @@ public class Ball extends Actor {
 			else {
 				if (getX() <= w / 2.0f) {
 					if (this.POS_X + movePoint.x <= field.camMaxX) {
-						Field.camera.position.set(camX + movePoint.x, camY, 0);
+						field.camera.position.set(camX + movePoint.x, camY, 0);
 					}
 					else {
-						Field.camera.position.set(field.camMaxX, camY, 0);
+						field.camera.position.set(field.camMaxX, camY, 0);
 						setX(w / 2.0f + this.POS_X + movePoint.x - field.camMaxX);
 					}
 					this.POS_X += movePoint.x;
 				} 
 				else {
 					if (this.POS_X + movePoint.x > field.camMaxX) {
-						Field.camera.position.set(field.camMaxX, camY, 0);
+						field.camera.position.set(field.camMaxX, camY, 0);
 						setX(w / 2.0f + this.POS_X + movePoint.x - field.camMaxX);
 					}
 					else {
-						Field.camera.position.set(this.POS_X + movePoint.x, camY, 0);
+						field.camera.position.set(this.POS_X + movePoint.x, camY, 0);
 						setX(w / 2.0f);
 					}
 					this.POS_X += movePoint.x;
@@ -593,24 +592,24 @@ public class Ball extends Actor {
 			}
 			
 			// Перемещение по оси Y
-			camX = Field.camera.position.x;
-			camY = Field.camera.position.y;
+			camX = field.camera.position.x;
+			camY = field.camera.position.y;
 			
 			if (this.POS_Y < field.fieldHeight / 2.0f) {
 				if (this.POS_Y >= h / 2) {
 					if (this.POS_Y + movePoint.y < h / 2.0f) {
-						Field.camera.position.set(camX, h / 2.0f, 0);
+						field.camera.position.set(camX, h / 2.0f, 0);
 						setY(movePoint.y + this.POS_Y);
 					}
 					else {
-						Field.camera.position.set(camX, camY + movePoint.y, 0);
+						field.camera.position.set(camX, camY + movePoint.y, 0);
 					}
 					this.POS_Y += movePoint.y;
 				} 
 				else {
 					if (this.POS_Y + movePoint.y > h / 2.0f) {
 						setY(h / 2.0f);
-						Field.camera.position.set(camX, camY + this.POS_Y + movePoint.y - h / 2.0f, 0);
+						field.camera.position.set(camX, camY + this.POS_Y + movePoint.y - h / 2.0f, 0);
 					}
 					else {
 						setY(getY() + movePoint.y);
@@ -621,21 +620,21 @@ public class Ball extends Actor {
 			else {
 				if (getY() <= h / 2.0f) {
 					if (this.POS_Y + movePoint.y <= field.camMaxY) {
-						Field.camera.position.set(camX, camY + movePoint.y, 0);
+						field.camera.position.set(camX, camY + movePoint.y, 0);
 					}
 					else {
-						Field.camera.position.set(camX, field.camMaxY, 0);
+						field.camera.position.set(camX, field.camMaxY, 0);
 						setY(h / 2.0f + this.POS_Y + movePoint.y - field.camMaxY);
 					}
 					this.POS_Y += movePoint.y;
 				}
 				else {
 					if (this.POS_Y + movePoint.y > field.camMaxY) {
-						Field.camera.position.set(camX, field.camMaxY, 0);
+						field.camera.position.set(camX, field.camMaxY, 0);
 						setY(h / 2.0f + this.POS_Y + movePoint.y - field.camMaxY);
 					}
 					else {
-						Field.camera.position.set(camX, this.POS_Y + movePoint.y, 0);
+						field.camera.position.set(camX, this.POS_Y + movePoint.y, 0);
 						setY(h / 2.0f);
 					}
 					this.POS_Y += movePoint.y;

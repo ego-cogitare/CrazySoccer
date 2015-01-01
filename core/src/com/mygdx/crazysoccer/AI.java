@@ -97,13 +97,13 @@ public class AI {
 		return result;
 	}
 	
-	private String queueToString(int playerId) {
-		String result = "[";
-		for (int i = 0; i < this.getActionQueue(playerId).size(); i++) {
-			result += this.getActionQueue(playerId).get(i).toString() + ", ";
-		}
-		return result + "]";
-	}
+//	private String queueToString(int playerId) {
+//		String result = "[";
+//		for (int i = 0; i < this.getActionQueue(playerId).size(); i++) {
+//			result += this.getActionQueue(playerId).get(i).toString() + ", ";
+//		}
+//		return result + "]";
+//	}
 	
 	/**
 	 * Выполнение действий в порядке поступления в очередь
@@ -276,9 +276,9 @@ public class AI {
 	 * Очистка очереди выполнения команд игрока
 	 * @param playerId
 	 */
-	private void clearActionStack(int playerId) {
-		actionsStack.get(playerId).clear();
-	}
+//	private void clearActionStack(int playerId) {
+//		actionsStack.get(playerId).clear();
+//	}
 	
 	/**
 	 * Перечень возможных суперударов 

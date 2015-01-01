@@ -11,6 +11,14 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 
 public class GraphUtils {
 	
+	public static int screenCenterX() {
+		return (int)(Gdx.graphics.getWidth() / 2);
+	}
+	
+	public static int screenCenterY() {
+		return (int)(Gdx.graphics.getHeight() / 2);
+	}
+	
 	public static Color getPixelAt(float x, float y) {
 		Pixmap pixmap = new Pixmap(1, 1, Format.RGBA8888);
 		ByteBuffer pixels = pixmap.getPixels();
@@ -31,5 +39,29 @@ public class GraphUtils {
 			x += space + dotSize;
 		}
 		CrazySoccer.shapeRenderer.end();
+	}
+	
+	public static void blackCurtain(float x, float y, int width, int height, float opacity) {
+		Gdx.gl20.glEnable(GL20.GL_BLEND);
+        Gdx.gl20.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+        CrazySoccer.shapeRenderer.begin(ShapeType.Filled);
+        CrazySoccer.shapeRenderer.setColor(0, 0, 0, opacity);
+        CrazySoccer.shapeRenderer.rect(x, y, width, height);
+        CrazySoccer.shapeRenderer.end();
+        Gdx.gl20.glDisable(GL20.GL_BLEND);
+	}
+	
+	public static void drawText(int x, int y, String s) {
+		CrazySoccer.batch.begin();
+		CrazySoccer.font.draw(CrazySoccer.batch, s, x, y);
+		CrazySoccer.batch.end();
+	}
+	
+	public static void drawText(int x, int y, String s, boolean centerX) {
+		if (centerX) 
+			x = (int)(GraphUtils.screenCenterX() - 
+						CrazySoccer.font.getBounds(s).width / 2);
+		
+		drawText(x, y, s);
 	}
 }

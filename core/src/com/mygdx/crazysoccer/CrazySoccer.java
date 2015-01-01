@@ -14,8 +14,8 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g2d.Animation.PlayMode;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
-import com.mygdx.crazysoccer.GameScreen.GameScreens;
+import com.badlogic.gdx.math.Matrix4;
+import com.mygdx.crazysoccer.Field.GameStates;
 import com.mygdx.crazysoccer.GameScreen.ScreenNames;
 import com.mygdx.crazysoccer.Movie.MovieTypes;
 
@@ -25,9 +25,11 @@ public class CrazySoccer extends ApplicationAdapter {
 	
 	public static ShapeRenderer shapeRenderer;
 	
+	public static Matrix4 shapeProjectionMatrix;
+	
 	public static SpriteBatch batch;
 	
-	private HashMap<String,Menu> menus = new HashMap<String,Menu>();
+	public static HashMap<String,Menu> menus = new HashMap<String,Menu>();
 	
 	// Игровое поле
 	private Field field; 
@@ -51,10 +53,11 @@ public class CrazySoccer extends ApplicationAdapter {
 		
 		// Для отрисовки линий поля
 		shapeRenderer = new ShapeRenderer();
+		shapeProjectionMatrix = new Matrix4(shapeRenderer.getProjectionMatrix());
 		
-		font = new BitmapFont();
-		font.setMarkupEnabled(true);
-		font.scale(1.0f);
+		System.out.println(shapeProjectionMatrix);
+		
+		font = new BitmapFont(Gdx.files.internal("fonts/font.fnt"),Gdx.files.internal("fonts/font.png"),false);
 		
 		batch = new SpriteBatch();
 		
@@ -67,7 +70,7 @@ public class CrazySoccer extends ApplicationAdapter {
 		menus.get("main_menu").addItem(new Menu.Item(650,210,"TEAMS",1));
 		menus.get("main_menu").addItem(new Menu.Item(650,160,"MUSIC",1));
 		menus.get("main_menu").addItem(new Menu.Item(650,110,"EXIT",1));
-		
+		menus.get("main_menu").setActive(3);
 		
 		menus.put("music_select", new Menu());
 		menus.get("music_select").addItem(new Menu.Item(400,620,"GOAL 3 END THEME",0));
@@ -75,6 +78,10 @@ public class CrazySoccer extends ApplicationAdapter {
 		menus.get("music_select").addItem(new Menu.Item(400,480,"KNUKLE FIGHT END THEME",0));
 		menus.get("music_select").addItem(new Menu.Item(400,410,"GOAL 3 BATTLE THEME",0));
 		menus.get("music_select").addItem(new Menu.Item(400,100,"BACK TO MENU",0));
+		
+		menus.put("give_up", new Menu());
+		menus.get("give_up").addItem(new Menu.Item(520,GraphUtils.screenCenterY() + 100,"No",0));
+		menus.get("give_up").addItem(new Menu.Item(580,GraphUtils.screenCenterY() + 100,"Yes",1));
 	}
 	
 	private void drawTitle() {
@@ -152,7 +159,6 @@ public class CrazySoccer extends ApplicationAdapter {
 				if (movie.isLoaded(MovieTypes.MUSIC_DANCE))
 				{
 					movie.getMovie(MovieTypes.MUSIC_DANCE).setFlipX(
-						//true
 						movie.getMovie(MovieTypes.MUSIC_DANCE).getCurentFrame() % 2 == 0
 					);
 					
@@ -186,7 +192,7 @@ public class CrazySoccer extends ApplicationAdapter {
 				this.handleMenu("music_select");
 				
 				// Отрисовка меню
-				this.menus.get("music_select").draw();
+				menus.get("music_select").draw();
 				
 				for (int i = 0; i < menus.get("music_select").getItems().size(); i++) {
 					GraphUtils.dottedVertLine(
@@ -250,6 +256,11 @@ public class CrazySoccer extends ApplicationAdapter {
 			
 			case PREPORATIONS:
 				
+				if (field != null) {
+					field.dispose();
+					field = null;
+				}
+				
 				// 
 				if (!Sounds.isLoaded("main_menu")) {
 					Sounds.load("main_menu", "sound/bg/mainmenu.ogg");
@@ -262,7 +273,7 @@ public class CrazySoccer extends ApplicationAdapter {
 				if (movie.isLoaded(MovieTypes.TEACH_TEACHER))
 					movie.getMovie(MovieTypes.TEACH_TEACHER).play(false);
 				else {
-					movie.load(MovieTypes.TEACH_TEACHER, "graphics/kunio.png", 8, 8);
+					movie.load(MovieTypes.TEACH_TEACHER, "graphics/body.png", 8, 8);
 					
 					// Установка коеффициента увеличения кадра
 					movie.getMovie(MovieTypes.TEACH_TEACHER).setScaleXY(3);
@@ -307,7 +318,7 @@ public class CrazySoccer extends ApplicationAdapter {
 				// Отрисовка меню
 				menus.get("main_menu").draw();
 				
-				// Отрисовка курсора
+				// Отрисовка указателя меню
 				this.drawMenuCursor("main_menu");
 				
 				// Белая рамка
@@ -375,26 +386,51 @@ public class CrazySoccer extends ApplicationAdapter {
 				Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 				
 				// Проверка иницилизировано ли игровое поле
-				if (field == null) {
-					field = new Field(new ScreenViewport());
+				if (field == null) 
+				{
+					field = new Field();
 					field.LoadMap("levels/level01.tmx"); 
 					
 					// Привязываем слушатель ввода
 					Gdx.input.setInputProcessor(field);
 				}
-				
-				Field.camera.update();
-				field.fieldMapRenderer.setView(Field.camera);
-				field.fieldMapRenderer.render();
-				
-				// Обработка входящей информации от игрока и изменение поведения героев
-				field.act();
+				else 
+				{
+					field.camera.update();
+					field.fieldMapRenderer.setView(field.camera);
+					field.fieldMapRenderer.render();
 					
-				// Обработчик процесса игры
-				field.processGame();
-				
-				// Отрисовка сцены и всех добавленных в нее актеров
-				field.draw();
+					// Обработка входящей информации от игрока и изменение поведения героев
+					field.act();
+						
+					// Обработчик процесса игры
+					field.processGame();
+					
+					// Отрисовка сцены и всех добавленных в нее актеров
+					field.draw();
+					
+					if (field.gameState == GameStates.PAUSE) {
+						GraphUtils.blackCurtain(
+							field.camera.position.x - Gdx.graphics.getWidth() / 2, 
+							field.camera.position.y - Gdx.graphics.getHeight() / 2, 
+							Gdx.graphics.getWidth(),
+							Gdx.graphics.getHeight(),
+							0.9f
+						);
+						
+						GraphUtils.drawText(
+							0,
+							GraphUtils.screenCenterY() + 100, 
+							"GIVE UP?          ",
+							true
+						);
+						
+						this.handleMenu("give_up");
+						
+						// Отрисовка меню
+						menus.get("give_up").draw();
+					}
+				}
 			break;
 			
 			default:

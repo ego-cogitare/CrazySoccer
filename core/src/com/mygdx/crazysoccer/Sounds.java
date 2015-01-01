@@ -70,6 +70,18 @@ class Sounds {
 		}
 	}
 	
+	public static void unloadAll(String exceptOne) {
+		List<String> keyList = new ArrayList<String>(sound.keySet());
+		
+		for (int i = 0; i < keyList.size(); i++) {
+			if (exceptOne != keyList.get(i) && isLoaded(keyList.get(i))) { 
+				stop(keyList.get(i));
+				sound.get(keyList.get(i)).sound.dispose();
+				sound.remove(keyList.get(i));
+			}
+		}
+	}
+	
 	public static void loop(String name, boolean looping) {
 		sound.get(name).sound.setLooping(sound.get(name).ID, looping);
 		sound.get(name).loop = looping;

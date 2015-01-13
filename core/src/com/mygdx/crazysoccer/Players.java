@@ -7,7 +7,7 @@ public class Players {
 		RIKKI
 	}
 	
-	private static enum Ampluas {
+	public static enum Amplua {
 		GK,
 		DF,
 		MF,
@@ -28,7 +28,7 @@ public class Players {
 		public int ID;
 		public Names name;
 		public String stringName;
-		public Ampluas amplua;
+		public Amplua amplua;
 		
 		public float walkingSpeed;
 		public float runSpeed;
@@ -43,7 +43,7 @@ public class Players {
 		public FaceCell faceLayId;
 		
 		
-		public Params(int ID, String stringName, Names name, Ampluas amplua, float walkingSpeed, float runSpeed, float topSpeed, 
+		public Params(int ID, String stringName, Names name, Amplua amplua, float walkingSpeed, float runSpeed, float topSpeed, 
 				float strength, float kickStrength, float mass, float maxHealth, FaceCell faceFrontId, FaceCell faceProfileId, FaceCell faceLayId) {
 			
 			this.ID = ID;
@@ -66,62 +66,62 @@ public class Players {
 	
 	private static Params[] playerParams = {
 		new Params(
-			0, "KUNIO", Names.KUNIO, Ampluas.FW, 3.0f, 6.0f, 9.0f, 210.0f, 50.0f, 62.0f, 200, 
+			0, "KUNIO", Names.KUNIO, Amplua.FW, 3.0f, 6.0f, 9.0f, 210.0f, 50.0f, 62.0f, 200, 
 			new FaceCell(0,2), new FaceCell(0,3), new FaceCell(0,1)
 		),
 		
 		new Params(
-			1, "RIKKI", Names.RIKKI, Ampluas.FW, 3.0f, 6.0f, 9.0f, 210.0f, 50.0f, 62.0f, 200,
+			1, "FRANKI", Names.RIKKI, Amplua.FW, 3.0f, 6.0f, 9.0f, 210.0f, 50.0f, 62.0f, 200,
 			new FaceCell(0,5), new FaceCell(0,6), new FaceCell(0,4)
 		),
 		
 		new Params(
-			2, "BATON", Names.RIKKI, Ampluas.FW, 3.0f, 6.0f, 9.0f, 210.0f, 50.0f, 62.0f, 200,
+			2, "BATON", Names.RIKKI, Amplua.FW, 3.0f, 6.0f, 9.0f, 210.0f, 50.0f, 62.0f, 200,
 			new FaceCell(0,8), new FaceCell(0,9), new FaceCell(0,7)
 		),
 		
 		new Params(
-			3, "KOSYAK", Names.RIKKI, Ampluas.FW, 3.0f, 6.0f, 9.0f, 210.0f, 50.0f, 62.0f, 200,
+			3, "KOSYAK", Names.RIKKI, Amplua.FW, 3.0f, 6.0f, 9.0f, 210.0f, 50.0f, 62.0f, 200,
 			new FaceCell(0,11), new FaceCell(0,12), new FaceCell(0,10)
 		),
 		
 		new Params(
-			4, "PATLA", Names.RIKKI, Ampluas.FW, 3.0f, 6.0f, 9.0f, 210.0f, 50.0f, 62.0f, 200,
+			4, "PATLA", Names.RIKKI, Amplua.FW, 3.0f, 6.0f, 9.0f, 210.0f, 50.0f, 62.0f, 200,
 			new FaceCell(0,14), new FaceCell(0,15), new FaceCell(0,13)
 		),
 		
 		new Params(
-			5, "KEEPER", Names.RIKKI, Ampluas.FW, 3.0f, 6.0f, 9.0f, 210.0f, 50.0f, 62.0f, 200,
+			5, "KEEPER", Names.RIKKI, Amplua.GK, 3.0f, 6.0f, 9.0f, 210.0f, 50.0f, 62.0f, 200,
 			new FaceCell(1,1), new FaceCell(1,2), new FaceCell(1,0)
 		),
 		
 		new Params(
-			6, "SVERDLO", Names.RIKKI, Ampluas.FW, 3.0f, 6.0f, 9.0f, 210.0f, 50.0f, 62.0f, 200,
+			6, "SVERDLO", Names.RIKKI, Amplua.FW, 3.0f, 6.0f, 9.0f, 210.0f, 50.0f, 62.0f, 200,
 			new FaceCell(1,4), new FaceCell(1,5), new FaceCell(1,3)
 		),
 		
 		new Params(
-			7, "BANAN", Names.RIKKI, Ampluas.FW, 3.0f, 6.0f, 9.0f, 210.0f, 50.0f, 62.0f, 200,
+			7, "BANAN", Names.RIKKI, Amplua.FW, 3.0f, 6.0f, 9.0f, 210.0f, 50.0f, 62.0f, 200,
 			new FaceCell(1,7), new FaceCell(1,8), new FaceCell(1,6)
 		),
 		
 		new Params(
-			8, "RIBKA", Names.RIKKI, Ampluas.FW, 3.0f, 6.0f, 9.0f, 210.0f, 50.0f, 62.0f, 200,
+			8, "RIBKA", Names.RIKKI, Amplua.FW, 3.0f, 6.0f, 9.0f, 210.0f, 50.0f, 62.0f, 200,
 			new FaceCell(1,10), new FaceCell(1,11), new FaceCell(1,9)
 		),
 		
 		new Params(
-			9, "OCHKARIK", Names.RIKKI, Ampluas.FW, 3.0f, 6.0f, 9.0f, 210.0f, 50.0f, 62.0f, 200,
+			9, "OCHKARIK", Names.RIKKI, Amplua.FW, 3.0f, 6.0f, 9.0f, 210.0f, 50.0f, 62.0f, 200,
 			new FaceCell(1,13), new FaceCell(1,14), new FaceCell(1,12)
 		),
 		
 		new Params(
-			10, "DAVIDS", Names.RIKKI, Ampluas.FW, 3.0f, 6.0f, 9.0f, 210.0f, 50.0f, 62.0f, 200,
+			10, "DAVIDS", Names.RIKKI, Amplua.FW, 3.0f, 6.0f, 9.0f, 210.0f, 50.0f, 62.0f, 200,
 			new FaceCell(2,0), new FaceCell(2,1), new FaceCell(1,15)
 		),
 		
 		new Params(
-			11, "TRUSI", Names.RIKKI, Ampluas.FW, 3.0f, 6.0f, 9.0f, 210.0f, 50.0f, 62.0f, 200,
+			11, "TRUSI", Names.RIKKI, Amplua.GK, 3.0f, 6.0f, 9.0f, 210.0f, 50.0f, 62.0f, 200,
 			new FaceCell(2,3), new FaceCell(2,4), new FaceCell(2,2)
 		),
 	};
@@ -130,7 +130,7 @@ public class Players {
 		try {
 			return playerParams[playerId];
 		} 
-		catch(ArrayIndexOutOfBoundsException e) {
+		catch (ArrayIndexOutOfBoundsException e) {
 			return playerParams[0];
 		}
 	}

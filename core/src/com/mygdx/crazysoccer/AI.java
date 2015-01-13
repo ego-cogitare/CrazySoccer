@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import com.mygdx.crazysoccer.Actions.Controls;
 import com.mygdx.crazysoccer.Player.Directions;
 import com.mygdx.crazysoccer.Player.States;
+import com.mygdx.crazysoccer.Players.Amplua;
+import com.mygdx.crazysoccer.Players.Params;
 
 public class AI {
 	
@@ -77,7 +79,7 @@ public class AI {
 	
 	public AI() {
 		
-		for (int i = 0; i < 10; i++) {
+		for (int i = 0; i < 12; i++) {
 			actionsStack.add(i, new ArrayList<AIButton>());
 			opponents.add(i, new ArrayList<Integer>());
 		}
@@ -111,7 +113,12 @@ public class AI {
 	private void fetchFirstAction(int playerId) {
 		for (int i = 0; i < this.getActionQueue(playerId).size(); i++) {
 			// Посылка команды от ИИ к игроку, если она еще не отослана
-			if (this.getActionQueue(playerId).get(i).SENT == false && this.curTime() >= this.getActionQueue(playerId).get(i).START) {
+			if 
+			(
+				this.getActionQueue(playerId).get(i).SENT == false && 
+				this.curTime() >= this.getActionQueue(playerId).get(i).START
+			) 
+			{
 				
 				// Отсылаем команду
 				this.sendCommandToPlayer(playerId, this.getActionQueue(playerId).get(i).CONTROL);
@@ -173,6 +180,12 @@ public class AI {
 //		}
 	}
 	
+	private void removeAllCommandsFromPlayer(int playerId) {
+		for (int i = 0; i < this.actionsStack.get(playerId).size(); i++) {
+			this.actionsStack.get(playerId).remove(i);
+		}
+	}
+	
 	private Player getPlayer(int playerId) {
 		return field.players[playerId];
 	}
@@ -215,10 +228,18 @@ public class AI {
 		
 		if (followY - getPlayer(playerId).getAbsY() > dY && !getPlayer(playerId).upPressed()) {
 			removeCommandFromPlayer(playerId, Controls.DOWN);
+			
+//			if (!aiCommandExists(playerId, Controls.UP)) {
+//				aiCommand(playerId, 0, 400, Controls.UP);
+//			}
 			sendCommandToPlayer(playerId, Controls.UP);
 		}
 		else if (followY - getPlayer(playerId).getAbsY() < -dY && !getPlayer(playerId).downPressed()) {
 			removeCommandFromPlayer(playerId, Controls.UP);
+			
+//			if (!aiCommandExists(playerId, Controls.DOWN)) {
+//				aiCommand(playerId, 0, 400, Controls.DOWN);
+//			}
 			sendCommandToPlayer(playerId, Controls.DOWN);
 		}
 		
@@ -306,8 +327,8 @@ public class AI {
 			}
 		}
 		else {
-			aiCommand(playerId, 100, this.DEF_PRESS_DURATION, control);
-			aiCommand(playerId, 150, this.DEF_PRESS_DURATION, control);
+				aiCommand(playerId, 0, this.DEF_PRESS_DURATION, control);
+				aiCommand(playerId, 100, this.DEF_PRESS_DURATION, control);
 		}
 	}
 	
@@ -340,29 +361,37 @@ public class AI {
 	// Игра ИИ
 	public void play() {
 		
-		if (System.nanoTime() - LAST_PLAY_TIME < 120000000L) {
+		if (System.nanoTime() - LAST_PLAY_TIME < 140000000L) // Исключить двойной вверх, когда мяч вышел
+		{
 			
-			for (int i = 0; i < PLAY_FOR.size(); i++) {
-				
+			for (int i = 0; i < PLAY_FOR.size(); i++) 
+			{
 				int playerId = PLAY_FOR.get(i);
-			
-				fetchFirstAction(playerId);
-				disableOldActions(playerId);
+				
+				if (getPlayer(playerId).curentState() != States.DECELERATION) {
+					fetchFirstAction(playerId);
+					disableOldActions(playerId);
+				}
 			}
 		}
-		else {
+		else 
+		{
 			this.updateTicker();
 			
-			
 			// Проход по игрокам и принятие решения какое действие должен выполнять игрок
-			for (int i = 0; i < PLAY_FOR.size(); i++) {
-				
+			for (int i = 0; i < PLAY_FOR.size(); i++) 
+			{
 				// Получение идентификатора игрока
 				int playerId = PLAY_FOR.get(i);
 				
-//				if (playerId == 9) {
-//					System.out.println(queueToString(playerId));
+//				if (playerId == 5) {
+//					System.out.println(getActionQueue(5));
+//					System.out.println(getPlayer(playerId).curentState());
 //				}
+//				
+				if (getPlayer(playerId).curentState() == States.DECELERATION) {
+					continue;
+				}
 				
 				/**
 				 * Поведение игрока зависит от того, кто контроллирует мяч.
@@ -371,55 +400,429 @@ public class AI {
 				 * зоне ответственности игрока.
 				 */
 				
-				// Куда следовать для отбора мяча
-				float followX = -1;
-				float followY = -1;
-				float dX = 48;
-				float dY = 16;
-				
-				if (getPlayer(playerId).ballManagedByOpponents()) 
+				// Мяч введен в игру
+				if (field.ball.isThrowedIn()) 
 				{
-					followX = getPlayer(field.ball.managerByBlayer()).getAbsX();
-					followY = getPlayer(field.ball.managerByBlayer()).getAbsY();
-					dX = 64;
-					dY = 16;
-				}
-				else if (!field.ball.isCatched()) 
-				{
-					// Если мяч находится на земле то игрок следует в позицию местонахождения мяча
-					if (field.ball.getAbsH() < 10 || field.ball.absVelocity() < 0.5f) 
+//					System.out.println("Мяч в игре");
+//					System.out.println("Мяч контроллируется: "+field.ball.isCatched()+" игрок: "+field.ball.managerByBlayer());
+					
+					// ИИ полевых игроков
+					if (getPlayer(playerId).getAmplua() != Amplua.GK)
 					{
-						followX = field.ball.getAbsX();
-						followY = field.ball.getAbsY();
+						// Куда следовать для отбора мяча
+						float followX = -1;
+						float followY = -1;
+						float dX = 48;
+						float dY = 16;
 						
-						dX = 32;
-						dY = 16;
-					}
-					// Иначе игрок следует в позицию где мяч приземлится
-					else 
-					{
-						followX = field.ball.getLandingX();
-						followY = field.ball.getLandingY();
+						if (getPlayer(playerId).ballManagedByOpponents()) 
+						{
+							followX = getPlayer(field.ball.managerByBlayer()).getAbsX();
+							followY = getPlayer(field.ball.managerByBlayer()).getAbsY();
+							dX = 64;
+							dY = 16;
+						}
+						else if (!field.ball.isCatched()) 
+						{
+							// Если мяч находится на земле то игрок следует в позицию местонахождения мяча
+							if (field.ball.getAbsH() < 10 || field.ball.absVelocity() < 0.5f) 
+							{
+								followX = field.ball.getAbsX();
+								followY = field.ball.getAbsY();
+								
+								dX = 32;
+								dY = 16;
+							}
+							// Иначе игрок следует в позицию где мяч приземлится
+							else 
+							{
+								followX = field.ball.getLandingX();
+								followY = field.ball.getLandingY();
+								
+								dX = 32;
+								dY = 16;
+							}
+						}
 						
-						dX = 32;
-						dY = 16;
+						// ID ближайшего живого игрока соперника
+						nrstRival = field.playerNearest(playerId, Player.RIVAL, true, false, false, false, false);
+						
+						// Расстояние от текущего игрока до мяча
+						dstToBall = MathUtils.distance(getPlayer(playerId).getAbsX(), getPlayer(playerId).getAbsY(), field.ball.getAbsX(), field.ball.getAbsY());
+						
+						// Если мяч находится в зоне видимости AI и мяч не контроллируется вратарем
+						if (dstToBall < 600 && !field.ball.managedByGK())
+						{
+							/****************************************************
+							 * Если мяч ничейный или контроллируется оппонентом *
+							 ****************************************************/
+							if (followX != -1 && followY != -1) 
+							{
+								
+								/****************************************************************** 
+								 * Защита игроком самого себя, чтобы не давать себя ударить мячом *
+								 ******************************************************************/
+								if 
+								(
+									!field.ball.isCatched() &&
+									
+									!getPlayer(playerId).isDead() &&
+									
+									field.ball.getAbsH() < 150 &&
+									
+									getPlayer(playerId).isEnoughToKill(field.ball.impulse()) &&
+									
+									Math.abs(getPlayer(playerId).getAbsY() - field.ball.getAbsY()) < 50 &&
+									
+									Math.abs(getPlayer(playerId).getAbsX() - field.ball.getAbsX()) < 250 &&
+									(
+										(field.ball.getVelocityX() > 0 && getPlayer(playerId).getAbsX() > field.ball.getAbsX()) ||
+										(field.ball.getVelocityX() < 0 && getPlayer(playerId).getAbsX() < field.ball.getAbsX())
+									)
+								) 
+								{
+									//aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.LEFT);
+									aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.ACTION1);
+								}
+								
+								
+								/************************************************************************************************** 
+								 * Ситуация когда нужно бить рыбкой:															  *
+								 * 	1. когда игрок находится достаточно близко к мячу чтобы выполнить FISH_KICK;				  *
+								 *  2. ближайший игрок к мячу это игрок соперника или игрок соперника находится достаточно близко *
+								 **************************************************************************************************/
+								if 
+								(
+									// Если мяч ничейный 	
+									!field.ball.isCatched() &&
+									
+									field.ball.getAbsH() < 150 &&
+									
+									// и игрок который мог бы выполнить удар - живой
+									!getPlayer(playerId).isDead() &&
+									
+									// и он находится напротив мяча
+									Math.abs(getPlayer(playerId).getAbsY() - field.ball.getAbsY()) < 40 &&
+									
+									// и расстояние от него до мяча по оси OX меньше чем расстояние которое необходимо для удара "рыбкой"
+									Math.abs(getPlayer(playerId).getAbsX() - field.ball.getAbsX()) < 230
+								) 
+								{
+									// Случай, когда игрок находится возле мяча, чтобы выполнить удар по воротам / вынос мяча рыбкой
+									if 
+									(
+										// Ближайший игрок найден	
+										nrstRival != -1 &&
+										
+										// и расстояние к нему меньше 300
+										MathUtils.distance(
+											getPlayer(playerId).getAbsX(), 
+											getPlayer(playerId).getAbsY(), 
+											getPlayer(nrstRival).getAbsX(), 
+											getPlayer(nrstRival).getAbsY()
+										) < 300
+									) 
+									{
+										// Выполнение добивания рыбкой
+										if 
+										(
+											// и игрок повернут в сторону ворот соперника
+											getPlayer(playerId).turnedToDestinationGates() &&
+											
+											// и расстояние до ворот небольшое
+											getPlayer(playerId).distanceToDestGates() < 800
+										)
+										{
+											// Выполняем удар "рыбкой"
+											aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.ACTION1);
+										}
+										
+										// Выполнение выноса мяча рыбкой
+										else if 
+										(
+											// и игрок повернут в сторону ворот соперника
+											getPlayer(playerId).turnedToDestinationGates() &&
+											
+											// и расстояние до ворот небольшое
+											getPlayer(playerId).distanceToOwnGates() < 800
+										)
+										{
+											// Выполняем удар "рыбкой"
+											aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.ACTION1);
+										}
+									}
+								}
+								
+								
+		//						System.out.println(followX+" "+followY);
+		//						System.out.println(field.ball.getLandingX()+" "+field.ball.getLandingY());
+								
+								/********************************************************************************************
+								 *                                   Если игрок достиг мяча                                 *
+								 ********************************************************************************************/ 
+								if (moveTo(followX, followY, playerId, dX, dY)) 
+								{
+									// Если мяч контроллируется игроком-соперником, тогда пробуем отобрать мяч
+									if (field.ball.isCatched()) 
+									{
+										// Если игрок добрался до мяча, то выполняется попытка отбора мяча
+										if (Math.random() > 0.5f) {
+											aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.ACTION2);
+										}
+										else {
+											aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.ACTION1);
+										}
+									}
+									else if (!field.ball.inField()) 
+									{
+										aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.ACTION2);
+									}
+								}
+								// Пока игрок движется к ничейному мячу (или к мячу который контроллирует оппонентом)
+								else 
+								{
+									/* Целесообразно выполнять удар в прыжке при следующих ситуациях:
+									 *   1. Когда игрок доганяет игрока сзади (т.е. его скорость больше скорости убегающего)
+									 */
+									
+									// Если мяч контроллируется игроком соперником
+									if (field.ball.isCatched()) 
+									{
+										// ID игрока, который управляет мячом
+										int managedBy = field.ball.managerByBlayer();
+										
+										if
+										(
+											managedBy >= 0 &&
+											getPlayer(playerId).ballManagedByOpponents() &&
+											Math.abs(getPlayer(playerId).getVelocityX()) > Math.abs(getPlayer(managedBy).getVelocityX()) &&
+											MathUtils.distance(getPlayer(playerId).getAbsX(), getPlayer(playerId).getAbsY(), getPlayer(managedBy).getAbsX(), getPlayer(managedBy).getAbsY()) < 200 &&
+											(
+												(
+													getPlayer(managedBy).getVelocityX() != 0 &&
+													getPlayer(managedBy).getAbsH() == 0
+												)
+												||
+												(
+													getPlayer(managedBy).getAbsH() > 0
+												)
+											)
+										)
+										{
+											// Игрок подпрыгивает
+											aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.ACTION3);
+									
+											// и бъет ногами или корпусом
+											if (Math.random() > 0.5f)  
+												aiCommand(playerId, 100, this.DEF_PRESS_DURATION, Controls.ACTION1);
+											else
+												aiCommand(playerId, 100, this.DEF_PRESS_DURATION, Controls.ACTION2);
+										}
+									}
+									// Игрок на пути к ничейному мячу
+									else
+									{
+										
+									}
+								}
+							}
+							
+							
+							/***************************************************************************************
+							 *  Мяч контроллируется игроком или игроком команды к которой принадлежит данный игрок *
+							 ***************************************************************************************/
+							else 
+							{
+								// Если мяч контроллируется игроком
+								if (this.getPlayer(playerId).catchBall()) 
+								{
+									/**
+									 * Анализ игровой ситуации игроком который владеет мячом 
+									 */
+									
+									
+									/**
+									 * 1: Попытки уклонения от игроков соперника
+									 * 	 1.1. Если в опасной зоне игрока 1 противник, то игрок пытается уклониться от него
+									 *   1.2. Если в опасной зоне игрока количество противников более 1, то игрок делает атаку корпусом 
+									 */
+									float dstBtwPlayers = (nrstRival == -1) ? 9999 : getPlayer(playerId).getAbsX() - getPlayer(nrstRival).getAbsX();
+									
+									if 
+									(
+										// Ближайший соперник найден	
+										nrstRival != -1 &&
+										
+										// и расстояние по OY между игроками меньше 70
+										Math.abs(getPlayer(playerId).getAbsY() - getPlayer(nrstRival).getAbsY()) < 70 &&
+										
+										// и нету команды на выполнение
+										!aiCommandExists(playerId, Controls.UP) && !aiCommandExists(playerId, Controls.DOWN)
+										
+										&&
+										(
+											getPlayer(playerId).direction == Directions.RIGHT &&
+											(
+												(
+													dstBtwPlayers > -400 && dstBtwPlayers < 0
+												) 
+												|| 		
+												(
+													dstBtwPlayers < 100 && dstBtwPlayers > 0
+												) 		
+											)
+											||
+											getPlayer(playerId).direction == Directions.LEFT &&
+											(
+												(
+													dstBtwPlayers < 400 && dstBtwPlayers > 0
+												) 
+												|| 		
+												(
+													dstBtwPlayers > -100 && dstBtwPlayers < 0
+												) 		
+											)
+										)
+									) 
+									{
+										// Если количество соперников рядом более одного то делаем удар корпусом
+										if (field.playersNearThePoint(playerId, 400, 2, Player.RIVAL))
+										{
+											if (getPlayer(playerId).getAbsY() < getPlayer(nrstRival).getAbsY()) 
+											{
+												aiCommand(playerId,   0, this.DEF_PRESS_DURATION, Controls.UP);
+												aiCommand(playerId, 100, this.DEF_PRESS_DURATION, Controls.UP);
+											}
+											else
+											{
+												aiCommand(playerId,   0, this.DEF_PRESS_DURATION, Controls.DOWN);
+												aiCommand(playerId, 100, this.DEF_PRESS_DURATION, Controls.DOWN);
+											}
+										}
+										// Иначе AI уклоняется от игрока-соперника 
+										else
+										{
+											if (getPlayer(playerId).getAbsY() < getPlayer(nrstRival).getAbsY())
+											{
+												aiCommand(playerId, 0, 350, Controls.DOWN);
+											}
+											else
+											{
+												aiCommand(playerId, 0, 350, Controls.UP);
+											}
+										}
+									}
+									
+									
+									// 2: когда и кому отдать пас
+									
+									// 3: атака мячом с целью нейтрализовать противника
+									
+									
+									/*********************************************************************************
+									 *  Если уклоняясь игрок приблизился к ауту то отключаем его дальнейшее движение *
+									 *  за пределы поля																 *
+									 *********************************************************************************/
+									if 
+									(
+										getPlayer(playerId).getAbsY() < field.fieldOffsetY + 80 || 
+										getPlayer(playerId).getAbsY() > field.fieldOffsetY + field.fieldHeight - 80
+									) 
+									{
+										removeCommandFromPlayer(playerId, Controls.UP, Controls.DOWN);
+									}
+									
+									
+									
+									// Если доступен суперудар, то выполняем его, иначе движемся в сторону ворот, по которым нужно бить
+									if (getPlayer(playerId).distanceToDestGates() < getPlayer(playerId).superKickMaxLength()) 
+									{
+										// Если рядом есть соперники то выполняем отдаем пас, так как ударить не выйдет
+										if (field.playersNearThePoint(playerId, 200, 1, Player.RIVAL)) 
+										{
+											// Поис ближайшего игрока союзника
+											int nearestAlly = field.playerNearest(playerId, Player.ALLY, true, true, true, true, true);
+											
+											System.out.println("Nearest to pass from :"+playerId + " is " + nearestAlly);
+											System.out.println("Action :"+getPlayer(playerId).curentState());
+											
+											// Если найден игрок, которому можно отдать пас											
+											if (nearestAlly > 0)
+											{
+												aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.UP);
+												aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.ACTION2);
+											}
+											// Иначе просто бъем по воротам
+											else
+											{
+												aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.ACTION1);
+											}
+										}
+										else 
+										{
+											// Произвольным образом выбираем тип суперудара, которым будет бить игрок
+											int ind = MathUtils.random(0, SuperKickTypes.values().length - 1);
+											
+											// Выполнение суперудара
+											superKick(SuperKickTypes.values()[ind], playerId);
+										}
+									}
+									else 
+									{
+										makeRun(
+											playerId, 
+											getPlayer(playerId).getDestinationGateId() == Gate.LEFT_GATES ? Controls.LEFT : Controls.RIGHT
+										);
+										
+										//removeCommandFromPlayer(playerId, Controls.UP, Controls.DOWN);
+									}
+								}
+								// Мяч контроллируется другим игроком команды к которой принадлежит игрок
+								else 
+								{
+									// Игрок возвращается на свою позицию на поле
+									if (moveTo(getPlayer(playerId).getHomeX(), getPlayer(playerId).getHomeY(), playerId, 100, 30)) {
+										
+										// Если игрок достиг своей позиции на поле, за которой он закреплен поворачиваем его в нужную сторону
+										getPlayer(playerId).direction = getPlayer(playerId).getDestinationGateId() == Gate.LEFT_GATES ? Directions.LEFT : Directions.RIGHT;
+									}
+								}
+							}
+						}
+						
+						// AI возвращает игрока на свою позицию
+						else
+						{
+							// Игрок возвращается на свою позицию на поле
+							if (moveTo(getPlayer(playerId).getHomeX(), getPlayer(playerId).getHomeY(), playerId, 100, 30)) {
+								
+								// Если игрок достиг своей позиции на поле, за которой он закреплен поворачиваем его в нужную сторону
+								getPlayer(playerId).direction = getPlayer(playerId).getDestinationGateId() == Gate.LEFT_GATES ? Directions.LEFT : Directions.RIGHT;
+							}
+						}
+						
 					}
-				}
-				
-				// ID ближайшего живого игрока соперника
-				nrstRival = field.playerNearest(playerId, Player.RIVAL, true, false, false, false, false);
-				
-				// Расстояние от текущего игрока до мяча
-				dstToBall = MathUtils.distance(getPlayer(playerId).getAbsX(), getPlayer(playerId).getAbsY(), field.ball.getAbsX(), field.ball.getAbsY());
-				
-				// Если мяч находится в зоне видимости AI
-				if (dstToBall < 600) 
-				{
-					/****************************************************
-					 * Если мяч ничейный или контроллируется оппонентом *
-					 ****************************************************/
-					if (followX != -1 && followY != -1) 
+					
+					
+					/*########################################################################################################### 
+					  # 												ИИ ВРАТАРЕЙ												#
+					  ###########################################################################################################*/
+					else
 					{
+						// Игрок возвращается на свою позицию на поле
+						if (moveTo(getPlayer(playerId).getHomeX(), getPlayer(playerId).getHomeY(), playerId, 30, 30)) {
+							
+							// Если игрок достиг своей позиции на поле, за которой он закреплен поворачиваем его в нужную сторону
+							getPlayer(playerId).direction = getPlayer(playerId).getDestinationGateId() == Gate.LEFT_GATES ? Directions.LEFT : Directions.RIGHT;
+							
+							if (getPlayer(playerId).catchBall())
+								aiCommand(playerId, 0, 350, Controls.ACTION1);
+						}
+						else 
+						{
+							
+						}
+						
 						
 						/****************************************************************** 
 						 * Защита игроком самого себя, чтобы не давать себя ударить мячом *
@@ -443,303 +846,109 @@ public class AI {
 							)
 						) 
 						{
-							//aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.LEFT);
 							aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.ACTION1);
 						}
-						
-						
-						/************************************************************************************************** 
-						 * Ситуация когда нужно бить рыбкой:															  *
-						 * 	1. когда игрок находится достаточно близко к мячу чтобы выполнить FISH_KICK;				  *
-						 *  2. ближайший игрок к мячу это игрок соперника или игрок соперника находится достаточно близко *
-						 **************************************************************************************************/
-						if 
-						(
-							// Если мяч ничейный 	
-							!field.ball.isCatched() &&
-							
-							field.ball.getAbsH() < 150 &&
-							
-							// и игрок который мог бы выполнить удар - живой
-							!getPlayer(playerId).isDead() &&
-							
-							// и он находится напротив мяча
-							Math.abs(getPlayer(playerId).getAbsY() - field.ball.getAbsY()) < 40 &&
-							
-							// и расстояние от него до мяча по оси OX меньше чем расстояние которое необходимо для удара "рыбкой"
-							Math.abs(getPlayer(playerId).getAbsX() - field.ball.getAbsX()) < 230
-						) 
-						{
-							// Случай, когда игрок находится возле мяча, чтобы выполнить удар по воротам / вынос мяча рыбкой
-							if 
-							(
-								// Ближайший игрок найден	
-								nrstRival != -1 &&
-								
-								// и расстояние к нему меньше 300
-								MathUtils.distance(
-									getPlayer(playerId).getAbsX(), 
-									getPlayer(playerId).getAbsY(), 
-									getPlayer(nrstRival).getAbsX(), 
-									getPlayer(nrstRival).getAbsY()
-								) < 300
-							) 
-							{
-								// Выполнение добивания рыбкой
-								if 
-								(
-									// и игрок повернут в сторону ворот соперника
-									getPlayer(playerId).turnedToDestinationGates() &&
-									
-									// и расстояние до ворот небольшое
-									getPlayer(playerId).distanceToDestGates() < 800
-								)
-								{
-									// Выполняем удар "рыбкой"
-									aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.ACTION1);
-								}
-								
-								// Выполнение выноса мяча рыбкой
-								else if 
-								(
-									// и игрок повернут в сторону ворот соперника
-									getPlayer(playerId).turnedToDestinationGates() &&
-									
-									// и расстояние до ворот небольшое
-									getPlayer(playerId).distanceToOwnGates() < 800
-								)
-								{
-									// Выполняем удар "рыбкой"
-									aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.ACTION1);
-								}
-							}
-						}
-						
-						
-//						System.out.println(followX+" "+followY);
-//						System.out.println(field.ball.getLandingX()+" "+field.ball.getLandingY());
-						
-						/********************************************************************************************
-						 *                                   Если игрок достиг мяча                                 *
-						 ********************************************************************************************/ 
-						if (moveTo(followX, followY, playerId, dX, dY)) 
-						{
-							// Если мяч контроллируется игроком-соперником, тогда пробуем отобрать мяч
-							if (field.ball.isCatched()) 
-							{
-								// Если игрок добрался до мяча, то выполняется попытка отбора мяча
-								if (Math.random() > 0.5f) {
-									aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.ACTION2);
-								}
-								else {
-									aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.ACTION1);
-								}
-							}
-							else if (!field.ball.inField()) 
-							{
-								aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.ACTION2);
-							}
-						}
-						// Пока игрок движется к ничейному мячу (или к мячу который контроллирует оппонентом)
-						else 
-						{
-							/* Целесообразно выполнять удар в прыжке при следующих ситуациях:
-							 *   1. Когда игрок доганяет игрока сзади (т.е. его скорость больше скорости убегающего)
-							 */
-							
-							// Если мяч контроллируется игроком соперником
-							if (field.ball.isCatched()) 
-							{
-								// ID игрока, который управляет мячом
-								int managedBy = field.ball.managerByBlayer();
-								
-								if
-								(
-									managedBy >= 0 &&
-									getPlayer(playerId).ballManagedByOpponents() &&
-									Math.abs(getPlayer(playerId).getVelocityX()) > Math.abs(getPlayer(managedBy).getVelocityX()) &&
-									MathUtils.distance(getPlayer(playerId).getAbsX(), getPlayer(playerId).getAbsY(), getPlayer(managedBy).getAbsX(), getPlayer(managedBy).getAbsY()) < 200 &&
-									(
-										(
-											getPlayer(managedBy).getVelocityX() != 0 &&
-											getPlayer(managedBy).getAbsH() == 0
-										)
-										||
-										(
-											getPlayer(managedBy).getAbsH() > 0
-										)
-									)
-								)
-								{
-									// Игрок подпрыгивает
-									aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.ACTION3);
-							
-									// и бъет ногами или корпусом
-									if (Math.random() > 0.5f)  
-										aiCommand(playerId, 100, this.DEF_PRESS_DURATION, Controls.ACTION1);
-									else
-										aiCommand(playerId, 100, this.DEF_PRESS_DURATION, Controls.ACTION2);
-								}
-							}
-							// Игрок на пути к ничейному мячу
-							else
-							{
-								
-							}
-						}
-					}
-					
-					
-					/***************************************************************************************
-					 *  Мяч контроллируется игроком или игроком команды к которой принадлежит данный игрок *
-					 ***************************************************************************************/
-					else 
-					{
-						// Если мяч контроллируется игроком
-						if (this.getPlayer(playerId).catchBall()) 
-						{
-							/**
-							 * Анализ игровой ситуации игроком который владеет мячом 
-							 */
-							
-							
-							/**
-							 * 1: Попытки уклонения от игроков соперника
-							 * 	 1.1. Если в опасной зоне игрока 1 противник, то игрок пытается уклониться от него
-							 *   1.2. Если в опасной зоне игрока количество противников более 1, то игрок делает атаку корпусом 
-							 */
-							float dstBtwPlayers = (nrstRival == -1) ? 9999 : getPlayer(playerId).getAbsX() - getPlayer(nrstRival).getAbsX();
-							
-							if 
-							(
-								// Ближайший соперник найден	
-								nrstRival != -1 &&
-								
-								// и расстояние по OY между игроками меньше 70
-								Math.abs(getPlayer(playerId).getAbsY() - getPlayer(nrstRival).getAbsY()) < 70 &&
-								
-								// и нету команды на выполнение
-								!aiCommandExists(playerId, Controls.UP) && !aiCommandExists(playerId, Controls.DOWN)
-								
-								&&
-								(
-									getPlayer(playerId).direction == Directions.RIGHT &&
-									(
-										(
-											dstBtwPlayers > -400 && dstBtwPlayers < 0
-										) 
-										|| 		
-										(
-											dstBtwPlayers < 100 && dstBtwPlayers > 0
-										) 		
-									)
-									||
-									getPlayer(playerId).direction == Directions.LEFT &&
-									(
-										(
-											dstBtwPlayers < 400 && dstBtwPlayers > 0
-										) 
-										|| 		
-										(
-											dstBtwPlayers > -100 && dstBtwPlayers < 0
-										) 		
-									)
-								)
-							) 
-							{
-								// Если количество соперников рядом более одного то делаем удар корпусом
-								if (field.playersNearThePoint(playerId, 400, 2, Player.RIVAL))
-								{
-									if (getPlayer(playerId).getAbsY() < getPlayer(nrstRival).getAbsY()) 
-									{
-										aiCommand(playerId,   0, this.DEF_PRESS_DURATION, Controls.UP);
-										aiCommand(playerId, 100, this.DEF_PRESS_DURATION, Controls.UP);
-									}
-									else
-									{
-										aiCommand(playerId,   0, this.DEF_PRESS_DURATION, Controls.DOWN);
-										aiCommand(playerId, 100, this.DEF_PRESS_DURATION, Controls.DOWN);
-									}
-								}
-								// Иначе AI уклоняется от игрока-соперника 
-								else
-								{
-									if (getPlayer(playerId).getAbsY() < getPlayer(nrstRival).getAbsY())
-									{
-										aiCommand(playerId, 0, 350, Controls.DOWN);
-									}
-									else
-									{
-										aiCommand(playerId, 0, 350, Controls.UP);
-									}
-								}
-							}
-							
-							
-							// 2: когда и кому отдать пас
-							
-							// 3: атака мячом с целью нейтрализовать противника
-							
-							
-							/*********************************************************************************
-							 *  Если уклоняясь игрок приблизился к ауту то отключаем его дальнейшее движение *
-							 *  за пределы поля																 *
-							 *********************************************************************************/
-							if 
-							(
-								getPlayer(playerId).getAbsY() < field.fieldOffsetY + 80 || 
-								getPlayer(playerId).getAbsY() > field.fieldOffsetY + field.fieldHeight - 80
-							) 
-							{
-								removeCommandFromPlayer(playerId, Controls.UP, Controls.DOWN);
-							}
-							
-							
-							
-							// Если доступен суперудар, то выполняем его, иначе движемся в сторону ворот, по которым нужно бить
-							if (getPlayer(playerId).distanceToDestGates() < getPlayer(playerId).superKickMaxLength()) {
-								
-								// Произвольным образом выбираем тип суперудара, которым будет бить игрок
-								int ind = MathUtils.random(0, SuperKickTypes.values().length - 1);
-								
-								// Выполнение суперудара
-								superKick(SuperKickTypes.values()[ind], playerId);
-							}
-							else 
-							{
-								makeRun(
-									playerId, 
-									getPlayer(playerId).getDestinationGateId() == Gate.LEFT_GATES ? Controls.LEFT : Controls.RIGHT
-								);
-								
-								//removeCommandFromPlayer(playerId, Controls.UP, Controls.DOWN);
-							}
-						}
-						// Мяч контроллируется другим игроком команды к которой принадлежит игрок
-						else 
-						{
-							// Игрок возвращается на свою позицию на поле
-							if (moveTo(getPlayer(playerId).getHomeX(), getPlayer(playerId).getHomeY(), playerId, 100, 30)) {
-								
-								// Если игрок достиг своей позиции на поле, за которой он закреплен поворачиваем его в нужную сторону
-								getPlayer(playerId).direction = getPlayer(playerId).getDestinationGateId() == Gate.LEFT_GATES ? Directions.LEFT : Directions.RIGHT;
-							}
-						}
-					}
-				}
-				// AI возвращает игрока на свою позицию
-				else
-				{
-					// Игрок возвращается на свою позицию на поле
-					if (moveTo(getPlayer(playerId).getHomeX(), getPlayer(playerId).getHomeY(), playerId, 100, 30)) {
-						
-						// Если игрок достиг своей позиции на поле, за которой он закреплен поворачиваем его в нужную сторону
-						getPlayer(playerId).direction = getPlayer(playerId).getDestinationGateId() == Gate.LEFT_GATES ? Directions.LEFT : Directions.RIGHT;
 					}
 				}
 				
+				
+				/*####################################################################################### 
+				  # 				    			МЯЧ НЕ ВВЕДЕН В ИГРУ								#
+				  #######################################################################################*/
+				else 
+				{
+					Params p = Players.getParams(field.ball.getPlayerToThrowIn());
+					
+//					System.out.println("Мяч вне поля");
+//					System.out.println("Мяч контроллируется: "+ field.ball.isCatched() + " игроком - " + field.ball.managerByBlayer());
+//					System.out.println("Мяч вышел, подать должен: "+ p.stringName);
+					
+					/* Принимается решение ИИ для игрока, который должен вводить мяч в игру */
+					if (playerId == field.ball.getPlayerToThrowIn())
+					{
+//						System.out.println("Player "+playerId+" throws in.");
+						
+						// Если у и грока который подает есть мяч, то он идет к точке откуда подавать мяч
+						int throwX = 0;
+						int throwY = 0;
+						
+						if (getPlayer(playerId).catchBall())
+						{
+							Controls cntrlToThrow = Controls.ACTION1;
+							
+							// Координаты точки куда идти для подачи мяча
+							switch (field.ball.howToThrowIn)
+							{
+								case BOTTOM_OUT: case TOP_OUT:
+									throwX = (int)field.ball.getOutX();
+									throwY = (int)field.ball.getOutY();
+									
+									cntrlToThrow = Controls.ACTION2;
+								break;
+								
+								case LEFT_BOTTOM_CORNER:
+									throwX = field.fieldOffsetX;
+									throwY = field.fieldOffsetY;
+								break;
+								
+								case LEFT_TOP_CORNER:
+									throwX = 562;
+									throwY = 1548;
+								break;
+								
+								case RIGHT_TOP_CORNER:
+									throwX = 3322;
+									throwY = 1548;
+								break;
+								
+								case RIGHT_BOTTOM_CORNER:
+									throwX = field.fieldOffsetX + field.fieldMaxWidth;
+									throwY = field.fieldOffsetY;
+								break;
+								
+								case LEFT_FREE_KICK:
+									throwX = 537;
+									throwY = 680;
+								break;
+								
+								case RIGHT_FREE_KICK:
+									throwX = 3326;
+									throwY = 680;
+								break;
+							}
+							
+							// Игрок движется к точке откуда подавать мяч
+							if (moveTo(throwX, throwY, playerId, 56, 16)) 
+							{
+								aiCommand(playerId, 500, 650, Controls.UP);
+								aiCommand(playerId, 600, 200, cntrlToThrow);
+//								aiCommand(playerId, 0, this.DEF_PRESS_DURATION, Controls.ACTION2);
+//								System.out.println(p.stringName + " подает");
+							}
+							else
+							{
+//								System.out.println(p.stringName + " движется к точке подачи");
+							}
+						}
+						// Иначе он идет к мячу, чтобы взять его
+						else
+						{
+							if (moveTo(field.ball.getAbsX(), field.ball.getAbsY(), playerId, 16, 16)) 
+							{
+//								System.out.println(p.stringName + " пришел к мячу");
+							}
+							else
+							{
+//								System.out.println(p.stringName + " идет к мячу чтобы подать");
+							}
+						}
+					}
+					else
+					{
+						moveTo(getPlayer(playerId).getHomeX(), getPlayer(playerId).getHomeY(), playerId, 100, 30);
+					}
+				}
 			}
-			
 		}
 	}
 }

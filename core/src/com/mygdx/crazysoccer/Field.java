@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.Arrays;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
@@ -29,6 +30,7 @@ import com.mygdx.crazysoccer.GameScreen.ScreenNames;
 import com.mygdx.crazysoccer.Player.AddictedTo;
 import com.mygdx.crazysoccer.Player.Directions;
 import com.mygdx.crazysoccer.Player.States;
+import com.mygdx.crazysoccer.Players.Amplua;
 import com.mygdx.crazysoccer.Wind.WindDirections;
 
 public class Field extends Stage {
@@ -46,7 +48,7 @@ public class Field extends Stage {
 	public String BG_TRACK = "bg01";
 	
 	// Количество игроков на поле
-	private final int PLAYERS_AMOUNT = 10;
+	private final int PLAYERS_AMOUNT = 12;
 	
 	// Служебные переменные
 	private int Z_INDEX;
@@ -107,7 +109,7 @@ public class Field extends Stage {
 	public int fieldOffsetX;
 	public int fieldOffsetY;  
 	
-	float[][] playersArrangment = new float[10][2];
+	float[][] playersArrangment = new float[12][2];
 	
 	public TiledMap fieldMap;
     public TiledMapRenderer fieldMapRenderer;
@@ -151,21 +153,32 @@ public class Field extends Stage {
 		}
 		
 		// Создание игроков
-		for (int i = 0; i < players.length; i++) {
+		for (int i = 0; i < players.length; i++) 
+		{
 			// Создание игрока
 			players[i] = new Player(i);
 			
 			// Привязка слушателя ввода для игрока
 			players[i].setActionsListener(actions);
 
-			// Установка ворот, по которым игрок должен наносить удар
-			players[i].setDestinationGateId(
-					i <= 4 ? Gate.RIGHT_GATES : Gate.LEFT_GATES
-			);
+			if (i <= 5) 
+			{
+				// Установка ворот, по которым игрок должен наносить удар
+				players[i].setDestinationGateId(Gate.RIGHT_GATES);
+				
+				// Привязка игрока к команде
+				players[i].setTeamId(Teams.NEKKETSU);
+			}
+			else
+			{
+				players[i].setDestinationGateId(Gate.LEFT_GATES);
+				
+				players[i].setTeamId(Teams.ITALY);
+			}
 			
-			// Привязка игрока к команде
-			players[i].setTeamId(
-					i <= 4 ? Teams.NEKKETSU : Teams.ITALY
+			// Установка амплуа игрока
+			players[i].setAmplua(
+				Players.getParams(i).amplua
 			);
 
 			// Кем управляется игрок
@@ -193,11 +206,12 @@ public class Field extends Stage {
 		ai[0].attachField(this);
 		
 		// Добавляем ID игрока, за которого будет играть ИИ 
+		ai[0].addPlayer(11);
+		ai[0].addPlayer(10);
 		ai[0].addPlayer(9);
 		ai[0].addPlayer(8);
 		ai[0].addPlayer(7);
 		ai[0].addPlayer(6);
-		ai[0].addPlayer(5);
 		
 		// Экземпляр класса ИИ
 		ai[1] = new AI();
@@ -211,6 +225,7 @@ public class Field extends Stage {
 		ai[1].addPlayer(2);
 		ai[1].addPlayer(3);
 		ai[1].addPlayer(4);
+		ai[1].addPlayer(5);
 		
 		// Создание листьев
 		for (int i = 0; i < leafs.length; i++) {
@@ -326,7 +341,7 @@ public class Field extends Stage {
         		this.camMaxX = this.worldWidth - Gdx.graphics.getWidth() / 2.0f;
         		this.camMaxY = this.worldHeight - Gdx.graphics.getHeight() / 2.0f;
         		
-        		playersArrangment[0][0] = worldWidth / 2.0f - 23;
+        		playersArrangment[0][0] = worldWidth / 2.0f - 40;
         		playersArrangment[0][1] = fieldOffsetY + fieldHeight / 2.0f;
         		
         		playersArrangment[1][0] = 800;
@@ -341,8 +356,11 @@ public class Field extends Stage {
         		playersArrangment[4][0] = worldWidth / 2.0f - 350;
         		playersArrangment[4][1] = worldHeight - 500;
         		
-        		playersArrangment[5][0] = worldWidth / 2.0f + 350;
-        		playersArrangment[5][1] = worldHeight - 500;
+        		// Левый вратарь
+        		playersArrangment[5][0] = 450;
+        		playersArrangment[5][1] = fieldOffsetY + fieldHeight / 2.0f;
+        		
+        		
         		
         		playersArrangment[6][0] = worldWidth / 2.0f + 350;
         		playersArrangment[6][1] = 500;
@@ -354,8 +372,14 @@ public class Field extends Stage {
         		playersArrangment[8][1] = 500;
         		
         		playersArrangment[9][0] = worldWidth / 2.0f + 350;
-        		playersArrangment[9][1] = fieldOffsetY + fieldHeight / 2.0f;
+        		playersArrangment[9][1] = worldHeight - 500;
         		
+        		playersArrangment[10][0] = worldWidth / 2.0f + 200;
+        		playersArrangment[10][1] = fieldOffsetY + fieldHeight / 2.0f;
+        		
+        		// Правый вратарь
+        		playersArrangment[11][0] = worldWidth - 430;
+        		playersArrangment[11][1] = fieldOffsetY + fieldHeight / 2.0f;
         		
         		// Расстановка игроков
         		this.actorsArrangement();
@@ -508,36 +532,36 @@ public class Field extends Stage {
 				aliveFlag = true;
 			// Искать только среди живых
 			else
-				aliveFlag = !players[players[i].getPlayerId()].isDead();
+				aliveFlag = !players[i].isDead();
 			
 			//upFlag = rightFlag = downFlag = leftFlag = false;
 			
 			if (up) 
-				upFlag = players[players[i].getPlayerId()].getAbsY() >= players[playerId].getAbsY();
+				upFlag = players[i].getAbsY() >= players[playerId].getAbsY();
 			else 
 				upFlag = true;
 			
 			if (right) 
-				rightFlag = players[players[i].getPlayerId()].getAbsX() >= players[playerId].getAbsX();
+				rightFlag = players[i].getAbsX() >= players[playerId].getAbsX();
 			else 
 				rightFlag = true;
 			
 			if (down) 
-				downFlag = players[players[i].getPlayerId()].getAbsY() <= players[playerId].getAbsY();
+				downFlag = players[i].getAbsY() <= players[playerId].getAbsY();
 			else 
 				downFlag = true;
 			
 			if (left) 
-				leftFlag = players[players[i].getPlayerId()].getAbsX() <= players[playerId].getAbsX();
+				leftFlag = players[i].getAbsX() <= players[playerId].getAbsX();
 			else 
 				leftFlag = true;
 			
 			
 			if (searchAmong == 0) {
-				flag = (players[playerId].getTeamId() != players[players[i].getPlayerId()].getTeamId() && aliveFlag) ? true : false;
+				flag = (players[playerId].getTeamId() != players[i].getTeamId() && aliveFlag) ? true : false;
 			}
 			else if (searchAmong == 1) {
-				flag = (players[playerId].getTeamId() == players[players[i].getPlayerId()].getTeamId() && aliveFlag) ? true : false;
+				flag = (players[playerId].getTeamId() == players[i].getTeamId() && aliveFlag) ? true : false;
 			}
 			else if (searchAmong == 2) {
 				flag = aliveFlag; 
@@ -545,7 +569,7 @@ public class Field extends Stage {
 			
 			if (players[i].getPlayerId() != playerId && flag && upFlag && rightFlag && downFlag && leftFlag) {
 				// Расстояние к текущему игроку
-				curPlayerDist = MathUtils.distance(players[playerId].getAbsX(), players[playerId].getAbsY(), players[players[i].getPlayerId()].getAbsX(), players[players[i].getPlayerId()].getAbsY());
+				curPlayerDist = MathUtils.distance(players[playerId].getAbsX(), players[playerId].getAbsY(), players[i].getAbsX(), players[i].getAbsY());
 				
 				// Если текущий игрок ближе
 				if (curPlayerDist < nearestPlayerDist) {
@@ -574,10 +598,10 @@ public class Field extends Stage {
 			if (playerId != players[i].getPlayerId()) 
 			{
 				if (searchAmong == 0) {
-					flag = (players[playerId].getTeamId() != players[players[i].getPlayerId()].getTeamId()) ? true : false;
+					flag = (players[playerId].getTeamId() != players[i].getTeamId()) ? true : false;
 				}
 				else if (searchAmong == 1) {
-					flag = (players[playerId].getTeamId() == players[players[i].getPlayerId()].getTeamId()) ? true : false;
+					flag = (players[playerId].getTeamId() == players[i].getTeamId()) ? true : false;
 				}
 				else if (searchAmong == 2) {
 					flag = true; 
@@ -589,8 +613,8 @@ public class Field extends Stage {
 					MathUtils.distance(
 						players[playerId].getAbsX(), 
 						players[playerId].getAbsY(), 
-						players[players[i].getPlayerId()].getAbsX(), 
-						players[players[i].getPlayerId()].getAbsY()
+						players[i].getAbsX(), 
+						players[i].getAbsY()
 					) < r
 				) 
 				{
@@ -600,6 +624,42 @@ public class Field extends Stage {
 		}
 		
 		return false;
+	}
+	
+	public int findNearesPlayerToBall(ArrayList<Amplua> ampluas, ArrayList<AddictedTo> addictedTo, boolean aliveOnly, int destGates) {
+		
+		float minDist = 9999.0f; 
+		
+		int nearestPlayer = -1;
+		
+		for (int i = 0; i < players.length; i++) {
+			
+			// Поиск среди живых или всех
+			boolean flag1 = (aliveOnly) ? !players[i].isDead() : true;
+			
+			// Расстояние от мяча к игроку
+			float curDist = MathUtils.distance(
+								ball.getAbsX(), 
+								ball.getAbsY(), 
+								players[i].getAbsX(), 
+								players[i].getAbsY()
+							);
+			
+			if 
+			(
+				flag1 && 
+				addictedTo.indexOf(players[i].addictedTo) != -1 &&
+				curDist < minDist && 
+				players[i].getDestinationGateId() == destGates && 
+				ampluas.indexOf(players[i].getAmplua()) != -1
+			)
+			{
+				minDist = curDist;
+				nearestPlayer = players[i].getPlayerId();
+			}
+		}
+		
+		return nearestPlayer;
 	}
 
 	// Проверка находится ли клетка внутри полигона (озера / болота)
@@ -733,11 +793,12 @@ public class Field extends Stage {
 			players[i].setHomeY(playersArrangment[i][1]);
 		}
 		
-		players[5].direction = 
 		players[6].direction = 
 		players[7].direction = 
 		players[8].direction = 
-		players[9].direction = Directions.LEFT;
+		players[9].direction = 
+		players[10].direction = 
+		players[11].direction = Directions.LEFT;
 
 		gates[0].setAbsX(290);
 		gates[0].setAbsY(worldHeight / 2 - 100);
@@ -763,6 +824,11 @@ public class Field extends Stage {
 	}
 	
 	public void processGame() {
+		
+		if (Gdx.input.isKeyPressed(Input.Keys.F1)) camera.translate(10, 0, 0);
+		if (Gdx.input.isKeyPressed(Input.Keys.F2)) camera.translate(-10, 0, 0);
+		if (Gdx.input.isKeyPressed(Input.Keys.F3)) camera.translate(0, 10, 0);
+		if (Gdx.input.isKeyPressed(Input.Keys.F4)) camera.translate(0, -10, 0);
 		
 		drawField();
 		
@@ -871,7 +937,7 @@ public class Field extends Stage {
 		}
 		
 		
-		// Если мяч вышел за пределы игрового поля
+		// Если мяч находится в поле
 		if (this.inField(ball.getAbsX(),ball.getAbsY())) {
 			ballOutPlayed = false;
 		}
@@ -969,7 +1035,7 @@ public class Field extends Stage {
 				) 
 			{
 				// Меняем направление движения мяча на противоположное
-				ball.setVelocityX(-ball.getVelocityX());
+				ball.setVelocityX(-ball.getVelocityX() * ball.getRestitution());
 				
 				// Переводим мяч в режим обычного полета (на случай если он летел после суперудара, когда гравитация на мяч отключена)
 				ball.Do(Ball.States.FLY_MEDIUM, true);

@@ -2,8 +2,6 @@ package com.mygdx.crazysoccer;
 
 import java.util.ArrayList;
 
-import com.badlogic.gdx.Input.Keys;
-
 public class Menu {
 
 	public static class Item {
@@ -40,6 +38,11 @@ public class Menu {
 		}
 	}
 	
+	public static final int CURSOR_UP = 0;
+	public static final int CURSOR_DOWN = 1;
+	public static final int CURSOR_LEFT = 2;
+	public static final int CURSOR_RIGHT = 3;
+	
 	private ArrayList<Item> items;
 	
 	public Menu() {
@@ -48,11 +51,11 @@ public class Menu {
 		Sounds.load("nav_ok", "sound/sfx/nav_ok.ogg");
 	}
 	
-	public void cursorMove(int key) {
+	public void cursorMove(int d) {
 		Item item = getActive();
 		
-		switch (key) {
-			case Keys.LEFT:
+		switch (d) {
+			case CURSOR_LEFT:
 				if (item.columnId > getMinColumnId()) {
 					item.isActive = false;
 					int pos = getPositionInColumn(item);
@@ -65,7 +68,7 @@ public class Menu {
 				} 
 			break;
 			
-			case Keys.RIGHT:
+			case CURSOR_RIGHT:
 				if (item.columnId < getMaxColumnId()) {
 					item.isActive = false;
 					int pos = getPositionInColumn(item);
@@ -78,14 +81,14 @@ public class Menu {
 				} 
 			break;
 			
-			case Keys.UP:
+			case CURSOR_UP:
 				if (item.id != getFirstForColumn(item.columnId).id) {
 					item.isActive = false;
 					getItem(item.id - 1).isActive = true;
 				} 
 			break;
 			
-			case Keys.DOWN:
+			case CURSOR_DOWN:
 				if (item.id != getLastForColumn(item.columnId).id) {
 					item.isActive = false;
 					getItem(item.id + 1).isActive = true;

@@ -55,8 +55,6 @@ public class CrazySoccer extends ApplicationAdapter {
 		shapeRenderer = new ShapeRenderer();
 		shapeProjectionMatrix = new Matrix4(shapeRenderer.getProjectionMatrix());
 		
-		System.out.println(shapeProjectionMatrix);
-		
 		font = new BitmapFont(Gdx.files.internal("fonts/font.fnt"),Gdx.files.internal("fonts/font.png"),false);
 		
 		batch = new SpriteBatch();
@@ -68,7 +66,7 @@ public class CrazySoccer extends ApplicationAdapter {
 		menus.get("main_menu").addItem(new Menu.Item(130,110,"START!",0));
 		menus.get("main_menu").addItem(new Menu.Item(650,260,"WEATHER",1));
 		menus.get("main_menu").addItem(new Menu.Item(650,210,"TEAMS",1));
-		menus.get("main_menu").addItem(new Menu.Item(650,160,"MUSIC",1));
+		menus.get("main_menu").addItem(new Menu.Item(650,160,"MUSIC TEST",1));
 		menus.get("main_menu").addItem(new Menu.Item(650,110,"EXIT",1));
 		menus.get("main_menu").setActive(3);
 		
@@ -111,16 +109,16 @@ public class CrazySoccer extends ApplicationAdapter {
 	
 	private void handleMenu(String menuName) {
 		if (Gdx.input.isKeyJustPressed(Keys.UP))
-			menus.get(menuName).cursorMove(Keys.UP);
+			menus.get(menuName).cursorMove(Menu.CURSOR_UP);
 		
 		if (Gdx.input.isKeyJustPressed(Keys.DOWN))
-			menus.get(menuName).cursorMove(Keys.DOWN);
+			menus.get(menuName).cursorMove(Menu.CURSOR_DOWN);
 		
 		if (Gdx.input.isKeyJustPressed(Keys.LEFT))
-			menus.get(menuName).cursorMove(Keys.LEFT);
+			menus.get(menuName).cursorMove(Menu.CURSOR_LEFT);
 		
 		if (Gdx.input.isKeyJustPressed(Keys.RIGHT))
-			menus.get(menuName).cursorMove(Keys.RIGHT);
+			menus.get(menuName).cursorMove(Menu.CURSOR_RIGHT);
 	}
 	
 	@Override

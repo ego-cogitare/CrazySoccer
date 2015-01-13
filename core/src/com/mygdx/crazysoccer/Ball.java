@@ -1,5 +1,7 @@
 package com.mygdx.crazysoccer;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,6 +13,8 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g2d.Animation.PlayMode;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.mygdx.crazysoccer.Player.AddictedTo;
+import com.mygdx.crazysoccer.Players.Amplua;
 
 public class Ball extends Actor {
 	
@@ -35,6 +39,13 @@ public class Ball extends Actor {
  	// Координаты приземления мяча
  	private float LANDING_X = 0;
  	private float LANDING_Y = 0;
+ 	
+ 	// Координаты, где мяч впоследний раз вышел за пределы поля
+ 	private float OUT_X = -1;
+ 	private float OUT_Y = -1;
+ 	
+ 	// Идентификатор игрока который был назначен для ввода мяча в игру
+ 	private int PLAYER_TO_THROW_IN = -1;
     
     // Парамерты высоты расположения мяча
     private float JUMP_HEIGHT = 0;
@@ -76,6 +87,12 @@ public class Ball extends Actor {
     // Находится ли мяч в пределах поля
     private boolean IS_BALL_IN_FIELD = true;
     
+    // Введен ли мяч в игру
+    private boolean THROWED_IN = false;
+    
+    // Было ли первое касание мяча
+    private boolean IS_FIRST_TOUCH_HAPPENED = false;
+    
     // Набор анимаций мяча
     public Map<States, Animation> animations;
     
@@ -84,15 +101,29 @@ public class Ball extends Actor {
     
     // Текущее состояние мяча
  	public Map<States, Boolean> state = new HashMap<States, Boolean>();
+ 	
+ 	// Типы вбрасывания мяча в поле
+ 	public static enum ThrowInType {
+ 		TOP_OUT,
+ 		BOTTOM_OUT,
+ 		LEFT_BOTTOM_CORNER,
+ 		LEFT_TOP_CORNER,
+ 		RIGHT_TOP_CORNER,
+ 		RIGHT_BOTTOM_CORNER,
+ 		LEFT_FREE_KICK,
+ 		RIGHT_FREE_KICK
+ 	}
+ 	
+ 	// Способ ввода мяча в игру
+ 	public ThrowInType howToThrowIn;
     
     public static enum States {
 		STOP,     			// Состояние покоя
 		FLY_FAST,     		// Состояние полета
 		FLY_MEDIUM,     	// Состояние полета
 		FLY_SLOW,     		// Состояние полета
-		
 		FOOT_SUPER_KICK,      // Суперудар ногой
-		HEAD_BACK_SUPER_KICK, // Суперудар голой / через себя
+		HEAD_BACK_SUPER_KICK  // Суперудар голой / через себя
 	}
 	
     // Текущий кадр анимации
@@ -119,9 +150,6 @@ public class Ball extends Actor {
         
         // Загрузка карты анимаций персонажа
         animationMap = TextureRegion.split(animationSheet, animationSheet.getWidth()/FRAME_COLS, animationSheet.getHeight()/FRAME_ROWS);
-        
-        // Спрайт для отрисовки персонажа
-//        spriteBatch = new SpriteBatch(); 
         
         // Анимация движущегося мяча
         flyFrames = new TextureRegion[8];
@@ -181,6 +209,129 @@ public class Ball extends Actor {
 	}
 	
 	public void inField(boolean b) {
+		
+//		if (!b) {
+//			// Отмечаем что мяч не контроллируется никаким из игроков
+//			this.managerByBlayer(-1);
+//			
+//			// Отмечаем что мяч свободен
+//			this.isCatched(false);
+//			
+//			// Отмечаем, что никто из игроков не контроллирует мяч
+//			for (int i = 0; i < field.players.length; i++) {
+//				field.players[i].catchBall(false);
+//			}
+//		}
+		
+		// Если мяч вышел за пределы игрового поля
+		if (IS_BALL_IN_FIELD && !b && PLAYER_TO_THROW_IN == -1) {
+			
+			// Сохраняем координату где мяч покинул пределы поля
+			setOutXY(getAbsX(), getAbsY());
+			
+			// Отмечаем, что мяч не введен в игру
+			setThrowedIn(false);
+			
+			// Сдвиг кривой ограничивающей поле справа и слева для данной высоты
+			float offs = field.mGetSideLineProjection(getAbsY());
+			
+			// Определяем способ как должен быть введен мяч в игру согласно футбольным правилам
+			if (getOutX() >= field.fieldOffsetX && getOutX() <= field.fieldOffsetX + field.fieldMaxWidth && getOutY() < field.fieldOffsetY) 
+				howToThrowIn = ThrowInType.BOTTOM_OUT;
+			
+			else if (getOutX() >= field.fieldOffsetX + offs && getOutX() <= field.fieldOffsetX + field.fieldMaxWidth - offs && getOutY() > field.fieldOffsetY + field.fieldHeight) 
+				howToThrowIn = ThrowInType.TOP_OUT;
+			
+			// Мяч вышел слева
+			else if (getOutX() < field.fieldMaxWidth / 2)
+			{
+				// Если угловой с левой стороны 
+				if (field.players[LAST_MANAGED_PLAYER_ID].getDestinationGateId() == Gate.RIGHT_GATES)
+					howToThrowIn = 
+						(getOutY() < field.fieldOffsetY + (field.fieldHeight / 2)) ? 
+							ThrowInType.LEFT_BOTTOM_CORNER : ThrowInType.LEFT_TOP_CORNER;
+				// Левый свободный удар
+				else
+					howToThrowIn = ThrowInType.LEFT_FREE_KICK;
+			}
+			
+			// Мяч вышел справа
+			else
+			{
+				// Если угловой с левой стороны 
+				if (field.players[LAST_MANAGED_PLAYER_ID].getDestinationGateId() == Gate.LEFT_GATES)
+					howToThrowIn = 
+						(getOutY() < field.fieldOffsetY + (field.fieldHeight / 2)) ? 
+							ThrowInType.RIGHT_BOTTOM_CORNER : ThrowInType.RIGHT_TOP_CORNER;
+				// Левый свободный удар
+				else
+					howToThrowIn = ThrowInType.RIGHT_FREE_KICK;
+			}
+			
+			// Поиск ближайшего игрока, который мог бы ввести мяч в игру в зависимости от способа ввода
+			switch (howToThrowIn)
+			{
+				case RIGHT_FREE_KICK:
+					PLAYER_TO_THROW_IN = 
+						field.findNearesPlayerToBall(
+							new ArrayList<Amplua>(
+								Arrays.asList(
+									Amplua.GK
+								)
+							),
+							new ArrayList<AddictedTo>(
+								Arrays.asList(
+									AddictedTo.AI,
+									AddictedTo.HUMAN
+								)
+							),
+							false,
+							Gate.LEFT_GATES
+						);
+				break;
+				
+				case LEFT_FREE_KICK:
+					PLAYER_TO_THROW_IN = 
+						field.findNearesPlayerToBall(
+							new ArrayList<Amplua>(
+								Arrays.asList(
+									Amplua.GK
+								)
+							),
+							new ArrayList<AddictedTo>(
+								Arrays.asList(
+									AddictedTo.AI,
+									AddictedTo.HUMAN
+								)
+							),
+							false,
+							Gate.RIGHT_GATES
+						);
+				break;
+				
+				default:
+					PLAYER_TO_THROW_IN = 
+						field.findNearesPlayerToBall(
+							new ArrayList<Amplua>(
+								Arrays.asList(
+									Amplua.FW,
+									Amplua.DF,
+									Amplua.MF
+								)
+							),
+							new ArrayList<AddictedTo>(
+								Arrays.asList(
+									AddictedTo.AI
+								)
+							),
+							true,
+							field.players[LAST_MANAGED_PLAYER_ID].getDestinationGateId() == Gate.RIGHT_GATES ? 
+								Gate.LEFT_GATES : Gate.RIGHT_GATES
+						);
+				break;
+			}
+		}
+		
 		IS_BALL_IN_FIELD = b;
 	}
 	
@@ -230,11 +381,51 @@ public class Ball extends Actor {
 	
 	public void isCatched(boolean c) {
 		if (!c) this.MANAGED_PLAYER_ID = -1;
+				
 		this.CATCHED = c;
 	}
 	
 	public boolean isCatched() {
+		if (!this.CATCHED) {
+			this.MANAGED_PLAYER_ID = -1;
+		}
+		
 		return this.CATCHED;
+	}
+	
+	/**
+	 * Было ли касания мяча после начала матча / розыграша мяча после гола
+	 * @return
+	 */
+	public boolean isFirstTouchHappened() {
+		return IS_FIRST_TOUCH_HAPPENED;
+	}
+	
+	public void setFirstTouchHappened(boolean ft) {
+		// Если первого касания еще небыло и устанавливается флаг, что 
+		// оно произошло - отмечаем что мяч введен в игру  
+		if (!IS_FIRST_TOUCH_HAPPENED && ft) {
+			THROWED_IN = true;
+		}
+		IS_FIRST_TOUCH_HAPPENED = ft;
+	}
+	
+	/**
+	 * Введен ли мяч в игру
+	 * @return
+	 */
+	public boolean isThrowedIn() {
+		return THROWED_IN;
+	}
+	
+	/**
+	 * Установка признака введен ли мяч в игру
+	 * @return
+	 */
+	public void setThrowedIn(boolean thwdIn) {
+		if (thwdIn) PLAYER_TO_THROW_IN = -1;
+		
+		THROWED_IN = thwdIn;
 	}
 	
 	// Установка ID игрока, которым контроллируется мяч
@@ -243,6 +434,10 @@ public class Ball extends Actor {
 		if (playerId >= 0) this.LAST_MANAGED_PLAYER_ID = playerId;
 		
 		this.MANAGED_PLAYER_ID = playerId;
+	}
+	
+	public boolean managedByGK() {
+		return isCatched() && MANAGED_PLAYER_ID != -1 && field.players[MANAGED_PLAYER_ID].getAmplua() == Amplua.GK;
 	}
 	
 	// Получение ID игрока которым контроллируется мяч
@@ -266,9 +461,52 @@ public class Ball extends Actor {
 		return LANDING_Y;
 	}
 	
+	/**
+	 * Установка точки где мяч покинул пределы поля
+	 * @param x
+	 * @param y
+	 */
+	public void setOutXY(float x, float y) {
+		this.OUT_X = x;
+		this.OUT_Y = y;
+	}
+	
+	/**
+	 * Получение координаты X где мяч покинул пределы поля
+	 * @return
+	 */
+	public float getOutX() {
+		return this.OUT_X;
+	}
+	
+	/**
+	 * Получение координаты Y где мяч покинул пределы поля
+	 * @return
+	 */
+	public float getOutY() {
+		return this.OUT_Y;
+	}
+	
+	public int getPlayerToThrowIn() {
+//		if (this.MANAGED_PLAYER_ID != -1 && this.PLAYER_TO_THROW_IN != -1 && this.MANAGED_PLAYER_ID != this.PLAYER_TO_THROW_IN) {
+//			field.players[this.MANAGED_PLAYER_ID].catchBall(false);
+//			this.isCatched(false);
+//		}
+//		
+//		if (this.PLAYER_TO_THROW_IN != -1) {
+//			field.players[this.PLAYER_TO_THROW_IN].catchBall(true);
+//			this.isCatched(true);
+//		}
+		return PLAYER_TO_THROW_IN;
+	}
+	
 	// Получение ID игрока которым контроллируется мяч
 	public int lastManagerByBlayer() {
 		return this.LAST_MANAGED_PLAYER_ID;
+	}
+	
+	public void lastManagerByBlayer(int playerId) {
+		this.LAST_MANAGED_PLAYER_ID = playerId;
 	}
 	
 	// Импульс удара мяча
@@ -655,7 +893,6 @@ public class Ball extends Actor {
 	
 	@Override
 	public void act(float delta) {
-		
 		// Замедление полета мяча (трение воздуха)
 		this.CURENT_SPEED_X += this.CURENT_SPEED_X * this.AIR_FRICTION; 
 		this.CURENT_SPEED_Y += this.CURENT_SPEED_Y * this.AIR_FRICTION;
@@ -700,12 +937,15 @@ public class Ball extends Actor {
 		
 		// Если мяч вышел за пределы поля
 		if (!field.inField(getAbsX(),getAbsY())) {
-			// Отмечам что мяч никем не контроллируется
-			this.isCatched(false);
-			this.MANAGED_PLAYER_ID = -1;
 			
-			// Включаем воздействие гравитации
-			this.ALLOW_GRAVITY_FROM = 999.0f;
+			if (isThrowedIn()) {
+				// Отмечаем что мяч никем не контроллируется
+				this.isCatched(false);
+				this.MANAGED_PLAYER_ID = -1;
+				
+				// Включаем воздействие гравитации
+				this.ALLOW_GRAVITY_FROM = 999.0f;
+			}
 		}
 		
 		if (this.ballInNet() && !field.inField(getAbsX(),getAbsY())) {

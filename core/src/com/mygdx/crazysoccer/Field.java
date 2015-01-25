@@ -1,15 +1,16 @@
 package com.mygdx.crazysoccer;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
-import java.util.Arrays;
+import java.util.Random;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
@@ -63,6 +64,15 @@ public class Field extends Stage {
 	
 	// Екземпляр мяча
 	public Ball ball;
+	
+	// Флаг хранящий состояние был ли забит гол
+	private boolean GOAL_SCORED = false;
+	
+	// Идентификатор игрока, который последний раз забил гол
+	private int GOAL_SCORED_BY = -1;
+	
+	// Идентификатор ворот, в которые был в последний раз забит гол
+	private int GOAL_SCORED_GATES = -1;
 	
 	// Ворота
 	public Gate[] gates = new Gate[2];
@@ -862,10 +872,75 @@ public class Field extends Stage {
 				}
 			}
 			
-			// Игра ИИ
-			ai[0].play();
+			// Отмечаем что был забит гол
+			if (ball.ballInNet() && !GOAL_SCORED) {
+				GOAL_SCORED = true;
+				GOAL_SCORED_BY = ball.lastManagerByBlayer();
+				GOAL_SCORED_GATES = ball.scoredInGates();
+				
+				System.out.println("Последний коснувшийся мяча     : " + Players.getParams(ball.lastTouchedByBlayer()).stringName);
+				System.out.println("Последний контролировавший мяч : " + Players.getParams(ball.lastManagerByBlayer()).stringName);
+				System.out.println("Забито в ворота : " + ball.scoredInGates());
+			}
 			
-			ai[1].play();
+			if (GOAL_SCORED)
+			{
+				for (Player player : players) {
+					if (player.addictedTo == AddictedTo.AI) {
+						player.setVelocityX(0);
+						player.setVelocityY(0);
+						player.disableDirections();
+						
+						// Если мяч забит в нужные для игрока ворота, то он радуется
+						if (player.getDestinationGateId() == GOAL_SCORED_GATES) 
+						{
+							// Если устанавливается анимация празднования забитого гола для игрока забившего гол
+							if (player.getPlayerId() == GOAL_SCORED_BY) 
+							{
+								if (player.Can(States.REJOICE2)) {
+									player.Do(States.REJOICE2, true);
+								}
+							}
+							// Анимация празднования остальных игроков 
+							else if (player.Can(States.REJOICE1)) 
+							{
+								player.Do(States.REJOICE1, true);
+							}
+						}
+						else 
+						{
+							int cry = MathUtils.random(1, 3);
+							
+							if (player.Can(States.valueOf("CRY"+String.valueOf(cry)))) {
+								player.Do(States.valueOf("CRY"+String.valueOf(cry)), true);
+							}
+						}
+					}
+					// Анимация игрока человека
+					else if (player.getAbsH() == 0 && player.maxVelocity() == 0) 
+					{
+						if (player.getDestinationGateId() == GOAL_SCORED_GATES) 
+						{
+							 if (player.Can(States.REJOICE3))
+							 {
+								 player.Do(States.REJOICE3, true);
+							 }
+						}
+						else 
+						{
+							 if (player.Can(States.CRY1)) 
+							 {
+								 player.Do(States.CRY1, true);
+							 }
+						}
+					}
+				}
+			}
+			else
+			{
+//				ai[0].play();
+//				ai[1].play();
+			}
 			
 			// Сортировака спрайтов по глубине
 			zIndexSorting();
@@ -943,8 +1018,8 @@ public class Field extends Stage {
 		}
 		else if (!this.inField(ball.getAbsX(),ball.getAbsY()) && !ballOutPlayed) {
 			// Если мяч влетел в ворота
-			if (ball.isGoalIn() > 0) {
-				Sounds.play("goalin01", true);
+			if (ball.scoredInGates() > -1) {
+				Sounds.play("goalin01", true);		
 			}
 			// Если мяч ушел за пределы поля вне ворот
 			else {

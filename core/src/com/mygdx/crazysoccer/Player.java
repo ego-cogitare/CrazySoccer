@@ -137,6 +137,13 @@ public class Player extends Actor {
 		BODY_ATTACK, 		// Атака плечом
 		TACKLE_ATTACK, 		// Атака подкатом
 		FOOT_ATTACK, 		// Атака ногами в полете
+		
+		CRY1,
+		CRY2,
+		CRY3,
+		REJOICE1,
+		REJOICE2,
+		REJOICE3,
 	} 
 	
 	// Кому подчинен игрок
@@ -457,6 +464,59 @@ public class Player extends Actor {
 				animationMap[3][5],
 				animationMap[3][5],
 				animationMap[3][5]
+			)
+		);
+        
+        
+        animations.put(States.CRY1, 
+			new Animation(0.45f, 
+				animationMap[6][4],
+				animationMap[6][5]
+			)
+		);
+        
+        animations.put(States.CRY2, 
+			new Animation(0.35f, 
+				animationMap[6][6],
+				animationMap[6][7]
+			)
+		);
+        
+        animations.put(States.CRY3, 
+			new Animation(0.5f, 
+				animationMap[7][0],
+				animationMap[7][1]
+			)
+		);
+        
+        animations.put(States.REJOICE1, 
+    		new Animation(0.5f, 
+				animationMap[7][2],
+				animationMap[7][3]
+			)
+		);
+        
+        animations.put(States.REJOICE2, 
+    		new Animation(0.20f, 
+				animationMap[7][4],
+				animationMap[7][5],
+				animationMap[7][4],
+				animationMap[7][5],
+				animationMap[7][4],
+				animationMap[7][5],
+				animationMap[7][4],
+				animationMap[7][4],
+				animationMap[7][4],
+				animationMap[7][4],
+				animationMap[7][4]
+			)
+		);
+        
+        animations.put(States.REJOICE3, 
+    		new Animation(0.35f, 
+				animationMap[7][6],
+				animationMap[7][7],
+				animationMap[7][7]
 			)
 		);
         
@@ -1181,7 +1241,19 @@ public class Player extends Actor {
 						!state.get(States.LAY_BELLY) &&
 						this.getAbsH() > 0 &&
 						Math.abs(this.getVelocityX()) > 0;
-				break;
+			break;
+			
+			case CRY1: case CRY2: case CRY3: case REJOICE1: case REJOICE2: case REJOICE3:
+				isCan = !state.get(States.CRY1) &&
+						!state.get(States.CRY2) &&
+						!state.get(States.CRY3) &&
+						!state.get(States.REJOICE1) &&
+						!state.get(States.REJOICE2) &&
+						!state.get(States.REJOICE3) &&
+						!state.get(States.LAY_BACK) &&
+						!state.get(States.LAY_BELLY) && 
+						!state.get(States.DEAD);
+			break;
 			
 			default:
 				isCan = false;
@@ -1335,6 +1407,10 @@ public class Player extends Actor {
 				actionsListener.disableAction(Controls.ACTION2, this.PLAYER_ID);
 			break;
 			
+			case CRY1: case CRY2: case CRY3: case REJOICE1: case REJOICE2: case REJOICE3:
+				this.stateTime = 0.0f;
+			break;
+			
 			default:
 			break;
 		}
@@ -1344,7 +1420,7 @@ public class Player extends Actor {
 	}
 	
 	// Отключение всех действий к перемещению персонажа
-	private void disableDirections() {
+	public void disableDirections() {
 		actionsListener.disableAction(Controls.RIGHT, this.PLAYER_ID);
 		actionsListener.disableAction(Controls.LEFT, this.PLAYER_ID);
 		actionsListener.disableAction(Controls.UP, this.PLAYER_ID);
@@ -2178,7 +2254,7 @@ public class Player extends Actor {
 		ball.managerByBlayer(-1);
 		
 		// Устанавливаем текущего игрока как последнего коснувшегося мяча
-		ball.lastManagerByBlayer(this.getPlayerId());
+		ball.lastTouchedByBlayer(this.getPlayerId());
 		
 		// Проверяем не пролетает ли мяч сквозь игрока (когда здоровья у игрока осталось больше чем импульс удара)
 		if (this.getHealth() > strength) 
@@ -2231,7 +2307,7 @@ public class Player extends Actor {
 	 */
 	private void ballHeadBackSuperKick() {
 		// Определение точки куда бить игроку
-		ball.headBackSuperKick(this.getKickStrength() * 1.2f, this.netCenter(this.DESTINATION_GATE_ID).x, this.netCenter(this.DESTINATION_GATE_ID).y);
+		ball.headBackSuperKick(this.getKickStrength(), this.netCenter(this.DESTINATION_GATE_ID).x, this.netCenter(this.DESTINATION_GATE_ID).y);
 		
 		// Отмечаем что игрок потерял мяч
 		this.catchBall(false);
@@ -2347,17 +2423,17 @@ public class Player extends Actor {
 					ball.setJumpVelocity(0);
 					
 					if (this.direction == Directions.RIGHT) 
-						ball.moveBallBy(new Vector2(this.getAbsX()-ball.getAbsX()+20, this.getAbsY()-ball.getAbsY()-1));
+						ball.moveBallBy(this.getAbsX()-ball.getAbsX()+20, this.getAbsY()-ball.getAbsY()-1);
 					else
-						ball.moveBallBy(new Vector2(this.getAbsX()-ball.getAbsX()-20, this.getAbsY()-ball.getAbsY()-1));
+						ball.moveBallBy(this.getAbsX()-ball.getAbsX()-20, this.getAbsY()-ball.getAbsY()-1);
 				}
 				// Иначе привязка осуществляется к ногам
 				else if (ball.isThrowedIn())
 				{
 					if (this.direction == Directions.RIGHT) 
-						ball.moveBallBy(new Vector2(this.getAbsX()-ball.getAbsX() + 40, this.getAbsY()-ball.getAbsY() - 1));
+						ball.moveBallBy(this.getAbsX()-ball.getAbsX() + 40, this.getAbsY()-ball.getAbsY() - 1);
 					else 
-						ball.moveBallBy(new Vector2(this.getAbsX()-ball.getAbsX() - 40, this.getAbsY()-ball.getAbsY() - 1));
+						ball.moveBallBy(this.getAbsX()-ball.getAbsX() - 40, this.getAbsY()-ball.getAbsY() - 1);
 									
 					if (ball.getJumpVelocity() >= 0 && curentState() != States.HEAD_KICK && curentState() != States.BACK_KICK) 
 						ball.setAbsH(this.getAbsH());
@@ -2443,6 +2519,12 @@ public class Player extends Actor {
 			else if (
 					curentState() != States.RUN && 
 					curentState() != States.DECELERATION && 
+					curentState() != States.CRY1 && 
+					curentState() != States.CRY2 && 
+					curentState() != States.CRY3 && 
+					curentState() != States.REJOICE1 && 
+					curentState() != States.REJOICE2 && 
+					curentState() != States.REJOICE3 && 
 					(
 						curentState() != States.BODY_ATTACK || 
 						curentState() == States.BODY_ATTACK && getAbsH() == 0

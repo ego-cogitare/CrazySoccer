@@ -67,7 +67,10 @@ public class Ball extends Actor {
     private int MANAGED_PLAYER_ID = 0;
     
     // ID игрока, который последним управлял мячом
-    private int LAST_MANAGED_PLAYER_ID = 0;
+    private int LAST_MANAGED_PLAYER_ID = -1;
+    
+    // ID игрока, который последним косался мяча
+    private int LAST_TOUCHED_PLAYER_ID = -1;
     
     // Скорость мяча при которой на мяч начинает действовать гравитация
     private float ALLOW_GRAVITY_FROM = 999.0f;
@@ -246,7 +249,7 @@ public class Ball extends Actor {
 			else if (getOutX() < field.fieldMaxWidth / 2)
 			{
 				// Если угловой с левой стороны 
-				if (field.players[LAST_MANAGED_PLAYER_ID].getDestinationGateId() == Gate.RIGHT_GATES)
+				if (field.players[LAST_TOUCHED_PLAYER_ID].getDestinationGateId() == Gate.RIGHT_GATES)
 					howToThrowIn = 
 						(getOutY() < field.fieldOffsetY + (field.fieldHeight / 2)) ? 
 							ThrowInType.LEFT_BOTTOM_CORNER : ThrowInType.LEFT_TOP_CORNER;
@@ -259,7 +262,7 @@ public class Ball extends Actor {
 			else
 			{
 				// Если угловой с левой стороны 
-				if (field.players[LAST_MANAGED_PLAYER_ID].getDestinationGateId() == Gate.LEFT_GATES)
+				if (field.players[LAST_TOUCHED_PLAYER_ID].getDestinationGateId() == Gate.LEFT_GATES)
 					howToThrowIn = 
 						(getOutY() < field.fieldOffsetY + (field.fieldHeight / 2)) ? 
 							ThrowInType.RIGHT_BOTTOM_CORNER : ThrowInType.RIGHT_TOP_CORNER;
@@ -325,7 +328,7 @@ public class Ball extends Actor {
 								)
 							),
 							true,
-							field.players[LAST_MANAGED_PLAYER_ID].getDestinationGateId() == Gate.RIGHT_GATES ? 
+							field.players[LAST_TOUCHED_PLAYER_ID].getDestinationGateId() == Gate.RIGHT_GATES ? 
 								Gate.LEFT_GATES : Gate.RIGHT_GATES
 						);
 				break;
@@ -431,7 +434,7 @@ public class Ball extends Actor {
 	// Установка ID игрока, которым контроллируется мяч
 	public void managerByBlayer(int playerId) {
 		// Сохранение ID игрока, который последним контроллировал мяч
-		if (playerId >= 0) this.LAST_MANAGED_PLAYER_ID = playerId;
+		if (playerId >= 0) this.LAST_MANAGED_PLAYER_ID = this.LAST_TOUCHED_PLAYER_ID = playerId;
 		
 		this.MANAGED_PLAYER_ID = playerId;
 	}
@@ -507,6 +510,15 @@ public class Ball extends Actor {
 	
 	public void lastManagerByBlayer(int playerId) {
 		this.LAST_MANAGED_PLAYER_ID = playerId;
+	}
+	
+	// ID игрока, который последним касался мяча
+	public int lastTouchedByBlayer() {
+		return this.LAST_TOUCHED_PLAYER_ID;
+	}
+	
+	public void lastTouchedByBlayer(int playerId) {
+		this.LAST_TOUCHED_PLAYER_ID = playerId;
 	}
 	
 	// Импульс удара мяча
@@ -749,7 +761,7 @@ public class Ball extends Actor {
 	}
 	
 	// Механизм передвижения мяча и камеры относительно него
-	public void moveBallBy(Vector2 movePoint) {
+	public void moveBallBy(float x, float y) {
 		
 		float w = Gdx.graphics.getWidth();
 		float h = Gdx.graphics.getHeight();
@@ -761,21 +773,21 @@ public class Ball extends Actor {
 		if (this.POS_X >= 0 && this.POS_X <= field.worldWidth && this.POS_Y >= 0 && this.POS_Y <= field.worldHeight) {
 			
 			// Ограничение выхода персонажа за пределы поля
-			if (this.POS_X + movePoint.x < 0) {
-				movePoint.x = -this.POS_X;
+			if (this.POS_X + x < 0) {
+				x = -this.POS_X;
 				doStop = true;
 			}
-			else if (this.POS_X + movePoint.x > field.worldWidth) { 
-				movePoint.x = field.worldWidth - this.POS_X;
+			else if (this.POS_X + x > field.worldWidth) { 
+				x = field.worldWidth - this.POS_X;
 				doStop = true;
 			}
 			
-			if (this.POS_Y + movePoint.y < 0) {
-				movePoint.y = -this.POS_Y;
+			if (this.POS_Y + y < 0) {
+				y = -this.POS_Y;
 				doStop = true;
 			}
-			else if (this.POS_Y + movePoint.y > field.worldHeight) { 
-				movePoint.y = field.worldHeight - this.POS_Y;
+			else if (this.POS_Y + y > field.worldHeight) { 
+				y = field.worldHeight - this.POS_Y;
 				doStop = true;
 			}
 			
@@ -785,47 +797,47 @@ public class Ball extends Actor {
 			// Перемещение по оси X
 			if (this.POS_X < field.fieldMaxWidth / 2.0f) {
 				if (this.POS_X >= w / 2) {
-					if (this.POS_X + movePoint.x < w / 2.0f) {
+					if (this.POS_X + x < w / 2.0f) {
 						field.camera.position.set(w / 2.0f, camY, 0);
-						setX(movePoint.x + this.POS_X);
+						setX(x + this.POS_X);
 					}
 					else {
-						field.camera.position.set(camX + movePoint.x, camY, 0);
+						field.camera.position.set(camX + x, camY, 0);
 					}
-					this.POS_X += movePoint.x;
+					this.POS_X += x;
 				} 
 				else {
-					if (this.POS_X + movePoint.x > w / 2.0f) {
+					if (this.POS_X + x > w / 2.0f) {
 						setX(w / 2.0f);
-						field.camera.position.set(camX + this.POS_X + movePoint.x - w / 2.0f, camY, 0);
+						field.camera.position.set(camX + this.POS_X + x - w / 2.0f, camY, 0);
 					}
 					else {
-						setX(getX() + movePoint.x);
+						setX(getX() + x);
 					}
-					this.POS_X += movePoint.x;
+					this.POS_X += x;
 				}
 			}
 			else {
 				if (getX() <= w / 2.0f) {
-					if (this.POS_X + movePoint.x <= field.camMaxX) {
-						field.camera.position.set(camX + movePoint.x, camY, 0);
+					if (this.POS_X + x <= field.camMaxX) {
+						field.camera.position.set(camX + x, camY, 0);
 					}
 					else {
 						field.camera.position.set(field.camMaxX, camY, 0);
-						setX(w / 2.0f + this.POS_X + movePoint.x - field.camMaxX);
+						setX(w / 2.0f + this.POS_X + x - field.camMaxX);
 					}
-					this.POS_X += movePoint.x;
+					this.POS_X += x;
 				} 
 				else {
-					if (this.POS_X + movePoint.x > field.camMaxX) {
+					if (this.POS_X + x > field.camMaxX) {
 						field.camera.position.set(field.camMaxX, camY, 0);
-						setX(w / 2.0f + this.POS_X + movePoint.x - field.camMaxX);
+						setX(w / 2.0f + this.POS_X + x - field.camMaxX);
 					}
 					else {
-						field.camera.position.set(this.POS_X + movePoint.x, camY, 0);
+						field.camera.position.set(this.POS_X + x, camY, 0);
 						setX(w / 2.0f);
 					}
-					this.POS_X += movePoint.x;
+					this.POS_X += x;
 				}
 			}
 			
@@ -835,47 +847,47 @@ public class Ball extends Actor {
 			
 			if (this.POS_Y < field.fieldHeight / 2.0f) {
 				if (this.POS_Y >= h / 2) {
-					if (this.POS_Y + movePoint.y < h / 2.0f) {
+					if (this.POS_Y + y < h / 2.0f) {
 						field.camera.position.set(camX, h / 2.0f, 0);
-						setY(movePoint.y + this.POS_Y);
+						setY(y + this.POS_Y);
 					}
 					else {
-						field.camera.position.set(camX, camY + movePoint.y, 0);
+						field.camera.position.set(camX, camY + y, 0);
 					}
-					this.POS_Y += movePoint.y;
+					this.POS_Y += y;
 				} 
 				else {
-					if (this.POS_Y + movePoint.y > h / 2.0f) {
+					if (this.POS_Y + y > h / 2.0f) {
 						setY(h / 2.0f);
-						field.camera.position.set(camX, camY + this.POS_Y + movePoint.y - h / 2.0f, 0);
+						field.camera.position.set(camX, camY + this.POS_Y + y - h / 2.0f, 0);
 					}
 					else {
-						setY(getY() + movePoint.y);
+						setY(getY() + y);
 					}
-					this.POS_Y += movePoint.y;
+					this.POS_Y += y;
 				}
 			}
 			else {
 				if (getY() <= h / 2.0f) {
-					if (this.POS_Y + movePoint.y <= field.camMaxY) {
-						field.camera.position.set(camX, camY + movePoint.y, 0);
+					if (this.POS_Y + y <= field.camMaxY) {
+						field.camera.position.set(camX, camY + y, 0);
 					}
 					else {
 						field.camera.position.set(camX, field.camMaxY, 0);
-						setY(h / 2.0f + this.POS_Y + movePoint.y - field.camMaxY);
+						setY(h / 2.0f + this.POS_Y + y - field.camMaxY);
 					}
-					this.POS_Y += movePoint.y;
+					this.POS_Y += y;
 				}
 				else {
-					if (this.POS_Y + movePoint.y > field.camMaxY) {
+					if (this.POS_Y + y > field.camMaxY) {
 						field.camera.position.set(camX, field.camMaxY, 0);
-						setY(h / 2.0f + this.POS_Y + movePoint.y - field.camMaxY);
+						setY(h / 2.0f + this.POS_Y + y - field.camMaxY);
 					}
 					else {
-						field.camera.position.set(camX, this.POS_Y + movePoint.y, 0);
+						field.camera.position.set(camX, this.POS_Y + y, 0);
 						setY(h / 2.0f);
 					}
-					this.POS_Y += movePoint.y;
+					this.POS_Y += y;
 				}
 			}
 			
@@ -1040,10 +1052,10 @@ public class Ball extends Actor {
 		}
 		
 		// Перемещение мяча
-		moveBallBy(new Vector2(this.CURENT_SPEED_X, this.CURENT_SPEED_Y));
+		moveBallBy(this.CURENT_SPEED_X, this.CURENT_SPEED_Y);
 	}
 	
-	private boolean ballInNet() {
+	public boolean ballInNet() {
 		return this.IS_BALL_IN_NET;
 	}
 	
@@ -1060,28 +1072,28 @@ public class Ball extends Actor {
 	//  0 - мяч не в воротах
 	//  1 - мяч в левых воротах
 	//  2 - мяч в правых воротах
-	public int isGoalIn() {
-		int r = 0;
+	public int scoredInGates() {
+		int r = -1;
 		
 		if (!field.inField(getAbsX(),getAbsY())) {
 			
 			if ((this.getAbsH() < field.gates[0].getHeight()) && 
 				(this.getAbsX() + 10 < field.fieldOffsetX + field.mGetSideLineProjection(this.getAbsY()) && this.getAbsY() > field.gates[0].getBottomBar().y && this.getAbsY() < field.gates[0].getTopBar().y)) {
 				
-				r = 1;
+				r = 0;
 			}
 			else if ((this.getAbsH() < field.gates[1].getHeight()) && 
 					 (this.getAbsX() - 10 > field.fieldOffsetX + field.fieldMaxWidth - field.mGetSideLineProjection(this.getAbsY()) && this.getAbsY() > field.gates[1].getBottomBar().y && this.getAbsY() < field.gates[1].getTopBar().y)) {
 				 
-				r = 2;
+				r = 1;
 			}
 			
 		}
 		
 		// Если было зафиксировано, что мяч находится в воротах то устанавливаем флаг того что мяч в воротах 
-		if (!this.ballInNet() && r != 0) 
+		if (!this.ballInNet() && r != -1) 
 			this.ballInNet(true);
-		else if (this.ballInNet() && r == 0)
+		else if (this.ballInNet() && r == -1)
 			this.ballInNet(false);
 		
 		return r;

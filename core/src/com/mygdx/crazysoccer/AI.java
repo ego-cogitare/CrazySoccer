@@ -168,16 +168,10 @@ public class AI {
 		field.actions.add(command, playerId);
 	}
 	
-	private void removeCommandFromPlayer(int playerId, Controls command) {
-		field.actions.remove(command, playerId);
-	}
-	
-	private void removeCommandFromPlayer(int playerId, Controls command1, Controls command2) {
-		
-//		if (command1 != Controls.UP && command1 != Controls.DOWN && command2 != Controls.UP && command2 != Controls.DOWN ) {
-		field.actions.remove(command1, playerId);
-		field.actions.remove(command2, playerId);
-//		}
+	private void removeCommandFromPlayer(int playerId, Controls... commands) {
+		for (Controls cntrl: commands) {
+			field.actions.remove(cntrl, playerId);
+		}
 	}
 	
 	private void removeAllCommandsFromPlayer(int playerId) {
@@ -743,8 +737,8 @@ public class AI {
 											// Поис ближайшего игрока союзника
 											int nearestAlly = field.playerNearest(playerId, Player.ALLY, true, true, true, true, true);
 											
-											System.out.println("Nearest to pass from :"+playerId + " is " + nearestAlly);
-											System.out.println("Action :"+getPlayer(playerId).curentState());
+//											System.out.println("Nearest to pass from :"+playerId + " is " + nearestAlly);
+//											System.out.println("Action :"+getPlayer(playerId).curentState());
 											
 											// Если найден игрок, которому можно отдать пас											
 											if (nearestAlly > 0)

@@ -71,10 +71,14 @@ public class CrazySoccer extends ApplicationAdapter {
 		menus.get("main_menu").setActive(3);
 		
 		menus.put("music_select", new Menu());
-		menus.get("music_select").addItem(new Menu.Item(400,620,"GOAL 3 END THEME",0));
-		menus.get("music_select").addItem(new Menu.Item(400,550,"IKE-IKE HOCKEY",0));
-		menus.get("music_select").addItem(new Menu.Item(400,480,"KNUKLE FIGHT END THEME",0));
-		menus.get("music_select").addItem(new Menu.Item(400,410,"GOAL 3 BATTLE THEME",0));
+		menus.get("music_select").addItem(new Menu.Item(400,640,"GOAL 3 END THEME",0));
+		menus.get("music_select").addItem(new Menu.Item(400,580,"IKE-IKE HOCKEY",0));
+		menus.get("music_select").addItem(new Menu.Item(400,520,"KNUKLE FIGHT END THEME",0));
+		menus.get("music_select").addItem(new Menu.Item(400,460,"GOAL 3 BATTLE THEME",0));
+		menus.get("music_select").addItem(new Menu.Item(400,400,"THE BLIZZARD",0));
+		menus.get("music_select").addItem(new Menu.Item(400,340,"NINJA GAIDEN 3: CATWALK",0));
+		menus.get("music_select").addItem(new Menu.Item(400,280,"THE BLIZZARD",0));
+		menus.get("music_select").addItem(new Menu.Item(400,220,"THE BLIZZARD",0));
 		menus.get("music_select").addItem(new Menu.Item(400,100,"BACK TO MENU",0));
 		
 		menus.put("give_up", new Menu());
@@ -159,14 +163,13 @@ public class CrazySoccer extends ApplicationAdapter {
 					movie.getMovie(MovieTypes.MUSIC_DANCE).setFlipX(
 						movie.getMovie(MovieTypes.MUSIC_DANCE).getCurentFrame() % 2 == 0
 					);
-					
 					movie.getMovie(MovieTypes.MUSIC_DANCE).play(false);
 				}
 				else
 				{
 					movie.load(MovieTypes.MUSIC_DANCE, 
 						new Animation(
-							0.4f,
+							0.5f,
 							new TextureRegion(
 								new Texture(Gdx.files.internal("graphics/atlas.png")), 768, 0, 128, 128
 							),
@@ -195,8 +198,8 @@ public class CrazySoccer extends ApplicationAdapter {
 				for (int i = 0; i < menus.get("music_select").getItems().size(); i++) {
 					GraphUtils.dottedVertLine(
 							menus.get("music_select").getItem(i).getX(),
-							menus.get("music_select").getItem(i).getY() - 40,
-							menus.get("music_select").getItem(i).getId() != 4 ? 570 : 225, 
+							menus.get("music_select").getItem(i).getY() - 35,
+							menus.get("music_select").getItem(i).getId() != menus.get("music_select").getItems().size() - 1 ? 570 : 260, 
 							3, 
 							3
 					);
@@ -210,7 +213,7 @@ public class CrazySoccer extends ApplicationAdapter {
 				
 				if (Gdx.input.isKeyJustPressed(Keys.ENTER) || !Sounds.isLoaded("bg")) {
 					
-					if (menus.get("music_select").getActive().getId() != 4) 
+					if (menus.get("music_select").getActive().getId() != menus.get("music_select").getItems().size() - 1) 
 					{
 					
 						// Выгружаем текущую музыку с памяти
@@ -232,6 +235,14 @@ public class CrazySoccer extends ApplicationAdapter {
 							
 							case 3:
 								Sounds.load("bg", "sound/bg/background04.ogg");
+							break;
+							
+							case 4:
+								Sounds.load("bg", "sound/bg/background05.ogg");
+							break;
+							
+							case 5:
+								Sounds.load("bg", "sound/bg/background06.ogg");
 							break;
 						}
 						
@@ -268,8 +279,10 @@ public class CrazySoccer extends ApplicationAdapter {
 				}
 				
 				// Капитан команды
-				if (movie.isLoaded(MovieTypes.TEACH_TEACHER))
+				if (movie.isLoaded(MovieTypes.TEACH_TEACHER)) {
 					movie.getMovie(MovieTypes.TEACH_TEACHER).play(false);
+					movie.getMovie(MovieTypes.TEACH_TEACHER).animation.setPlayMode(PlayMode.LOOP);
+				}
 				else {
 					movie.load(MovieTypes.TEACH_TEACHER, "graphics/body.png", 8, 8);
 					
@@ -284,6 +297,29 @@ public class CrazySoccer extends ApplicationAdapter {
 					// Установка позиции проигрыания
 					movie.getMovie(MovieTypes.TEACH_TEACHER).setXY(500,400);
 				}
+				
+				if (movie.isLoaded(MovieTypes.TEACHER_HEAD)) {
+					movie.getMovie(MovieTypes.TEACHER_HEAD).play(true);
+					
+					if (movie.isLoaded(MovieTypes.TEACH_TEACHER)) {
+						// Установка позиции проигрыания
+						movie.getMovie(MovieTypes.TEACHER_HEAD).setXY(
+							movie.getMovie(MovieTypes.TEACH_TEACHER).getCurentFrame() % 2 == 0 ? 524 : 527,
+							448
+						);
+					}
+				} 
+				else {
+					// Загрузка головы тренера
+					movie.load(MovieTypes.TEACHER_HEAD, "graphics/heads.png", 32, 0, 16, 16, 999.0f);
+					
+					// Установка коеффициента увеличения кадра
+					movie.getMovie(MovieTypes.TEACHER_HEAD).setScaleXY(3);
+					
+					// Отмечаем, что кадр должен зеркалироваться по ОХ
+					movie.getMovie(MovieTypes.TEACHER_HEAD).setFlipX(true);
+				}
+				
 				
 				// Полевой игрок
 				if (movie.isLoaded(MovieTypes.TEACH_PUPIL))

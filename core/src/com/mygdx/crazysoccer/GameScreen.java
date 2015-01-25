@@ -37,7 +37,7 @@ public class GameScreen {
 	public static ScreenNames curentScreen;
 	
 	public static void init() {
-		curentScreen = ScreenNames.SPLASH_SCREEN;
+		curentScreen = ScreenNames.PREPORATIONS;
 		
 		gameScreen.put(ScreenNames.SPLASH_SCREEN, new GameScreens(""));
 		gameScreen.put(ScreenNames.PREPORATIONS, new GameScreens("PREPORATIONS"));

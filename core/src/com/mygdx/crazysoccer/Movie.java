@@ -1,5 +1,6 @@
 package com.mygdx.crazysoccer;
 
+import java.util.Arrays;
 import java.util.HashMap;
 
 import com.badlogic.gdx.Gdx;
@@ -177,6 +178,7 @@ public class Movie {
     public static enum MovieTypes {
     	SPLASH,
     	TEACH_TEACHER,
+    	TEACHER_HEAD,
     	TEACH_PUPIL,
     	TEACH_BLACKBOARD,
     	CURSOR,

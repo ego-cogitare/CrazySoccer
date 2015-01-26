@@ -1,6 +1,5 @@
 package com.mygdx.crazysoccer;
 
-import java.util.Arrays;
 import java.util.HashMap;
 
 import com.badlogic.gdx.Gdx;
@@ -258,23 +257,23 @@ public class Movie {
 	        case TEACH_PUPIL:
 	        	movies.get(name).animation = 
         			new Animation(0.12f,
-    					frames[0][5],
-    					frames[0][5],
-    					frames[0][5],
-    					frames[0][5],
-    					frames[0][5],
-    					frames[0][5],
-    					frames[0][5],
-    					frames[0][5],
-    					frames[0][5],
-    					frames[0][5],
-    					frames[0][6],
-    					frames[0][5],
-    					frames[0][6],
-    					frames[0][5],
-    					frames[0][6],	
-    					frames[0][5],
-    					frames[0][6]
+    					frames[4][5],
+    					frames[4][5],
+    					frames[4][5],
+    					frames[4][5],
+    					frames[4][5],
+    					frames[4][5],
+    					frames[4][5],
+    					frames[4][5],
+    					frames[4][5],
+    					frames[4][5],
+    					frames[4][6],
+    					frames[4][5],
+    					frames[4][6],
+    					frames[4][5],
+    					frames[4][6],	
+    					frames[4][5],
+    					frames[4][6]
 					);
         	break;
         	

@@ -29,6 +29,8 @@ public class CrazySoccer extends ApplicationAdapter {
 	
 	public static SpriteBatch batch;
 	
+	public static String BG_TRACK = "sound/bg/background00.ogg";	
+	
 	public static HashMap<String,Menu> menus = new HashMap<String,Menu>();
 	
 	// Игровое поле
@@ -222,29 +224,33 @@ public class CrazySoccer extends ApplicationAdapter {
 						switch (menus.get("music_select").getActive().getId()) {
 							
 							case 0:
-								Sounds.load("bg", "sound/bg/background01.ogg");
+								Sounds.load("bg", "sound/bg/background00.ogg");
 							break;
 							
 							case 1:
-								Sounds.load("bg", "sound/bg/background02.ogg");
+								Sounds.load("bg", "sound/bg/background01.ogg");
 							break;
 							
 							case 2:
-								Sounds.load("bg", "sound/bg/background03.ogg");
+								Sounds.load("bg", "sound/bg/background02.ogg");
 							break;
 							
 							case 3:
-								Sounds.load("bg", "sound/bg/background04.ogg");
+								Sounds.load("bg", "sound/bg/background03.ogg");
 							break;
 							
 							case 4:
-								Sounds.load("bg", "sound/bg/background05.ogg");
+								Sounds.load("bg", "sound/bg/background04.ogg");
 							break;
 							
 							case 5:
-								Sounds.load("bg", "sound/bg/background06.ogg");
+								Sounds.load("bg", "sound/bg/background05.ogg");
 							break;
 						}
+						
+						// Установка выбранного трека для проигрывания при игре
+						//field.setBgTrack(menus.get("music_select").getActive().getId() + 1);
+						CrazySoccer.BG_TRACK = "sound/bg/background0" + String.valueOf(menus.get("music_select").getActive().getId()) + ".ogg";
 						
 						Sounds.play("bg");
 						Sounds.loop("bg", true);
@@ -284,7 +290,7 @@ public class CrazySoccer extends ApplicationAdapter {
 					movie.getMovie(MovieTypes.TEACH_TEACHER).animation.setPlayMode(PlayMode.LOOP);
 				}
 				else {
-					movie.load(MovieTypes.TEACH_TEACHER, "graphics/body.png", 8, 8);
+					movie.load(MovieTypes.TEACH_TEACHER, "graphics/body.png", 16, 8);
 					
 					// Установка коеффициента увеличения кадра
 					movie.getMovie(MovieTypes.TEACH_TEACHER).setScaleXY(3);
@@ -325,7 +331,7 @@ public class CrazySoccer extends ApplicationAdapter {
 				if (movie.isLoaded(MovieTypes.TEACH_PUPIL))
 					movie.getMovie(MovieTypes.TEACH_PUPIL).play(false);
 				else {
-					movie.load(MovieTypes.TEACH_PUPIL, "graphics/states.png", 8, 8);
+					movie.load(MovieTypes.TEACH_PUPIL, "graphics/body.png", 16, 8);
 					
 					// Установка коеффициента увеличения кадра
 					movie.getMovie(MovieTypes.TEACH_PUPIL).setScaleXY(3);

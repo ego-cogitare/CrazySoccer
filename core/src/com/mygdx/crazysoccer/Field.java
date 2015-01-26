@@ -45,9 +45,6 @@ public class Field extends Stage {
 	// Текущее состояние игры
 	public GameStates gameState;
 	
-	// Файл музыки фона
-	public String BG_TRACK = "bg01";
-	
 	// Количество игроков на поле
 	private final int PLAYERS_AMOUNT = 12;
 	
@@ -260,9 +257,9 @@ public class Field extends Stage {
 	
 	private void loadSounds() {
 		// Загрузка фоновой музыки
-		Sounds.load(BG_TRACK, "sound/bg/background02.ogg");
-		Sounds.play(BG_TRACK);
-		Sounds.loop(BG_TRACK, true);
+		Sounds.load("bg", CrazySoccer.BG_TRACK);
+		Sounds.play("bg");
+		Sounds.loop("bg", true);
 		
 		// Звук паса
 		Sounds.load("pass01", "sound/sfx/pass01.ogg");
@@ -878,6 +875,8 @@ public class Field extends Stage {
 				GOAL_SCORED_BY = ball.lastManagerByBlayer();
 				GOAL_SCORED_GATES = ball.scoredInGates();
 				
+				ball.allowGravityFrom(999.0f);
+				
 				System.out.println("Последний коснувшийся мяча     : " + Players.getParams(ball.lastTouchedByBlayer()).stringName);
 				System.out.println("Последний контролировавший мяч : " + Players.getParams(ball.lastManagerByBlayer()).stringName);
 				System.out.println("Забито в ворота : " + ball.scoredInGates());
@@ -921,9 +920,9 @@ public class Field extends Stage {
 					{
 						if (player.getDestinationGateId() == GOAL_SCORED_GATES) 
 						{
-							 if (player.Can(States.REJOICE3))
+							 if (player.Can(States.REJOICE4))
 							 {
-								 player.Do(States.REJOICE3, true);
+								 player.Do(States.REJOICE4, true);
 							 }
 						}
 						else 
@@ -1196,9 +1195,9 @@ public class Field extends Stage {
 		gameState = GameStates.PAUSE;
 		
 		// Останавливаем все звуки, кроме того, что передано в except
-		Sounds.stopAll(BG_TRACK);
+		Sounds.stopAll("bg");
 		//Sounds.pause(BG_TRACK);
-		Sounds.volume(BG_TRACK, 0.3f);
+		Sounds.volume("bg", 0.3f);
 		
 		Sounds.play("ballout01");
 	}
@@ -1208,7 +1207,7 @@ public class Field extends Stage {
 		gameState = GameStates.RUN;
 		Sounds.play("ballout01");
 		//Sounds.resume(BG_TRACK);
-		Sounds.volume(BG_TRACK, 1.0f);
+		Sounds.volume("bg", 1.0f);
 		
 		// Если в меню было выбрано "сдаться"
 		if (CrazySoccer.menus.get("give_up").getActive().getId() == 1) {
@@ -1221,7 +1220,7 @@ public class Field extends Stage {
 	@Override
 	public void dispose() {
 		
-		Sounds.unload(BG_TRACK);
+		Sounds.unload("bg");
 		Sounds.unload("pass01");
 		Sounds.unload("kick01");
 		Sounds.unload("run01");

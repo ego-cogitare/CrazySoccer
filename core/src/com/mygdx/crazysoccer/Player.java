@@ -144,6 +144,7 @@ public class Player extends Actor {
 		REJOICE1,
 		REJOICE2,
 		REJOICE3,
+		REJOICE4,
 	} 
 	
 	// Кому подчинен игрок
@@ -204,7 +205,7 @@ public class Player extends Actor {
         headsSheet = new Texture(Gdx.files.internal("graphics/heads.png"));
         
         // Загрузка карты анимаций персонажа
-        animationMap = TextureRegion.split(animationSheet, animationSheet.getWidth() / 8, animationSheet.getHeight() / 8);
+        animationMap = TextureRegion.split(animationSheet, animationSheet.getWidth() / 16, animationSheet.getHeight() / 8);
         
         // Загрузка карты анимаций состояний игрока
         headsMap = TextureRegion.split(headsSheet, headsSheet.getWidth() / 16, headsSheet.getHeight() / 16);
@@ -513,10 +514,24 @@ public class Player extends Actor {
 		);
         
         animations.put(States.REJOICE3, 
-    		new Animation(0.35f, 
+    		new Animation(0.25f, 
+				animationMap[7][6],
+				animationMap[7][7],
+				animationMap[7][7],
 				animationMap[7][6],
 				animationMap[7][7],
 				animationMap[7][7]
+			)
+		);
+        
+        animations.put(States.REJOICE4, 
+			new Animation(0.30f, 
+				animationMap[0][12],
+				animationMap[0][11],
+				animationMap[0][11],
+				animationMap[0][12],
+				animationMap[0][11],
+				animationMap[0][11]
 			)
 		);
         
@@ -709,6 +724,14 @@ public class Player extends Actor {
 			
 			case BACK_KICK:
 				flip = (this.DESTINATION_GATE_ID == Gate.RIGHT_GATES) ? (cf == 0 || cf == 1 || cf == 2 || cf == 6 || cf == 7 || cf == 8) : (cf == 3 || cf == 4 || cf == 5);
+			break;
+			
+			case REJOICE3:
+				flip = (cf > 2);
+			break;
+			
+			case REJOICE4:
+				flip = (cf > 2);
 			break;
 			
 			default:
@@ -1243,13 +1266,14 @@ public class Player extends Actor {
 						Math.abs(this.getVelocityX()) > 0;
 			break;
 			
-			case CRY1: case CRY2: case CRY3: case REJOICE1: case REJOICE2: case REJOICE3:
+			case CRY1: case CRY2: case CRY3: case REJOICE1: case REJOICE2: case REJOICE3: case REJOICE4:
 				isCan = !state.get(States.CRY1) &&
 						!state.get(States.CRY2) &&
 						!state.get(States.CRY3) &&
 						!state.get(States.REJOICE1) &&
 						!state.get(States.REJOICE2) &&
 						!state.get(States.REJOICE3) &&
+						!state.get(States.REJOICE4) &&
 						!state.get(States.LAY_BACK) &&
 						!state.get(States.LAY_BELLY) && 
 						!state.get(States.DEAD);
@@ -1407,7 +1431,7 @@ public class Player extends Actor {
 				actionsListener.disableAction(Controls.ACTION2, this.PLAYER_ID);
 			break;
 			
-			case CRY1: case CRY2: case CRY3: case REJOICE1: case REJOICE2: case REJOICE3:
+			case CRY1: case CRY2: case CRY3: case REJOICE1: case REJOICE2: case REJOICE3: case REJOICE4:
 				this.stateTime = 0.0f;
 			break;
 			
@@ -2525,6 +2549,7 @@ public class Player extends Actor {
 					curentState() != States.REJOICE1 && 
 					curentState() != States.REJOICE2 && 
 					curentState() != States.REJOICE3 && 
+					curentState() != States.REJOICE4 && 
 					(
 						curentState() != States.BODY_ATTACK || 
 						curentState() == States.BODY_ATTACK && getAbsH() == 0
@@ -2550,7 +2575,7 @@ public class Player extends Actor {
 		
 		switch (curentState()) {
 		
-			case STAY: case WALKING: case RUN: case TOP_RUN: case KNEE_CATCH: case CHEST_CATCH: case JUMP: case SIT: case BODY_ATTACK: case BACK_KICK:
+			case STAY: case WALKING: case RUN: case TOP_RUN: case KNEE_CATCH: case CHEST_CATCH: case JUMP: case SIT: case BODY_ATTACK: case BACK_KICK: case REJOICE1:
 				cellX = Players.getParams(this.getPlayerId()).faceFrontId.x;
 				cellY = Players.getParams(this.getPlayerId()).faceFrontId.y;
 				
@@ -2574,6 +2599,12 @@ public class Player extends Actor {
 				}
 				else if (curentState() == States.BODY_ATTACK) { 
 					offsetX = direction == Directions.RIGHT ? 40 : -4;
+				}
+				else if (curentState() == States.REJOICE1) { 
+					if (cf == 1) 
+						offsetX = direction == Directions.RIGHT ? 24 : 12;
+					else 
+						offsetX = direction == Directions.RIGHT ? 21 : 15;
 				}
 				
 				

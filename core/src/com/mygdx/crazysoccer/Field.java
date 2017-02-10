@@ -937,8 +937,8 @@ public class Field extends Stage {
 			}
 			else
 			{
-//				ai[0].play();
-//				ai[1].play();
+				ai[0].play();
+				ai[1].play();
 			}
 			
 			// Сортировака спрайтов по глубине
